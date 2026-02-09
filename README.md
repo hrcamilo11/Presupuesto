@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Presupuesto — Rastreador de presupuesto personal
 
-## Getting Started
+Aplicación para seguimiento de ingresos y gastos con Next.js, shadcn/ui y Supabase.
 
-First, run the development server:
+## Características
+
+- **Autenticación:** registro e inicio de sesión con Supabase Auth
+- **Ingresos:** CRUD con tipos (mensual, irregular, ocasional) y filtro por mes
+- **Gastos:** CRUD con prioridad (obligatorio, necesario, opcional) y filtro por mes
+- **Dashboard:** resumen del mes actual (totales, balance, desglose por tipo y prioridad)
+
+## Requisitos
+
+- Node.js 18+ (recomendado 20+)
+- Cuenta en [Supabase](https://supabase.com)
+
+## Configuración
+
+1. Clona el repo e instala dependencias:
+
+   ```bash
+   npm install
+   ```
+
+2. Crea un proyecto en Supabase y ejecuta la migración:
+
+   - En el dashboard de Supabase, ve a **SQL Editor**
+   - Copia y ejecuta el contenido de `supabase/migrations/20250209000000_initial_schema.sql`
+
+3. Variables de entorno:
+
+   - Copia `.env.example` a `.env.local`
+   - Rellena con tu URL y anon key del proyecto Supabase (Settings → API):
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+4. Arranca el servidor de desarrollo:
+
+   ```bash
+   npm run dev
+   ```
+
+5. Abre [http://localhost:3000](http://localhost:3000). Crea una cuenta en **Regístrate** y empieza a añadir ingresos y gastos.
+
+### Configuración de autenticación en Supabase
+
+Para que el registro y la confirmación por correo funcionen bien:
+
+1. En el **Dashboard de Supabase** → **Authentication** → **URL Configuration**:
+   - **Site URL** (producción): `https://budget-tracker-wheat-tau.vercel.app/auth/callback`
+   - **Redirect URLs** — añade estas (en local y producción):
+     - `http://localhost:3000`
+     - `http://localhost:3000/auth/callback`
+     - `https://budget-tracker-wheat-tau.vercel.app`
+     - `https://budget-tracker-wheat-tau.vercel.app/auth/callback`
+   - Para probar en local, cambia **Site URL** temporalmente a `http://localhost:3000/auth/callback`.
+
+2. Opcional: en **Authentication** → **Providers** → **Email** puedes subir el tiempo de validez del enlace de confirmación.
+
+- En **login** puedes usar **"¿Olvidaste tu contraseña?"** para recuperar acceso y **"Reenviar correo de confirmación"** si no recibiste el de registro.
+- Tras registrarte, en la pantalla de éxito también puedes **"Reenviar correo de confirmación"**.
+
+## Despliegue en Vercel
+
+1. **Sube el código** a un repositorio en GitHub, GitLab o Bitbucket.
+
+2. **Importa el proyecto en Vercel:**
+   - Entra en [vercel.com](https://vercel.com) e inicia sesión.
+   - **Add New** → **Project** → importa el repo de este proyecto.
+   - Framework: **Next.js** (se detecta solo). No cambies el directorio raíz.
+
+3. **Variables de entorno** (Settings → Environment Variables del proyecto):
+   - `NEXT_PUBLIC_SUPABASE_URL` — URL del proyecto Supabase.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Anon / public key de Supabase.
+
+4. **Deploy.** La app está en **https://budget-tracker-wheat-tau.vercel.app**
+
+**Alternativa con CLI:**
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm i -g vercel   # o: npx vercel
+vercel login
+vercel --prod
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Cuando la CLI pida las variables de entorno, añade las dos de Supabase o configúralas después en el dashboard del proyecto en Vercel.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev` — desarrollo
+- `npm run build` — build de producción
+- `npm run start` — servidor de producción
+- `npm run lint` — ESLint
+- `npm run db:migrate` — aplicar migraciones a Supabase (requiere `SUPABASE_DB_PASSWORD` en `.env`)
 
-## Learn More
+## Estructura
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `app/(auth)/` — login y registro
+- `app/(dashboard)/` — dashboard, ingresos y gastos (rutas protegidas)
+- `app/actions/` — server actions (CRUD)
+- `components/ui/` — componentes shadcn
+- `components/incomes/`, `components/expenses/` — formularios y listas
+- `lib/supabase/` — cliente Supabase (browser, server, middleware)
+- `lib/validations/` — esquemas Zod
+- `supabase/migrations/` — SQL del esquema y RLS
