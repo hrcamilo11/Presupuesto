@@ -146,19 +146,6 @@ function LoginForm() {
               autoComplete="current-password"
             />
           </div>
-          {!otpExpired && (
-            <p className="text-xs text-muted-foreground">
-              ¿No recibiste el correo de confirmación?{" "}
-              <button
-                type="button"
-                onClick={handleResendConfirmation}
-                disabled={resendLoading}
-                className="text-primary hover:underline"
-              >
-                Reenviar correo de confirmación
-              </button>
-            </p>
-          )}
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
           <Button type="submit" className="w-full" disabled={loading}>

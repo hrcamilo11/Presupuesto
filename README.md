@@ -57,8 +57,8 @@ Para que el registro y la confirmación por correo funcionen bien:
 
 2. Opcional: en **Authentication** → **Providers** → **Email** puedes subir el tiempo de validez del enlace de confirmación.
 
-- En **login** puedes usar **"¿Olvidaste tu contraseña?"** para recuperar acceso y **"Reenviar correo de confirmación"** si no recibiste el de registro.
-- Tras registrarte, en la pantalla de éxito también puedes **"Reenviar correo de confirmación"**.
+- En **login** puedes usar **"¿Olvidaste tu contraseña?"** para recuperar acceso.
+- El correo de confirmación solo se envía al **registrarte**; en la pantalla de éxito puedes **"Reenviar correo de confirmación"** si no lo recibes. Si el enlace caduca y vuelves a login, también podrás solicitar un nuevo enlace allí.
 
 ## Despliegue en Vercel
 
