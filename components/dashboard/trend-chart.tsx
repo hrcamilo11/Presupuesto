@@ -48,15 +48,16 @@ export function TrendChart({ data }: Props) {
     );
   }
 
+  const chartHeight = 280;
   return (
-    <div className="h-[220px] w-full sm:h-[280px]">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full" style={{ minHeight: chartHeight, height: chartHeight }}>
+      <ResponsiveContainer width="100%" height={chartHeight} minHeight={chartHeight}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
         <XAxis dataKey="month" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-        <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" tickFormatter={(v) => `$${v >= 1000 ? (v / 1000) + "k" : v}`} />
+        <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" tickFormatter={(v) => (Number.isFinite(v) ? `$${v >= 1000 ? (v / 1000) + "k" : v}` : "")} />
         <Tooltip
-          formatter={(value: number) => [`$${value.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`, ""]}
+          formatter={(value: number | undefined) => [`$${formatChartValue(value ?? 0)}`, ""]}
           labelFormatter={(label) => `Mes: ${label}`}
           contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }}
         />
@@ -67,4 +68,9 @@ export function TrendChart({ data }: Props) {
       </ResponsiveContainer>
     </div>
   );
+}
+
+function formatChartValue(n: number): string {
+  if (!Number.isFinite(n)) return "0.00";
+  return n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }

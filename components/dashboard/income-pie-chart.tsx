@@ -33,9 +33,11 @@ export function IncomePieChart({ data }: Props) {
     );
   }
 
+  const chartHeight = 240;
   return (
-    <ResponsiveContainer width="100%" height={240}>
-      <PieChart>
+    <div className="w-full" style={{ minWidth: 1, minHeight: chartHeight }}>
+      <ResponsiveContainer width="100%" height={chartHeight} minHeight={chartHeight} minWidth={1}>
+        <PieChart>
         <Pie
           data={chartData}
           cx="50%"
@@ -44,15 +46,21 @@ export function IncomePieChart({ data }: Props) {
           outerRadius={90}
           paddingAngle={2}
           dataKey="value"
-          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+          label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
         >
           {chartData.map((_, i) => (
             <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="transparent" />
           ))}
         </Pie>
-        <Tooltip formatter={(value: number) => [`$${value.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`, ""]} />
+        <Tooltip formatter={(value: number | undefined) => [`$${formatCurrency(value ?? 0)}`, ""]} />
         <Legend />
       </PieChart>
     </ResponsiveContainer>
+    </div>
   );
+}
+
+function formatCurrency(n: number): string {
+  if (!Number.isFinite(n)) return "0.00";
+  return n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }

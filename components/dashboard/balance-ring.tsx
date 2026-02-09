@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 
+function formatBalance(n: number): string {
+  const value = Math.abs(n);
+  if (!Number.isFinite(value)) return "0.00";
+  return value.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 type Props = {
   balance: number;
   totalIncome: number;
@@ -70,7 +76,7 @@ export function BalanceRing({ balance, totalIncome, totalExpense }: Props) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold tabular-nums">
-            ${Math.abs(balance).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 0 })}
+            ${formatBalance(balance)}
           </span>
           <span className="text-xs text-muted-foreground">{balance >= 0 ? "Superávit" : "Déficit"}</span>
         </div>

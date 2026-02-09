@@ -36,7 +36,6 @@ export default async function DashboardPage() {
     incomesRes,
     expensesRes,
     subscriptionsRes,
-    loansRes,
     taxRes,
     trendIncomes,
     trendExpenses,
@@ -44,7 +43,6 @@ export default async function DashboardPage() {
     supabase.from("incomes").select("amount, income_type").eq("user_id", user.id).gte("date", start).lte("date", end),
     supabase.from("expenses").select("amount, expense_priority").eq("user_id", user.id).gte("date", start).lte("date", end),
     supabase.from("subscriptions").select("amount, frequency").eq("user_id", user.id),
-    supabase.from("loans").select("id").eq("user_id", user.id),
     supabase.from("tax_obligations").select("amount, paid_at").eq("user_id", user.id),
     Promise.all(
       [0, -1, -2, -3, -4, -5].map(async (offset) => {
@@ -67,7 +65,6 @@ export default async function DashboardPage() {
   const incomes = incomesRes.data ?? [];
   const expenses = expensesRes.data ?? [];
   const subscriptions = subscriptionsRes.data ?? [];
-  const loans = loansRes.data ?? [];
   const taxObligations = taxRes.data ?? [];
 
   const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
