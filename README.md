@@ -4,10 +4,13 @@ Aplicación para seguimiento de ingresos y gastos con Next.js, shadcn/ui y Supab
 
 ## Características
 
-- **Autenticación:** registro e inicio de sesión con Supabase Auth
+- **Autenticación:** registro, login, recuperar contraseña y reenviar correo de confirmación
 - **Ingresos:** CRUD con tipos (mensual, irregular, ocasional) y filtro por mes
 - **Gastos:** CRUD con prioridad (obligatorio, necesario, opcional) y filtro por mes
-- **Dashboard:** resumen del mes actual (totales, balance, desglose por tipo y prioridad)
+- **Suscripciones:** gastos recurrentes (mensual/anual), próximo pago y “marcar como pagado” (avanza la fecha)
+- **Préstamos:** capital, tasa anual, plazo; tabla de amortización (método francés) y registro de pagos realizados
+- **Impuestos:** obligaciones fiscales con vencimiento, periodo (mensual/trimestral/anual) y estado de pago
+- **Dashboard:** resumen del mes (ingresos, gastos, balance), equivalente mensual de suscripciones, préstamos activos e impuestos pendientes
 
 ## Requisitos
 
@@ -22,10 +25,11 @@ Aplicación para seguimiento de ingresos y gastos con Next.js, shadcn/ui y Supab
    npm install
    ```
 
-2. Crea un proyecto en Supabase y ejecuta la migración:
+2. Crea un proyecto en Supabase y ejecuta las migraciones (en orden):
 
-   - En el dashboard de Supabase, ve a **SQL Editor**
-   - Copia y ejecuta el contenido de `supabase/migrations/20250209000000_initial_schema.sql`
+   - En **SQL Editor**, ejecuta primero `supabase/migrations/20250209000000_initial_schema.sql`
+   - Luego ejecuta `supabase/migrations/20250210000000_subscriptions_loans_taxes.sql`
+   - O usa `npm run db:migrate` si tienes `SUPABASE_DB_PASSWORD` en `.env`
 
 3. Variables de entorno:
 
@@ -102,4 +106,5 @@ Cuando la CLI pida las variables de entorno, añade las dos de Supabase o config
 - `components/incomes/`, `components/expenses/` — formularios y listas
 - `lib/supabase/` — cliente Supabase (browser, server, middleware)
 - `lib/validations/` — esquemas Zod
-- `supabase/migrations/` — SQL del esquema y RLS
+- `lib/amortization.ts` — cuota mensual y tabla de amortización (préstamos)
+- `supabase/migrations/` — SQL del esquema y RLS (inicial + suscripciones, préstamos, impuestos)

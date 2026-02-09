@@ -30,23 +30,26 @@ export default async function DashboardPage() {
 
   const { start, end } = getMonthBounds();
 
-  const [incomesRes, expensesRes] = await Promise.all([
-    supabase
-      .from("incomes")
-      .select("amount, income_type")
-      .eq("user_id", user.id)
-      .gte("date", start)
-      .lte("date", end),
-    supabase
-      .from("expenses")
-      .select("amount, expense_priority")
-      .eq("user_id", user.id)
-      .gte("date", start)
-      .lte("date", end),
+  const [incomesRes, expensesRes, subscriptionsRes, loansRes, taxRes] = await Promise.all([
+    supabase.from("incomes").select("amount, income_type").eq("user_id", user.id).gte("date", start).lte("date", end),
+    supabase.from("expenses").select("amount, expense_priority").eq("user_id", user.id).gte("date", start).lte("date", end),
+    supabase.from("subscriptions").select("amount, frequency").eq("user_id", user.id),
+    supabase.from("loans").select("id, principal, annual_interest_rate, term_months, start_date").eq("user_id", user.id),
+    supabase.from("tax_obligations").select("amount, paid_at").eq("user_id", user.id),
   ]);
 
   const incomes = incomesRes.data ?? [];
   const expenses = expensesRes.data ?? [];
+  const subscriptions = subscriptionsRes.data ?? [];
+  const loans = loansRes.data ?? [];
+  const taxObligations = taxRes.data ?? [];
+
+  const subscriptionsMonthly = subscriptions.reduce((s, sub) => {
+    const amt = Number(sub.amount);
+    return s + (sub.frequency === "yearly" ? amt / 12 : amt);
+  }, 0);
+
+  const taxPending = taxObligations.filter((t) => !t.paid_at).reduce((s, t) => s + Number(t.amount), 0);
 
   const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
   const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
@@ -172,6 +175,42 @@ export default async function DashboardPage() {
             </ul>
             <Button asChild variant="outline" className="mt-4 w-full">
               <Link href="/expenses">Ver gastos</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Suscripciones (equiv. mensual)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold">${subscriptionsMonthly.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+            <Button asChild variant="outline" size="sm" className="mt-2">
+              <Link href="/subscriptions">Ver suscripciones</Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Préstamos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold">{loans.length} activos</p>
+            <Button asChild variant="outline" size="sm" className="mt-2">
+              <Link href="/loans">Ver préstamos</Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Impuestos pendientes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-bold text-amber-600 dark:text-amber-400">${taxPending.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+            <Button asChild variant="outline" size="sm" className="mt-2">
+              <Link href="/taxes">Ver impuestos</Link>
             </Button>
           </CardContent>
         </Card>

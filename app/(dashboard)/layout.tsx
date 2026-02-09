@@ -7,6 +7,9 @@ import {
   TrendingUp,
   TrendingDown,
   LogOut,
+  Repeat,
+  Landmark,
+  Receipt,
 } from "lucide-react";
 
 export default async function DashboardLayout({
@@ -44,6 +47,24 @@ export default async function DashboardLayout({
               <Link href="/expenses">
                 <TrendingDown className="mr-2 h-4 w-4" />
                 Gastos
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/subscriptions">
+                <Repeat className="mr-2 h-4 w-4" />
+                Suscripciones
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/loans">
+                <Landmark className="mr-2 h-4 w-4" />
+                Préstamos
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/taxes">
+                <Receipt className="mr-2 h-4 w-4" />
+                Impuestos
               </Link>
             </Button>
             <form action="/auth/signout" method="POST">
