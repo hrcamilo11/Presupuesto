@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { IncomeType } from "@/lib/database.types";
+import type { IncomeType, Income, Tag } from "@/lib/database.types";
 import { incomeSchema } from "@/lib/validations/income";
 
 export async function createIncome(formData: {
@@ -122,10 +122,10 @@ export async function getIncomes(sharedAccountId?: string) {
   const { data, error } = await query.order("date", { ascending: false });
 
   // Map the nested tags for easier usage
-  const formattedData = data?.map((i: any) => ({
+  const formattedData = data?.map((i) => ({
     ...i,
-    tags: i.tags?.map((t: any) => t.tags).filter(Boolean) || []
-  }));
+    tags: (i.tags as unknown as { tags: Tag }[])?.map((t) => t.tags).filter(Boolean) || []
+  })) as Income[];
 
   return { data: formattedData, error: error?.message };
 }

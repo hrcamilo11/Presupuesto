@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Target, Calendar, CheckCircle2, MoreHorizontal } from "lucide-react";
+import { Target, Calendar } from "lucide-react";
 import type { SharedSavingsGoal } from "@/lib/database.types";
 import { formatCurrency } from "@/lib/utils";
 

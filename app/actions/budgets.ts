@@ -49,3 +49,18 @@ export async function getBudgets(sharedAccountId?: string) {
     const { data, error } = await query;
     return { data, error: error?.message };
 }
+export async function deleteBudget(id: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "No authenticated user" };
+
+    const { error } = await supabase
+        .from("budgets")
+        .delete()
+        .eq("id", id);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/budgets");
+    return { error: null };
+}

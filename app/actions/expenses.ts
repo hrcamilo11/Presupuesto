@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { ExpensePriority } from "@/lib/database.types";
+import type { ExpensePriority, Expense, Tag } from "@/lib/database.types";
 import { expenseSchema } from "@/lib/validations/expense";
 
 export async function createExpense(formData: {
@@ -123,10 +123,10 @@ export async function getExpenses(sharedAccountId?: string) {
   const { data, error } = await query.order("date", { ascending: false });
 
   // Map the nested tags for easier usage
-  const formattedData = data?.map((e: any) => ({
+  const formattedData = data?.map((e) => ({
     ...e,
-    tags: e.tags?.map((t: any) => t.tags).filter(Boolean) || []
-  }));
+    tags: (e.tags as unknown as { tags: Tag }[])?.map((t) => t.tags).filter(Boolean) || []
+  })) as Expense[];
 
   return { data: formattedData, error: error?.message };
 }

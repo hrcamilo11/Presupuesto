@@ -107,7 +107,7 @@ export default async function SharedAccountDashboardPage({ params }: { params: {
                     <Card>
                         <CardContent className="p-0">
                             <div className="divide-y">
-                                {account.members.map((m: any) => (
+                                {account.members.map((m: { id: string; profiles: { full_name: string | null }; role: string }) => (
                                     <div key={m.id} className="flex items-center justify-between p-4">
                                         <div className="flex items-center gap-3">
                                             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">

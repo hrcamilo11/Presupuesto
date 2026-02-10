@@ -86,7 +86,7 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
       ...(isEdit ? {} : { shared_account_id: sharedAccountId || null }),
     };
 
-    const result: any = isEdit
+    const result = isEdit
       ? await updateExpense(editExpense!.id, formData)
       : await createExpense(formData);
 
