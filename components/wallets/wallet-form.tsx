@@ -349,16 +349,17 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                                         <FormLabel>Banco (opcional)</FormLabel>
                                         <Select
                                             onValueChange={(value) => {
-                                                field.onChange(value);
+                                                const next = value === "__none__" ? null : value;
+                                                field.onChange(next);
                                                 // Auto-asignar color del banco si no hay color personalizado
-                                                if (!form.watch("color")) {
-                                                    const bankData = COLOMBIAN_BANKS.find((b) => b.value === value);
+                                                if (next && !form.watch("color")) {
+                                                    const bankData = COLOMBIAN_BANKS.find((b) => b.value === next);
                                                     if (bankData) {
                                                         form.setValue("color", bankData.color);
                                                     }
                                                 }
                                             }}
-                                            defaultValue={field.value ?? undefined}
+                                            defaultValue={field.value && field.value !== "" ? field.value : "__none__"}
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
@@ -366,7 +367,7 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="">Ninguno</SelectItem>
+                                                <SelectItem value="__none__">Ninguno</SelectItem>
                                                 {COLOMBIAN_BANKS.map((bank) => (
                                                     <SelectItem key={bank.value} value={bank.value}>
                                                         {bank.label}
