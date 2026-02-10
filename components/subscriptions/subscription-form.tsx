@@ -60,7 +60,7 @@ export function SubscriptionForm({ open, onOpenChange, editSubscription }: Props
     const formData = {
       name,
       amount: Number(amount),
-      currency: "MXN",
+      currency: "COP",
       frequency,
       next_due_date: nextDueDate,
       description: description || undefined,

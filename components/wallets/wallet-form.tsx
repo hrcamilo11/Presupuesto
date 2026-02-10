@@ -55,7 +55,7 @@ export function WalletForm() {
         defaultValues: {
             name: "",
             type: "cash",
-            currency: "MXN",
+            currency: "COP",
             balance: 0,
         },
     });
@@ -158,7 +158,7 @@ export function WalletForm() {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="MXN">MXN</SelectItem>
+                                                <SelectItem value="COP">COP</SelectItem>
                                                 <SelectItem value="USD">USD</SelectItem>
                                                 <SelectItem value="EUR">EUR</SelectItem>
                                             </SelectContent>

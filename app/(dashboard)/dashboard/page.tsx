@@ -158,7 +158,7 @@ export default async function DashboardPage({
           </CardHeader>
           <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
             <p className="truncate text-lg font-bold text-green-600 dark:text-green-400 sm:text-2xl">
-              ${totalIncome.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+              ${totalIncome.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
             </p>
           </CardContent>
         </Card>
@@ -169,7 +169,7 @@ export default async function DashboardPage({
           </CardHeader>
           <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
             <p className="truncate text-lg font-bold text-red-600 dark:text-red-400 sm:text-2xl">
-              ${totalExpense.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+              ${totalExpense.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
             </p>
           </CardContent>
         </Card>
@@ -180,7 +180,7 @@ export default async function DashboardPage({
           </CardHeader>
           <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
             <p className={`truncate text-lg font-bold sm:text-2xl ${balance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-              ${balance.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+              ${balance.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
             </p>
           </CardContent>
         </Card>
@@ -216,7 +216,7 @@ export default async function DashboardPage({
                     <span className="text-xs text-muted-foreground uppercase">{wallet.currency}</span>
                   </div>
                   <div className="text-xl font-bold">
-                    ${Number(wallet.balance).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                    ${Number(wallet.balance).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1 capitalize">
                     {wallet.type === 'debit' ? 'Débito' : wallet.type === 'credit' ? 'Crédito' : wallet.type === 'cash' ? 'Efectivo' : wallet.type}
@@ -251,7 +251,7 @@ export default async function DashboardPage({
                     <div className="flex justify-between text-sm">
                       <span className="font-medium truncate">{goal.name}</span>
                       <span className="text-muted-foreground">
-                        ${Number(goal.current_amount).toLocaleString("es-MX")} / ${Number(goal.target_amount).toLocaleString("es-MX")}
+                        ${Number(goal.current_amount).toLocaleString("es-CO")} / ${Number(goal.target_amount).toLocaleString("es-CO")}
                       </span>
                     </div>
                     <div className="h-2 w-full rounded-full bg-secondary">
@@ -309,7 +309,7 @@ export default async function DashboardPage({
               {(Object.entries(byIncomeType) as [IncomeType, number][]).map(([type, amount]) => (
                 <li key={type} className="flex justify-between gap-2">
                   <span className="truncate">{INCOME_TYPE_LABELS[type]}</span>
-                  <span className="shrink-0 tabular-nums">${amount.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
+                  <span className="shrink-0 tabular-nums">${amount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</span>
                 </li>
               ))}
             </ul>
@@ -330,7 +330,7 @@ export default async function DashboardPage({
               {(Object.entries(byExpensePriority) as [ExpensePriority, number][]).map(([priority, amount]) => (
                 <li key={priority} className="flex justify-between gap-2">
                   <span className="truncate">{EXPENSE_PRIORITY_LABELS[priority]}</span>
-                  <span className="shrink-0 tabular-nums">${amount.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
+                  <span className="shrink-0 tabular-nums">${amount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</span>
                 </li>
               ))}
             </ul>
@@ -356,13 +356,13 @@ export default async function DashboardPage({
           </Button>
           <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
             <Link href="/subscriptions" className="flex flex-col items-center gap-1">
-              <span className="text-base font-semibold tabular-nums sm:text-lg">${subscriptionsMonthly.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
+              <span className="text-base font-semibold tabular-nums sm:text-lg">${subscriptionsMonthly.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
               <span className="text-center text-xs text-muted-foreground">Suscripciones / mes</span>
             </Link>
           </Button>
           <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
             <Link href="/taxes" className="flex flex-col items-center gap-1">
-              <span className="text-base font-semibold tabular-nums text-amber-600 sm:text-lg">${taxPending.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
+              <span className="text-base font-semibold tabular-nums text-amber-600 sm:text-lg">${taxPending.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
               <span className="text-center text-xs text-muted-foreground">Impuestos pendientes</span>
             </Link>
           </Button>

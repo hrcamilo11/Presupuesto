@@ -57,7 +57,7 @@ export function LoanForm({ open, onOpenChange, editLoan }: Props) {
       annual_interest_rate: Number(annualRate),
       term_months: Number(termMonths),
       start_date: startDate,
-      currency: "MXN",
+      currency: "COP",
       description: description || undefined,
     };
     const result = isEdit

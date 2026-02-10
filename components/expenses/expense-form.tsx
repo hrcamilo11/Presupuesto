@@ -63,7 +63,7 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
     setLoading(true);
     const formData = {
       amount: Number(amount),
-      currency: "MXN",
+      currency: "COP",
       expense_priority: priority,
       description: description || undefined,
       date,

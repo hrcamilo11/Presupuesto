@@ -55,7 +55,7 @@ export function TaxList({ taxes }: Props) {
       </div>
       {totalPending > 0 && (
         <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-2">
-          Total pendiente por pagar: ${totalPending.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+          Total pendiente por pagar: ${totalPending.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
         </p>
       )}
       {taxes.length === 0 ? (
@@ -76,7 +76,7 @@ export function TaxList({ taxes }: Props) {
             {taxes.map((t) => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.name}</TableCell>
-                <TableCell>${Number(t.amount).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell>${Number(t.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}</TableCell>
                 <TableCell>{TAX_PERIOD_LABELS[t.period_type]}</TableCell>
                 <TableCell>{new Date(t.due_date).toLocaleDateString("es")}</TableCell>
                 <TableCell>{t.paid_at ? `Pagado ${new Date(t.paid_at).toLocaleDateString("es")}` : "Pendiente"}</TableCell>

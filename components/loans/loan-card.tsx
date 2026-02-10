@@ -108,13 +108,13 @@ export function LoanCard({ loan, payments }: Props) {
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="text-sm text-muted-foreground">
-          Capital: ${Number(loan.principal).toLocaleString("es-MX", { minimumFractionDigits: 2 })} · 
-          Tasa: {Number(loan.annual_interest_rate)}% anual · 
-          Cuota: ${monthly.toLocaleString("es-MX", { minimumFractionDigits: 2 })}/mes
+          Capital: ${Number(loan.principal).toLocaleString("es-CO", { minimumFractionDigits: 0 })} ·
+          Tasa: {Number(loan.annual_interest_rate)}% anual ·
+          Cuota: ${monthly.toLocaleString("es-CO", { minimumFractionDigits: 0 })}/mes
         </p>
         <p className="text-sm">
-          Pagos realizados: {payments.length} / {loan.term_months} · 
-          Saldo restante: ${balanceRemaining.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+          Pagos realizados: {payments.length} / {loan.term_months} ·
+          Saldo restante: ${balanceRemaining.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
         </p>
         <div className="flex gap-2 pt-2">
           <Button size="sm" onClick={openRecordWithSuggested} disabled={!nextPayment}>
@@ -142,10 +142,10 @@ export function LoanCard({ loan, payments }: Props) {
                   <TableRow key={row.paymentNumber}>
                     <TableCell>{row.paymentNumber}</TableCell>
                     <TableCell>{new Date(row.dueDate).toLocaleDateString("es")}</TableCell>
-                    <TableCell className="text-right">${row.payment.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-right">${row.principalPortion.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-right">${row.interestPortion.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-right">${row.balanceAfter.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-right">${row.payment.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</TableCell>
+                    <TableCell className="text-right">${row.principalPortion.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</TableCell>
+                    <TableCell className="text-right">${row.interestPortion.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</TableCell>
+                    <TableCell className="text-right">${row.balanceAfter.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

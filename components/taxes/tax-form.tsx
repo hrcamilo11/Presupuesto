@@ -62,7 +62,7 @@ export function TaxForm({ open, onOpenChange, editTax }: Props) {
     const formData = {
       name,
       amount: Number(amount),
-      currency: "MXN",
+      currency: "COP",
       period_type: periodType,
       due_date: dueDate,
       paid_at: paidAt || undefined,

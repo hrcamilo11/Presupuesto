@@ -96,7 +96,7 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets }: 
                     {expense.description || "—"}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    ${Number(expense.amount).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                    ${Number(expense.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
@@ -123,7 +123,7 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets }: 
             </TableBody>
           </Table>
           <p className="text-sm font-medium mt-2">
-            Total: ${total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+            Total: ${total.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
           </p>
         </>
       )}

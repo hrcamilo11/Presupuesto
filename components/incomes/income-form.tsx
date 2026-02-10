@@ -63,7 +63,7 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
     setLoading(true);
     const formData = {
       amount: Number(amount),
-      currency: "MXN",
+      currency: "COP",
       income_type: incomeType,
       description: description || undefined,
       date,

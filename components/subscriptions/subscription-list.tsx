@@ -76,7 +76,7 @@ export function SubscriptionList({ subscriptions }: Props) {
               {subscriptions.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.name}</TableCell>
-                  <TableCell>${Number(s.amount).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell>${Number(s.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}</TableCell>
                   <TableCell>{SUBSCRIPTION_FREQUENCY_LABELS[s.frequency]}</TableCell>
                   <TableCell>{new Date(s.next_due_date).toLocaleDateString("es")}</TableCell>
                   <TableCell>
@@ -92,7 +92,7 @@ export function SubscriptionList({ subscriptions }: Props) {
               ))}
             </TableBody>
           </Table>
-          <p className="text-sm font-medium mt-2">Total equivalente mensual: ${totalMonthly.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+          <p className="text-sm font-medium mt-2">Total equivalente mensual: ${totalMonthly.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</p>
         </>
       )}
       <SubscriptionForm open={formOpen} onOpenChange={setFormOpen} editSubscription={editing} />
