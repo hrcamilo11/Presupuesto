@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { contributionSchema, type SavingsGoalSchema } from "@/lib/validations/savings";
+import { contributionSchema, savingsGoalSchema, type SavingsGoalSchema } from "@/lib/validations/savings";
 
 export async function getSavingsGoals() {
     const supabase = await createClient();
@@ -24,7 +24,18 @@ export async function getSavingsGoals() {
 
 export async function createSavingsGoal(formData: SavingsGoalSchema) {
     try {
-        console.log("Creating savings goal with data:", formData);
+        console.log("Creating savings goal with raw data:", formData);
+
+        const parsed = savingsGoalSchema.safeParse(formData);
+        if (!parsed.success) {
+            const message =
+                parsed.error.issues.map((i) => i.message).join(" ") || "Datos inválidos para la meta de ahorro.";
+            console.error("Validation error in createSavingsGoal:", message, parsed.error.issues);
+            return { error: message };
+        }
+
+        const data = parsed.data;
+        console.log("Validation passed with data:", data);
         const supabase = await createClient();
 
         // Get user
@@ -39,13 +50,13 @@ export async function createSavingsGoal(formData: SavingsGoalSchema) {
         // Log what we're about to insert
         const insertData = {
             user_id: user.id,
-            name: formData.name,
-            target_amount: Number(formData.target_amount),
-            target_date: formData.target_date || null,
-            type: formData.type || "manual",
-            shared_account_id: formData.shared_account_id || null,
-            color: formData.color,
-            icon: formData.icon,
+            name: data.name,
+            target_amount: Number(data.target_amount),
+            target_date: data.target_date || null,
+            type: data.type || "manual",
+            shared_account_id: data.shared_account_id || null,
+            color: data.color,
+            icon: data.icon,
         };
 
         console.log("Attempting to insert:", insertData);
@@ -64,14 +75,14 @@ export async function createSavingsGoal(formData: SavingsGoalSchema) {
         }
 
         // 2. Create the Plan if requested
-        if (formData.type === "recurring" && formData.plan && goal) {
+        if (data.type === "recurring" && data.plan && goal) {
             const { error: planError } = await supabase.from("savings_plans").insert({
                 user_id: user.id,
                 savings_goal_id: goal.id,
-                wallet_id: formData.plan.wallet_id,
-                amount: Number(formData.plan.amount),
-                frequency: formData.plan.frequency,
-                day_of_period: Number(formData.plan.day_of_period),
+                wallet_id: data.plan.wallet_id,
+                amount: Number(data.plan.amount),
+                frequency: data.plan.frequency,
+                day_of_period: Number(data.plan.day_of_period),
             });
 
             if (planError) {

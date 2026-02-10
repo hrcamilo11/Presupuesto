@@ -44,7 +44,6 @@ import { Wallet } from "@/lib/database.types";
 
 export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
     const [open, setOpen] = useState(false);
-    const [isRecurring, setIsRecurring] = useState(false);
 
     const router = useRouter();
     const { toast } = useToast();
@@ -59,39 +58,39 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
             name: "",
             target_amount: 0,
             type: "manual",
+            shared_account_id: null,
             plan: {
                 wallet_id: "",
                 amount: 0,
                 frequency: "monthly",
                 day_of_period: 1,
-            }
+            },
         },
     });
 
     const isLoading = form.formState.isSubmitting;
+    const watchType = form.watch("type");
+    const isRecurring = watchType === "recurring";
 
     async function onSubmit(data: SavingsGoalSchema) {
         console.log("Form submitted with data:", data);
         try {
-            if (!isRecurring) {
-                data.type = "manual";
-                delete data.plan;
-            } else {
-                data.type = "recurring";
-                // If amount is still 0 or empty, try to ensure it's a number
-                if (data.plan) {
-                    data.plan.amount = Number(data.plan.amount);
-                    data.plan.day_of_period = Number(data.plan.day_of_period) || 1;
-                }
-            }
-
-            // Ensure shared_account_id is null if it's empty string
-            if (!data.shared_account_id) {
-                data.shared_account_id = null;
-            }
+            const payload: SavingsGoalSchema = {
+                ...data,
+                shared_account_id: data.shared_account_id || null,
+                // Si no es recurrente, ignoramos plan en el servidor
+                type: isRecurring ? "recurring" : "manual",
+                plan: isRecurring && data.plan
+                    ? {
+                        ...data.plan,
+                        amount: Number(data.plan.amount),
+                        day_of_period: Number(data.plan.day_of_period) || 1,
+                    }
+                    : undefined,
+            };
 
             console.log("Calling createSavingsGoal server action...");
-            const result = await createSavingsGoal(data);
+            const result = await createSavingsGoal(payload);
             console.log("Server action finished with result:", result);
 
             if (result.error) {
@@ -110,7 +109,6 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                         : "Tu meta de ahorro ha sido creada.",
                 });
                 form.reset();
-                setIsRecurring(false);
                 setOpen(false);
                 router.refresh();
             }
@@ -181,7 +179,9 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                             </div>
                             <Switch
                                 checked={isRecurring}
-                                onCheckedChange={setIsRecurring}
+                                onCheckedChange={(checked) =>
+                                    form.setValue("type", checked ? "recurring" : "manual")
+                                }
                             />
                         </div>
 
