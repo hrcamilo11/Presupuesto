@@ -22,8 +22,9 @@ import {
 import { EXPENSE_PRIORITY_LABELS } from "@/lib/database.types";
 import { deleteExpense } from "@/app/actions/expenses";
 import { ExpenseForm } from "./expense-form";
-import type { Expense, SharedAccount, Wallet } from "@/lib/database.types";
-import { Pencil, Trash2 } from "lucide-react";
+import type { Expense, SharedAccount, Wallet, Category } from "@/lib/database.types";
+import { Pencil, Trash2, MessageCircle } from "lucide-react";
+import { ExpenseComments } from "./expense-comments";
 
 type ExpenseListProps = {
   expenses: Expense[];
@@ -31,14 +32,16 @@ type ExpenseListProps = {
   month: number;
   sharedAccounts: SharedAccount[];
   wallets: Wallet[];
+  categories: Category[];
 };
 
-export function ExpenseList({ expenses, year, month, sharedAccounts, wallets }: ExpenseListProps) {
+export function ExpenseList({ expenses, year, month, sharedAccounts, wallets, categories }: ExpenseListProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Expense | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [selectedExpenseForComments, setSelectedExpenseForComments] = useState<Expense | null>(null);
 
   async function handleDelete(id: string) {
     setDeleting(true);
@@ -49,16 +52,16 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets }: 
   }
 
   function openEdit(expense: Expense) {
-    setEditing(expense);
+    setEditingExpense(expense);
     setFormOpen(true);
   }
 
   function openCreate() {
-    setEditing(null);
+    setEditingExpense(null);
     setFormOpen(true);
   }
 
-  const total = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const totalAmount = expenses.reduce((s, e) => s + Number(e.amount), 0);
 
   return (
     <>
@@ -80,6 +83,7 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets }: 
               <TableRow>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Prioridad</TableHead>
+                <TableHead>Categoría</TableHead>
                 <TableHead>Descripción</TableHead>
                 <TableHead className="text-right">Monto</TableHead>
                 <TableHead className="w-[100px]"></TableHead>
@@ -92,6 +96,9 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets }: 
                     {new Date(expense.date).toLocaleDateString("es")}
                   </TableCell>
                   <TableCell>{EXPENSE_PRIORITY_LABELS[expense.expense_priority]}</TableCell>
+                  <TableCell>
+                    {categories.find(c => c.id === expense.category_id)?.name || "—"}
+                  </TableCell>
                   <TableCell className="max-w-[200px] truncate">
                     {expense.description || "—"}
                   </TableCell>
@@ -100,6 +107,14 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets }: 
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedExpenseForComments(expense)}
+                        title="Ver comentarios"
+                      >
+                        <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -123,7 +138,7 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets }: 
             </TableBody>
           </Table>
           <p className="text-sm font-medium mt-2">
-            Total: ${total.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+            Total: ${totalAmount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
           </p>
         </>
       )}
@@ -132,12 +147,39 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets }: 
         open={formOpen}
         onOpenChange={(open) => {
           setFormOpen(open);
-          if (!open) setEditing(null);
+          if (!open) setEditingExpense(null);
         }}
-        editExpense={editing}
+        editExpense={editingExpense}
         sharedAccounts={sharedAccounts}
         wallets={wallets}
+        categories={categories}
       />
+
+      <Dialog
+        open={!!selectedExpenseForComments}
+        onOpenChange={(open) => {
+          if (!open) setSelectedExpenseForComments(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalle del Gasto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <span className="text-muted-foreground">Monto:</span>
+              <span className="font-bold">${Number(selectedExpenseForComments?.amount || 0).toLocaleString("es-CO", { minimumFractionDigits: 0 })}</span>
+              <span className="text-muted-foreground">Fecha:</span>
+              <span>{selectedExpenseForComments?.date ? new Date(selectedExpenseForComments.date).toLocaleDateString("es") : "—"}</span>
+              <span className="text-muted-foreground">Categoría:</span>
+              <span>{categories.find(c => c.id === selectedExpenseForComments?.category_id)?.name || "—"}</span>
+            </div>
+            {selectedExpenseForComments && (
+              <ExpenseComments expenseId={selectedExpenseForComments.id} />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <DialogContent>

@@ -9,8 +9,10 @@ export async function createIncome(formData: {
   amount: number;
   currency: string;
   income_type: IncomeType;
-  description?: string;
+  description?: string | null;
   date: string;
+  category_id?: string | null;
+  wallet_id?: string | null;
   shared_account_id?: string | null;
 }) {
   const parsed = incomeSchema.safeParse(formData);
@@ -33,6 +35,8 @@ export async function createIncome(formData: {
     income_type: formData.income_type,
     description: formData.description || null,
     date: formData.date,
+    category_id: formData.category_id || null,
+    wallet_id: formData.wallet_id || null,
     shared_account_id: formData.shared_account_id || null,
   });
 
@@ -48,8 +52,10 @@ export async function updateIncome(
     amount: number;
     currency: string;
     income_type: IncomeType;
-    description?: string;
+    description?: string | null;
     date: string;
+    category_id?: string | null;
+    wallet_id?: string | null;
   }
 ) {
   const parsed = incomeSchema.safeParse(formData);
@@ -73,6 +79,8 @@ export async function updateIncome(
       income_type: formData.income_type,
       description: formData.description || null,
       date: formData.date,
+      category_id: formData.category_id || null,
+      wallet_id: formData.wallet_id || null,
     })
     .eq("id", id);
 

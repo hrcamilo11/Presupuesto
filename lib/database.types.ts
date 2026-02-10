@@ -2,6 +2,19 @@ export type IncomeType = "monthly" | "irregular" | "occasional";
 export type ExpensePriority = "obligatory" | "necessary" | "optional";
 export type SubscriptionFrequency = "monthly" | "yearly";
 export type TaxPeriodType = "monthly" | "quarterly" | "yearly";
+export type CategoryType = "income" | "expense";
+
+export interface Category {
+  id: string;
+  user_id: string;
+  shared_account_id: string | null;
+  name: string;
+  icon: string;
+  color: string;
+  type: CategoryType;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface Profile {
   id: string;
@@ -19,6 +32,11 @@ export interface SharedAccount {
   created_at: string;
   invite_code: string;
   member_count?: number;
+  members?: {
+    user_id: string;
+    role: "owner" | "member";
+    profiles: { full_name: string | null };
+  }[];
 }
 
 export interface SharedAccountMember {
@@ -48,8 +66,19 @@ export type Income = {
   income_type: IncomeType;
   description?: string;
   date: string;
+  category_id?: string | null;
   created_at: string;
 };
+
+export interface Budget {
+  id: string;
+  user_id: string;
+  category_id: string;
+  amount: number;
+  period: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export type Expense = {
   id: string;
@@ -61,6 +90,7 @@ export type Expense = {
   expense_priority: ExpensePriority;
   description?: string | null;
   date: string;
+  category_id?: string | null;
   created_at: string;
   subscription_id?: string | null;
   loan_payment_id?: string | null;
@@ -217,6 +247,7 @@ export type WalletTransfer = {
   amount: number;
   description?: string | null;
   date: string;
+  category_id?: string | null;
   created_at: string;
 };
 

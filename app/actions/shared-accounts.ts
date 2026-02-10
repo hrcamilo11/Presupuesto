@@ -20,7 +20,11 @@ export async function getMySharedAccounts() {
       created_by, 
       created_at, 
       invite_code,
-      shared_account_members(count)
+      shared_account_members(
+        user_id,
+        role,
+        profiles(full_name)
+      )
     `)
     .order("created_at", { ascending: false });
 
@@ -28,7 +32,12 @@ export async function getMySharedAccounts() {
 
   const formattedData = data?.map(account => ({
     ...account,
-    member_count: (account.shared_account_members as unknown as { count: number }[])?.[0]?.count ?? 0
+    member_count: account.shared_account_members?.length ?? 0,
+    members: (account.shared_account_members as unknown as { user_id: string; role: "owner" | "member"; profiles: { full_name: string | null } }[]).map(m => ({
+      user_id: m.user_id,
+      role: m.role,
+      profiles: (m.profiles as unknown as { full_name: string | null }) || { full_name: "Usuario" }
+    }))
   })) as SharedAccount[];
 
   return { data: formattedData ?? [], error: null };

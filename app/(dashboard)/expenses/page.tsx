@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ExpenseList } from "@/components/expenses/expense-list";
-import { MonthPicker } from "@/components/month-picker";
+import { getCategories } from "@/app/actions/categories";
 import { getMySharedAccounts } from "@/app/actions/shared-accounts";
 import { getWallets } from "@/app/actions/wallets";
 
@@ -26,26 +26,38 @@ export default async function ExpensesPage({
   const start = new Date(year, month - 1, 1).toISOString().slice(0, 10);
   const end = new Date(year, month, 0).toISOString().slice(0, 10);
 
-  const [{ data: expenses }, { data: sharedAccounts }, { data: wallets }] = await Promise.all([
-    supabase
-      .from("expenses")
-      .select("*")
-      .gte("date", start)
-      .lte("date", end)
-      .order("date", { ascending: false }),
-    getMySharedAccounts(),
-    getWallets(),
-  ]);
+  const [{ data: expenses }, { data: sharedAccounts }, { data: wallets }, { data: categories }] =
+    await Promise.all([
+      supabase
+        .from("expenses")
+        .select("*")
+        .gte("date", start)
+        .lte("date", end)
+        .order("date", { ascending: false }),
+      getMySharedAccounts(),
+      getWallets(),
+      getCategories("expense"),
+    ]);
 
   return (
-    <div className="space-y-6">
-      <MonthPicker year={year} month={month} />
+    <div className="flex flex-col gap-8 p-4 md:p-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Gastos</h1>
+          <p className="text-muted-foreground">Gestiona tus salidas de dinero.</p>
+        </div>
+        <div className="flex gap-2">
+          {/* No wrapper needed, button is inside list */}
+        </div>
+      </div>
+
       <ExpenseList
-        expenses={expenses ?? []}
+        expenses={expenses || []}
+        sharedAccounts={sharedAccounts || []}
+        wallets={wallets || []}
+        categories={categories || []}
         year={year}
         month={month}
-        sharedAccounts={sharedAccounts ?? []}
-        wallets={wallets ?? []}
       />
     </div>
   );

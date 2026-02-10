@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { EXPENSE_PRIORITY_LABELS, type ExpensePriority } from "@/lib/database.types";
 import { createExpense, updateExpense } from "@/app/actions/expenses";
-import type { Expense, SharedAccount, Wallet } from "@/lib/database.types";
+import type { Expense, SharedAccount, Wallet, Category } from "@/lib/database.types";
 
 type ExpenseFormProps = {
   open: boolean;
@@ -31,9 +31,10 @@ type ExpenseFormProps = {
   editExpense?: Expense | null;
   sharedAccounts?: SharedAccount[];
   wallets: Wallet[];
+  categories: Category[];
 };
 
-export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = [], wallets = [] }: ExpenseFormProps) {
+export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = [], wallets = [], categories = [] }: ExpenseFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,6 +44,7 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
   const [description, setDescription] = useState("");
   const [sharedAccountId, setSharedAccountId] = useState<string | null>(null);
   const [walletId, setWalletId] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string | null>(null);
 
   const isEdit = Boolean(editExpense?.id);
 
@@ -54,6 +56,7 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
       setDescription(editExpense?.description ?? "");
       setSharedAccountId(editExpense?.shared_account_id ?? null);
       setWalletId(editExpense?.wallet_id ?? "");
+      setCategoryId(editExpense?.category_id ?? null);
       setError(null);
     }
   }, [open, editExpense]);
@@ -69,6 +72,7 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
       description: description || undefined,
       date,
       wallet_id: walletId || undefined,
+      category_id: categoryId || undefined,
       ...(isEdit ? {} : { shared_account_id: sharedAccountId || null }),
     };
 
@@ -138,6 +142,26 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
               </Select>
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="category">Categoría (opcional)</Label>
+            <Select value={categoryId ?? "none"} onValueChange={(v) => setCategoryId(v === "none" ? null : v)}>
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Selecciona una categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin categoría</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: c.color }}>{c.icon}</span>
+                      {c.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="amount">Monto</Label>
             <CurrencyInput

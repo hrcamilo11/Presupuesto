@@ -9,8 +9,10 @@ export async function createExpense(formData: {
   amount: number;
   currency: string;
   expense_priority: ExpensePriority;
-  description?: string;
+  description?: string | null;
   date: string;
+  category_id?: string | null;
+  wallet_id?: string | null;
   shared_account_id?: string | null;
 }) {
   const parsed = expenseSchema.safeParse(formData);
@@ -33,6 +35,8 @@ export async function createExpense(formData: {
     expense_priority: formData.expense_priority,
     description: formData.description || null,
     date: formData.date,
+    category_id: formData.category_id || null,
+    wallet_id: formData.wallet_id || null,
     shared_account_id: formData.shared_account_id || null,
   });
 
@@ -48,8 +52,11 @@ export async function updateExpense(
     amount: number;
     currency: string;
     expense_priority: ExpensePriority;
-    description?: string;
+    description?: string | null;
     date: string;
+    category_id?: string | null;
+    wallet_id?: string | null;
+    shared_account_id?: string | null;
   }
 ) {
   const parsed = expenseSchema.safeParse(formData);
@@ -73,6 +80,8 @@ export async function updateExpense(
       expense_priority: formData.expense_priority,
       description: formData.description || null,
       date: formData.date,
+      category_id: formData.category_id || null,
+      wallet_id: formData.wallet_id || null,
     })
     .eq("id", id);
 

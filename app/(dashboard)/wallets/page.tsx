@@ -1,7 +1,7 @@
 import { getWallets } from "@/app/actions/wallets";
 import { WalletForm } from "@/components/wallets/wallet-form";
 import { WalletCard } from "@/components/wallets/wallet-card";
-import { TransferDialogWrapper } from "@/components/wallets/transfer-dialog-wrapper";
+import { TransferFormWrapper } from "@/components/wallets/transfer-form-wrapper";
 
 export default async function WalletsPage() {
     const { data: wallets, error } = await getWallets();
@@ -16,7 +16,7 @@ export default async function WalletsPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    {wallets.length > 1 && <TransferDialogWrapper wallets={wallets} />}
+                    {wallets.length > 1 && <TransferFormWrapper wallets={wallets} />}
                     <WalletForm />
                 </div>
             </div>

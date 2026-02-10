@@ -22,7 +22,7 @@ import {
 import { INCOME_TYPE_LABELS } from "@/lib/database.types";
 import { deleteIncome } from "@/app/actions/incomes";
 import { IncomeForm } from "./income-form";
-import type { Income, SharedAccount, Wallet } from "@/lib/database.types";
+import type { Income, SharedAccount, Wallet, Category } from "@/lib/database.types";
 import { Pencil, Trash2 } from "lucide-react";
 
 type IncomeListProps = {
@@ -31,9 +31,10 @@ type IncomeListProps = {
   month: number;
   sharedAccounts: SharedAccount[];
   wallets: Wallet[];
+  categories: Category[];
 };
 
-export function IncomeList({ incomes, year, month, sharedAccounts, wallets }: IncomeListProps) {
+export function IncomeList({ incomes, year, month, sharedAccounts, wallets, categories }: IncomeListProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Income | null>(null);
@@ -80,6 +81,7 @@ export function IncomeList({ incomes, year, month, sharedAccounts, wallets }: In
               <TableRow>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Tipo</TableHead>
+                <TableHead>Categoría</TableHead>
                 <TableHead>Descripción</TableHead>
                 <TableHead className="text-right">Monto</TableHead>
                 <TableHead className="w-[100px]"></TableHead>
@@ -92,6 +94,9 @@ export function IncomeList({ incomes, year, month, sharedAccounts, wallets }: In
                     {new Date(income.date).toLocaleDateString("es")}
                   </TableCell>
                   <TableCell>{INCOME_TYPE_LABELS[income.income_type]}</TableCell>
+                  <TableCell>
+                    {categories.find(c => c.id === income.category_id)?.name || "—"}
+                  </TableCell>
                   <TableCell className="max-w-[200px] truncate">
                     {income.description || "—"}
                   </TableCell>
@@ -137,6 +142,7 @@ export function IncomeList({ incomes, year, month, sharedAccounts, wallets }: In
         editIncome={editing}
         sharedAccounts={sharedAccounts}
         wallets={wallets}
+        categories={categories}
       />
 
       <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

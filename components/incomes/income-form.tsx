@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { INCOME_TYPE_LABELS, type IncomeType } from "@/lib/database.types";
 import { createIncome, updateIncome } from "@/app/actions/incomes";
-import type { Income, SharedAccount, Wallet } from "@/lib/database.types";
+import type { Income, SharedAccount, Wallet, Category } from "@/lib/database.types";
 
 type IncomeFormProps = {
   open: boolean;
@@ -31,9 +31,10 @@ type IncomeFormProps = {
   editIncome?: Income | null;
   sharedAccounts?: SharedAccount[];
   wallets: Wallet[];
+  categories: Category[];
 };
 
-export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = [], wallets = [] }: IncomeFormProps) {
+export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = [], wallets = [], categories = [] }: IncomeFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,6 +44,7 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
   const [description, setDescription] = useState("");
   const [sharedAccountId, setSharedAccountId] = useState<string | null>(null);
   const [walletId, setWalletId] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string | null>(null);
 
   const isEdit = Boolean(editIncome?.id);
 
@@ -54,6 +56,7 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
       setDescription(editIncome?.description ?? "");
       setSharedAccountId(editIncome?.shared_account_id ?? null);
       setWalletId(editIncome?.wallet_id ?? "");
+      setCategoryId(editIncome?.category_id ?? null);
       setError(null);
     }
   }, [open, editIncome]);
@@ -69,6 +72,7 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
       description: description || undefined,
       date,
       wallet_id: walletId || undefined,
+      category_id: categoryId || undefined,
       ...(isEdit ? {} : { shared_account_id: sharedAccountId || null }),
     };
 
@@ -138,6 +142,26 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
               </Select>
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="category">Categoría (opcional)</Label>
+            <Select value={categoryId ?? "none"} onValueChange={(v) => setCategoryId(v === "none" ? null : v)}>
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Selecciona una categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin categoría</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: c.color }}>{c.icon}</span>
+                      {c.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="amount">Monto</Label>
             <CurrencyInput

@@ -13,8 +13,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { UsersRound, Plus, Link2, Copy, Check } from "lucide-react";
+import { UsersRound, Plus, Link2, Copy, Check, Settings } from "lucide-react";
 import type { SharedAccount } from "@/lib/database.types";
+import { MemberAdminDialog } from "./member-admin-dialog";
 import {
   createSharedAccount,
   createInvite,
@@ -42,6 +43,8 @@ export function SharedAccountsList({ initialAccounts }: Props) {
   const [joinLoading, setJoinLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState<{ accountName: string; link: string; code: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminAccount, setAdminAccount] = useState<SharedAccount | null>(null);
 
   useEffect(() => {
     async function getUsr() {
@@ -196,14 +199,28 @@ export function SharedAccountsList({ initialAccounts }: Props) {
                       Enlace
                     </Button>
                     {currentUserId === account.created_by ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => handleDelete(account.id)}
-                      >
-                        Eliminar
-                      </Button>
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-amber-600 hover:bg-amber-100/50"
+                          onClick={() => {
+                            setAdminAccount(account);
+                            setAdminOpen(true);
+                          }}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          Administrar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => handleDelete(account.id)}
+                        >
+                          Eliminar
+                        </Button>
+                      </>
                     ) : (
                       <Button
                         variant="ghost"
@@ -325,6 +342,16 @@ export function SharedAccountsList({ initialAccounts }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {adminAccount && (
+        <MemberAdminDialog
+          open={adminOpen}
+          onOpenChange={setAdminOpen}
+          sharedAccountId={adminAccount.id}
+          members={adminAccount.members || []}
+          currentUserId={currentUserId || ""}
+        />
+      )}
     </>
   );
 }

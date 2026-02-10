@@ -119,10 +119,10 @@ export async function deleteWallet(id: string) {
 }
 
 export async function transferBetweenWallets(params: {
-    fromWalletId: string;
-    toWalletId: string;
+    from_wallet_id: string;
+    to_wallet_id: string;
     amount: number;
-    description: string;
+    description?: string;
 }) {
     const supabase = await createClient();
     const {
@@ -132,10 +132,10 @@ export async function transferBetweenWallets(params: {
 
     // Use RPC for atomic transaction
     const { data: transferId, error } = await supabase.rpc("transfer_between_wallets", {
-        p_from_wallet_id: params.fromWalletId,
-        p_to_wallet_id: params.toWalletId,
+        p_from_wallet_id: params.from_wallet_id,
+        p_to_wallet_id: params.to_wallet_id,
         p_amount: params.amount,
-        p_description: params.description,
+        p_description: params.description ?? "",
     });
 
     if (error) return { error: error.message };

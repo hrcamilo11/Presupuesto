@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -16,6 +17,11 @@ import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight } from "lucide-react";
 import { DashboardSummaryBanner } from "@/components/dashboard/dashboard-summary-banner";
 import { WalletFilter } from "@/components/dashboard/wallet-filter";
+import { BudgetSummary } from "@/components/dashboard/budget-summary";
+import { ExportReportButton } from "@/components/dashboard/export-report-button";
+import { DashboardContextSelector } from "@/components/dashboard/dashboard-context-selector";
+import { getBudgets } from "@/app/actions/budgets";
+import { getMySharedAccounts } from "@/app/actions/shared-accounts";
 
 function getMonthBounds(monthOffset: number) {
   const d = new Date();
@@ -28,7 +34,7 @@ function getMonthBounds(monthOffset: number) {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { wallet?: string };
+  searchParams: { wallet?: string; context?: string };
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -39,16 +45,25 @@ export default async function DashboardPage({
   await processRecurringSavings();
 
   const selectedWalletId = searchParams.wallet;
+  const context = searchParams.context || "global";
   const { start, end } = getMonthBounds(0);
   const monthName = new Date().toLocaleString("es", { month: "long", year: "numeric" });
 
   // Base queries
   let incomeQuery = supabase.from("incomes").select("amount, income_type").gte("date", start).lte("date", end);
-  let expenseQuery = supabase.from("expenses").select("amount, expense_priority").gte("date", start).lte("date", end);
+  let expenseQuery = supabase.from("expenses").select("amount, expense_priority, category_id").gte("date", start).lte("date", end);
 
   if (selectedWalletId) {
     incomeQuery = incomeQuery.eq("wallet_id", selectedWalletId);
     expenseQuery = expenseQuery.eq("wallet_id", selectedWalletId);
+  }
+
+  if (context === "personal") {
+    incomeQuery = incomeQuery.is("shared_account_id", null);
+    expenseQuery = expenseQuery.is("shared_account_id", null);
+  } else if (context !== "global") {
+    incomeQuery = incomeQuery.eq("shared_account_id", context);
+    expenseQuery = expenseQuery.eq("shared_account_id", context);
   }
 
   const [
@@ -58,6 +73,8 @@ export default async function DashboardPage({
     taxRes,
     walletsRes,
     savingsRes,
+    budgetsRes,
+    sharedAccountsRes,
     trendIncomes,
     trendExpenses,
   ] = await Promise.all([
@@ -67,11 +84,15 @@ export default async function DashboardPage({
     supabase.from("tax_obligations").select("amount, paid_at"),
     supabase.from("wallets").select("*").order("balance", { ascending: false }),
     supabase.from("savings_goals").select("*").order("target_date", { ascending: true }),
+    getBudgets(),
+    getMySharedAccounts(),
     Promise.all(
       [0, -1, -2, -3, -4, -5].map(async (offset) => {
         const { start: s, end: e, label } = getMonthBounds(offset);
         let q = supabase.from("incomes").select("amount").gte("date", s).lte("date", e);
         if (selectedWalletId) q = q.eq("wallet_id", selectedWalletId);
+        if (context === "personal") q = q.is("shared_account_id", null);
+        else if (context !== "global") q = q.eq("shared_account_id", context);
         const { data } = await q;
         const total = (data ?? []).reduce((sum, i) => sum + Number(i.amount), 0);
         return { label, total };
@@ -82,6 +103,8 @@ export default async function DashboardPage({
         const { start: s, end: e } = getMonthBounds(offset);
         let q = supabase.from("expenses").select("amount").gte("date", s).lte("date", e);
         if (selectedWalletId) q = q.eq("wallet_id", selectedWalletId);
+        if (context === "personal") q = q.is("shared_account_id", null);
+        else if (context !== "global") q = q.eq("shared_account_id", context);
         const { data } = await q;
         const total = (data ?? []).reduce((sum, i) => sum + Number(i.amount), 0);
         return total;
@@ -89,12 +112,14 @@ export default async function DashboardPage({
     ),
   ]);
 
-  const incomes = incomesRes.data ?? [];
-  const expenses = expensesRes.data ?? [];
-  const subscriptions = subscriptionsRes.data ?? [];
-  const taxObligations = taxRes.data ?? [];
-  const wallets = walletsRes.data ?? [];
-  const savingsGoals = savingsRes.data ?? [];
+  const incomes = (incomesRes.data ?? []) as any[];
+  const expenses = (expensesRes.data ?? []) as any[];
+  const subscriptions = (subscriptionsRes.data ?? []) as any[];
+  const taxObligations = (taxRes.data ?? []) as any[];
+  const wallets = (walletsRes.data ?? []) as any[];
+  const savingsGoals = (savingsRes.data ?? []) as any[];
+  const budgets = (budgetsRes.data ?? []) as any[];
+  const sharedAccounts = (sharedAccountsRes.data ?? []) as any[];
 
   const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
   const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
@@ -105,18 +130,18 @@ export default async function DashboardPage({
     const amt = Number(sub.amount);
     return s + (sub.frequency === "yearly" ? amt / 12 : amt);
   }, 0);
-  const taxPending = taxObligations.filter((t) => !t.paid_at).reduce((s, t) => s + Number(t.amount), 0);
+  const taxPending = taxObligations.filter(t => !t.paid_at).reduce((s, t) => s + Number(t.amount), 0);
 
-  const byIncomeType = incomes.reduce<Record<IncomeType, number>>(
-    (acc, i) => {
+  const byIncomeType = incomes.reduce(
+    (acc: Record<IncomeType, number>, i: any) => {
       const t = i.income_type as IncomeType;
       acc[t] = (acc[t] ?? 0) + Number(i.amount);
       return acc;
     },
     { monthly: 0, irregular: 0, occasional: 0 }
   );
-  const byExpensePriority = expenses.reduce<Record<ExpensePriority, number>>(
-    (acc, e) => {
+  const byExpensePriority = expenses.reduce(
+    (acc: Record<ExpensePriority, number>, e: any) => {
       const p = e.expense_priority as ExpensePriority;
       acc[p] = (acc[p] ?? 0) + Number(e.amount);
       return acc;
@@ -124,11 +149,11 @@ export default async function DashboardPage({
     { obligatory: 0, necessary: 0, optional: 0 }
   );
 
-  const trendData = trendIncomes.map((m, i) => ({
+  const trendData = (trendIncomes as any[]).map((m, idx) => ({
     month: m.label,
     ingresos: m.total,
-    gastos: trendExpenses[i] ?? 0,
-    balance: m.total - (trendExpenses[i] ?? 0),
+    gastos: (trendExpenses as number[])[idx] ?? 0,
+    balance: m.total - ((trendExpenses as number[])[idx] ?? 0),
   })).reverse();
 
   return (
@@ -139,7 +164,11 @@ export default async function DashboardPage({
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
           <p className="text-sm text-muted-foreground capitalize sm:text-base">{monthName}</p>
         </div>
-        <WalletFilter wallets={wallets} />
+        <div className="flex items-center gap-2">
+          <ExportReportButton />
+          <DashboardContextSelector sharedAccounts={sharedAccounts} />
+          <WalletFilter wallets={wallets} />
+        </div>
       </header>
 
       <DashboardSummaryBanner
@@ -149,7 +178,6 @@ export default async function DashboardPage({
         totalExpense={totalExpense}
       />
 
-      {/* KPIs: 2 cols móvil, 4 cols desktop, altura uniforme */}
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-green-500/20 bg-green-500/5 shadow-sm sm:min-h-[110px]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
@@ -195,9 +223,9 @@ export default async function DashboardPage({
         </Card>
       </section>
 
-      {/* Cuentas y Ahorros */}
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Mis Cuentas */}
+        <BudgetSummary budgets={budgets} expenses={expenses} />
+
         <Card className="card-hover shadow-sm lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2">
             <CardTitle className="text-base sm:text-lg">Mis Cuentas</CardTitle>
@@ -209,17 +237,17 @@ export default async function DashboardPage({
           </CardHeader>
           <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {wallets.slice(0, 3).map((wallet) => (
-                <div key={wallet.id} className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm flex flex-col justify-between">
+              {wallets.slice(0, 3).map((w) => (
+                <div key={w.id} className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="font-medium text-sm truncate">{wallet.name}</span>
-                    <span className="text-xs text-muted-foreground uppercase">{wallet.currency}</span>
+                    <span className="font-medium text-sm truncate">{w.name}</span>
+                    <span className="text-xs text-muted-foreground uppercase">{w.currency}</span>
                   </div>
                   <div className="text-xl font-bold">
-                    ${Number(wallet.balance).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                    ${Number(w.balance).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1 capitalize">
-                    {wallet.type === 'debit' ? 'Débito' : wallet.type === 'credit' ? 'Crédito' : wallet.type === 'cash' ? 'Efectivo' : wallet.type}
+                    {w.type === 'debit' ? 'Débito' : w.type === 'credit' ? 'Crédito' : w.type === 'cash' ? 'Efectivo' : w.type}
                   </div>
                 </div>
               ))}
@@ -232,7 +260,6 @@ export default async function DashboardPage({
           </CardContent>
         </Card>
 
-        {/* Metas de Ahorro */}
         <Card className="card-hover shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2">
             <CardTitle className="text-base sm:text-lg">Metas de Ahorro</CardTitle>
@@ -244,14 +271,14 @@ export default async function DashboardPage({
           </CardHeader>
           <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
             <div className="space-y-4">
-              {savingsGoals.slice(0, 3).map((goal) => {
-                const progress = goal.target_amount > 0 ? (goal.current_amount / goal.target_amount) * 100 : 0;
+              {savingsGoals.slice(0, 3).map((g) => {
+                const progress = g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0;
                 return (
-                  <div key={goal.id} className="space-y-1">
+                  <div key={g.id} className="space-y-1">
                     <div className="flex justify-between text-sm">
-                      <span className="font-medium truncate">{goal.name}</span>
+                      <span className="font-medium truncate">{g.name}</span>
                       <span className="text-muted-foreground">
-                        ${Number(goal.current_amount).toLocaleString("es-CO")} / ${Number(goal.target_amount).toLocaleString("es-CO")}
+                        ${Number(g.current_amount).toLocaleString("es-CO")} / ${Number(g.target_amount).toLocaleString("es-CO")}
                       </span>
                     </div>
                     <div className="h-2 w-full rounded-full bg-secondary">
@@ -273,7 +300,6 @@ export default async function DashboardPage({
         </Card>
       </section>
 
-      {/* Balance ring + tendencia: columna en móvil, 1/3 + 2/3 en desktop */}
       <section className="grid gap-4 md:gap-6 lg:grid-cols-3">
         <Card className="card-hover flex flex-col items-center justify-center shadow-sm p-4 sm:p-6">
           <CardHeader className="w-full p-0 pb-2">
@@ -292,7 +318,6 @@ export default async function DashboardPage({
         </Card>
       </section>
 
-      {/* Gráficas donut: una columna móvil, dos desktop */}
       <section className="grid gap-4 md:grid-cols-2 md:gap-6">
         <Card className="card-hover shadow-sm">
           <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
@@ -338,7 +363,6 @@ export default async function DashboardPage({
         </Card>
       </section>
 
-      {/* Accesos rápidos: 2x2 móvil, 4 cols desktop, botones táctiles */}
       <section>
         <h2 className="mb-3 text-base font-semibold sm:text-lg">Accesos rápidos</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
