@@ -111,8 +111,16 @@ export default async function DashboardPage({
   const monthName = `${MONTHS_ES_LONG[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
 
   // Base queries
-  let incomeQuery = supabase.from("incomes").select("amount, income_type, category_id, tags:income_tags(tags(*))").gte("date", start).lte("date", end);
-  let expenseQuery = supabase.from("expenses").select("amount, expense_priority, category_id, tags:expense_tags(tags(*))").gte("date", start).lte("date", end);
+  let incomeQuery = supabase
+    .from("incomes")
+    .select("amount, income_type, category_id, wallet_id, tags:income_tags(tags(*))")
+    .gte("date", start)
+    .lte("date", end);
+  let expenseQuery = supabase
+    .from("expenses")
+    .select("amount, expense_priority, category_id, wallet_id, tags:expense_tags(tags(*))")
+    .gte("date", start)
+    .lte("date", end);
 
   if (selectedWalletId) {
     incomeQuery = incomeQuery.eq("wallet_id", selectedWalletId);
@@ -138,6 +146,8 @@ export default async function DashboardPage({
     budgetsRes,
     sharedAccountsRes,
     categoriesRes,
+    savingsTxRes,
+    sharedSavingsTxRes,
     trendIncomes,
     trendExpenses,
   ] = await Promise.all([
@@ -151,6 +161,16 @@ export default async function DashboardPage({
     getBudgets(),
     getMySharedAccounts(),
     getCategories(),
+    supabase
+      .from("savings_transactions")
+      .select("amount, wallet_id, date")
+      .gte("date", start)
+      .lte("date", end),
+    supabase
+      .from("shared_savings_transactions")
+      .select("amount, wallet_id, date")
+      .gte("date", start)
+      .lte("date", end),
     Promise.all(
       [0, -1, -2, -3, -4, -5].map(async (offset) => {
         const { start: s, end: e, label } = getMonthBounds(offset);
@@ -187,6 +207,8 @@ export default async function DashboardPage({
   const budgets = (budgetsRes.data ?? []) as any[];
   const sharedAccounts = (sharedAccountsRes.data ?? []) as any[];
   const categories = (categoriesRes.data ?? []) as Category[];
+  const savingsTransactions = (savingsTxRes.data ?? []) as any[];
+  const sharedSavingsTransactions = (sharedSavingsTxRes.data ?? []) as any[];
 
   const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
   const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
@@ -315,6 +337,57 @@ export default async function DashboardPage({
     { label: "Suscripciones (equivalente mensual)", amount: subscriptionsMonthly },
     { label: "Impuestos pendientes", amount: taxPending },
   ].filter((a) => a.amount > 0);
+
+  // Distribución por cuenta (wallet)
+  type AccountAgg = { name: string; income: number; expense: number };
+  const accountMap = new Map<string, AccountAgg>();
+
+  const getOrCreateAccount = (walletId: string | null | undefined): AccountAgg => {
+    if (!walletId) {
+      const key = "none";
+      if (!accountMap.has(key)) {
+        accountMap.set(key, {
+          name: "Sin cuenta asignada",
+          income: 0,
+          expense: 0,
+        });
+      }
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return accountMap.get(key)!;
+    }
+    const existing = accountMap.get(walletId);
+    if (existing) return existing;
+    const wallet = wallets.find((w: any) => w.id === walletId);
+    const name = wallet ? wallet.name : "Cuenta desconocida";
+    const created: AccountAgg = { name, income: 0, expense: 0 };
+    accountMap.set(walletId, created);
+    return created;
+  };
+
+  incomes.forEach((i: any) => {
+    const entry = getOrCreateAccount(i.wallet_id ?? null);
+    entry.income += Number(i.amount ?? 0);
+  });
+
+  expenses.forEach((e: any) => {
+    const entry = getOrCreateAccount(e.wallet_id ?? null);
+    entry.expense += Number(e.amount ?? 0);
+  });
+
+  // Tratamos las contribuciones a ahorros como salidas adicionales por cuenta
+  savingsTransactions.forEach((tx: any) => {
+    const entry = getOrCreateAccount(tx.wallet_id ?? null);
+    entry.expense += Number(tx.amount ?? 0);
+  });
+
+  sharedSavingsTransactions.forEach((tx: any) => {
+    const entry = getOrCreateAccount(tx.wallet_id ?? null);
+    entry.expense += Number(tx.amount ?? 0);
+  });
+
+  const accountsDistribution = Array.from(accountMap.values()).filter(
+    (a) => a.income > 0 || a.expense > 0,
+  );
 
   function renderSection(sectionId: string) {
     switch (sectionId) {
@@ -597,6 +670,7 @@ export default async function DashboardPage({
             categories={categoryDistribution}
             tags={tagDistribution}
             allocations={allocations}
+            accounts={accountsDistribution}
           />
         );
       case "quick_access":

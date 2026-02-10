@@ -22,24 +22,42 @@ type AllocationInfo = {
   amount: number;
 };
 
+type AccountSlice = {
+  name: string;
+  income: number;
+  expense: number;
+};
+
 interface DistributionSectionProps {
   categories: CategorySlice[];
   tags: TagSlice[];
   allocations: AllocationInfo[];
+  accounts: AccountSlice[];
 }
 
 const CATEGORY_COLORS = ["#0ea5e9", "#8b5cf6", "#f97316", "#22c55e", "#e11d48", "#6366f1"];
 const TAG_COLORS = ["#22c55e", "#f97316", "#a855f7", "#eab308", "#06b6d4", "#f43f5e"];
+const ACCOUNT_COLORS = ["#0f766e", "#2563eb", "#f97316", "#a855f7", "#22c55e", "#dc2626"];
 
-export function DistributionSection({ categories, tags, allocations }: DistributionSectionProps) {
+export function DistributionSection({ categories, tags, allocations, accounts }: DistributionSectionProps) {
   const incomeByCategory = categories.filter((c) => c.income > 0).map((c) => ({
     name: c.name,
     value: Math.round(c.income),
   }));
-  const expenseByCategory = categories.filter((c) => c.expense > 0).map((c) => ({
+  const baseExpenseByCategory = categories.filter((c) => c.expense > 0).map((c) => ({
     name: c.name,
     value: Math.round(c.expense),
   }));
+
+  // Tratamos ahorros, suscripciones e impuestos como destinos adicionales de salida
+  const allocationSlices = allocations
+    .filter((a) => a.amount > 0)
+    .map((a) => ({
+      name: a.label,
+      value: Math.round(a.amount),
+    }));
+
+  const expenseByCategory = [...baseExpenseByCategory, ...allocationSlices];
 
   const incomeByTag = tags.filter((t) => t.income > 0).map((t) => ({
     name: t.name,
@@ -50,11 +68,22 @@ export function DistributionSection({ categories, tags, allocations }: Distribut
     value: Math.round(t.expense),
   }));
 
+  const incomeByAccount = accounts.filter((a) => a.income > 0).map((a) => ({
+    name: a.name,
+    value: Math.round(a.income),
+  }));
+  const expenseByAccount = accounts.filter((a) => a.expense > 0).map((a) => ({
+    name: a.name,
+    value: Math.round(a.expense),
+  }));
+
   const hasAnyData =
     incomeByCategory.length ||
     expenseByCategory.length ||
     incomeByTag.length ||
-    expenseByTag.length;
+    expenseByTag.length ||
+    incomeByAccount.length ||
+    expenseByAccount.length;
 
   const chartHeight = 220;
 
@@ -77,9 +106,10 @@ export function DistributionSection({ categories, tags, allocations }: Distribut
           </p>
         ) : (
           <Tabs defaultValue="category" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="category">Por categoría</TabsTrigger>
               <TabsTrigger value="tag">Por etiqueta</TabsTrigger>
+              <TabsTrigger value="account">Por cuenta</TabsTrigger>
             </TabsList>
 
             <TabsContent value="category" className="mt-2 space-y-4">
@@ -247,6 +277,98 @@ export function DistributionSection({ categories, tags, allocations }: Distribut
                               <Cell
                                 key={i}
                                 fill={TAG_COLORS[i % TAG_COLORS.length]}
+                                stroke="transparent"
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value: number | undefined) => [
+                              `$${formatNumber(value ?? 0)}`,
+                              "",
+                            ]}
+                          />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="account" className="mt-2 space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Ingresos por cuenta
+                  </p>
+                  {incomeByAccount.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      No hay ingresos registrados por cuenta este mes.
+                    </p>
+                  ) : (
+                    <div style={{ minWidth: 1, minHeight: chartHeight }}>
+                      <ResponsiveContainer width="100%" height={chartHeight}>
+                        <PieChart>
+                          <Pie
+                            data={incomeByAccount}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            dataKey="value"
+                            paddingAngle={2}
+                            label={({ name, percent }) =>
+                              `${name} ${(percent ?? 0 * 100).toFixed(0)}%`
+                            }
+                          >
+                            {incomeByAccount.map((_, i) => (
+                              <Cell
+                                key={i}
+                                fill={ACCOUNT_COLORS[i % ACCOUNT_COLORS.length]}
+                                stroke="transparent"
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value: number | undefined) => [
+                              `$${formatNumber(value ?? 0)}`,
+                              "",
+                            ]}
+                          />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Gastos por cuenta
+                  </p>
+                  {expenseByAccount.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      No hay gastos registrados por cuenta este mes.
+                    </p>
+                  ) : (
+                    <div style={{ minWidth: 1, minHeight: chartHeight }}>
+                      <ResponsiveContainer width="100%" height={chartHeight}>
+                        <PieChart>
+                          <Pie
+                            data={expenseByAccount}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            dataKey="value"
+                            paddingAngle={2}
+                            label={({ name, percent }) =>
+                              `${name} ${(percent ?? 0 * 100).toFixed(0)}%`
+                            }
+                          >
+                            {expenseByAccount.map((_, i) => (
+                              <Cell
+                                key={i}
+                                fill={ACCOUNT_COLORS[i % ACCOUNT_COLORS.length]}
                                 stroke="transparent"
                               />
                             ))}
