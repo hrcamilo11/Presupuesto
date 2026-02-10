@@ -44,20 +44,10 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
     name: c.name,
     value: Math.round(c.income),
   }));
-  const baseExpenseByCategory = categories.filter((c) => c.expense > 0).map((c) => ({
+  const expenseByCategory = categories.filter((c) => c.expense > 0).map((c) => ({
     name: c.name,
     value: Math.round(c.expense),
   }));
-
-  // Tratamos ahorros, suscripciones e impuestos como destinos adicionales de salida
-  const allocationSlices = allocations
-    .filter((a) => a.amount > 0)
-    .map((a) => ({
-      name: a.label,
-      value: Math.round(a.amount),
-    }));
-
-  const expenseByCategory = [...baseExpenseByCategory, ...allocationSlices];
 
   const incomeByTag = tags.filter((t) => t.income > 0).map((t) => ({
     name: t.name,

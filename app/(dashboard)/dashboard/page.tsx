@@ -118,7 +118,7 @@ export default async function DashboardPage({
     .lte("date", end);
   let expenseQuery = supabase
     .from("expenses")
-    .select("amount, expense_priority, category_id, wallet_id, tags:expense_tags(tags(*))")
+    .select("amount, expense_priority, category_id, wallet_id, subscription_id, loan_payment_id, tags:expense_tags(tags(*))")
     .gte("date", start)
     .lte("date", end);
 
@@ -253,45 +253,52 @@ export default async function DashboardPage({
     gastos: (trendExpenses as number[])[idx] ?? 0,
     balance: m.total - ((trendExpenses as number[])[idx] ?? 0),
   })).reverse();
-  // Distribución por categoría
-  const categoryMap = new Map<string, { category: Category | null; income: number; expense: number }>();
+  // Distribución por categoría: se trabaja por NOMBRE de categoría / tipo de salida
+  type CategoryAgg = { name: string; income: number; expense: number };
+  const categoryAggMap = new Map<string, CategoryAgg>();
   const categoryById = new Map<string, Category>();
   categories.forEach((c) => categoryById.set(c.id, c));
 
+  const addToCategory = (name: string, kind: "income" | "expense", amount: number) => {
+    if (!amount) return;
+    const current = categoryAggMap.get(name) ?? { name, income: 0, expense: 0 };
+    if (kind === "income") current.income += amount;
+    else current.expense += amount;
+    categoryAggMap.set(name, current);
+  };
+
   incomes.forEach((i: any) => {
-    const id = i.category_id ?? "uncategorized_income";
-    const current = categoryMap.get(id) ?? {
-      category: id === "uncategorized_income" ? null : categoryById.get(id) ?? null,
-      income: 0,
-      expense: 0,
-    };
-    current.income += Number(i.amount ?? 0);
-    categoryMap.set(id, current);
+    const cat =
+      (i.category_id && categoryById.get(i.category_id)) || null;
+    const name = cat?.name || "Sin categoría (ingresos)";
+    addToCategory(name, "income", Number(i.amount ?? 0));
   });
 
   expenses.forEach((e: any) => {
-    const id = e.category_id ?? "uncategorized_expense";
-    const current = categoryMap.get(id) ?? {
-      category: id === "uncategorized_expense" ? null : categoryById.get(id) ?? null,
-      income: 0,
-      expense: 0,
-    };
-    current.expense += Number(e.amount ?? 0);
-    categoryMap.set(id, current);
+    const cat =
+      (e.category_id && categoryById.get(e.category_id)) || null;
+    let name: string;
+    if (cat) {
+      name = cat.name;
+    } else if (e.subscription_id) {
+      name = "Suscripciones";
+    } else if (e.loan_payment_id) {
+      name = "Préstamos";
+    } else {
+      name = "Sin categoría (gastos)";
+    }
+    addToCategory(name, "expense", Number(e.amount ?? 0));
   });
 
-  const categoryDistribution = Array.from(categoryMap.values())
-    .map((entry) => ({
-      name:
-        entry.category?.name ??
-        (entry.income > 0 && entry.expense === 0
-          ? "Sin categoría (ingresos)"
-          : entry.expense > 0 && entry.income === 0
-          ? "Sin categoría (gastos)"
-          : "Sin categoría"),
-      income: entry.income,
-      expense: entry.expense,
-    }))
+  // Contribuciones a ahorros: se consideran una categoría extra de gasto
+  savingsTransactions.forEach((tx: any) => {
+    addToCategory("Ahorro personal", "expense", Number(tx.amount ?? 0));
+  });
+  sharedSavingsTransactions.forEach((tx: any) => {
+    addToCategory("Ahorro grupal", "expense", Number(tx.amount ?? 0));
+  });
+
+  const categoryDistribution = Array.from(categoryAggMap.values())
     .filter((c) => c.income > 0 || c.expense > 0)
     .sort((a, b) => b.income + b.expense - (a.income + a.expense));
 
