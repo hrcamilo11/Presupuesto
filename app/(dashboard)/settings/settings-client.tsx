@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, LayoutGrid, Tag, Palette, Loader2 } from "lucide-react";
+import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle } from "lucide-react";
 import { CategoryList } from "@/components/categories/category-list";
 import { TagList } from "@/components/tags/tag-list";
 import { Category, Tag as TagType, type Profile, type SharedAccount, type Wallet } from "@/lib/database.types";
@@ -18,7 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { updateMyDashboardSettings, updateMyProfileBasics } from "@/app/actions/profile";
+import { updateMyDashboardSettings, updateMyProfileBasics, wipeMyPersonalData } from "@/app/actions/profile";
 import { useTransition } from "react";
 
 interface SettingsPageClientProps {
@@ -72,6 +72,13 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
     );
     const [dashMsg, setDashMsg] = useState<string | null>(null);
 
+    // Limpieza de cuenta personal
+    const [wipeMsg, setWipeMsg] = useState<string | null>(null);
+    const [wipeConfirm1, setWipeConfirm1] = useState(false);
+    const [wipeConfirm2, setWipeConfirm2] = useState(false);
+    const [wipeConfirm3, setWipeConfirm3] = useState(false);
+    const [wipePassword, setWipePassword] = useState("");
+
     function toggleDashSetting(key: keyof typeof DEFAULT_DASHBOARD_SETTINGS) {
         setDashSettings((prev) => ({ ...prev, [key]: !prev[key] }));
     }
@@ -123,6 +130,25 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                 },
             });
             setDashMsg(res.error ? res.error : "Preferencias del dashboard actualizadas.");
+        });
+    }
+
+    function handleWipeAccount() {
+        if (!wipeConfirm1 || !wipeConfirm2 || !wipeConfirm3 || !wipePassword) return;
+        setWipeMsg(null);
+        startTransition(async () => {
+            const res = await wipeMyPersonalData({ password: wipePassword });
+            setWipeMsg(
+                res.error
+                    ? res.error
+                    : "Tu cuenta personal se ha limpiado. Tus cuentas compartidas no fueron afectadas.",
+            );
+            if (!res.error) {
+                setWipeConfirm1(false);
+                setWipeConfirm2(false);
+                setWipeConfirm3(false);
+                setWipePassword("");
+            }
         });
     }
 
@@ -209,6 +235,94 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                             <div className="flex justify-end">
                                 <Button onClick={saveProfile} disabled={isPending}>
                                     {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="shadow-sm border-destructive/40">
+                        <CardHeader>
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4 text-destructive" />
+                                <CardTitle className="text-destructive">
+                                    Zona peligrosa: limpiar cuenta personal
+                                </CardTitle>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {wipeMsg && (
+                                <p className="text-sm text-muted-foreground">{wipeMsg}</p>
+                            )}
+                            <p className="text-sm text-muted-foreground">
+                                Esta acción borrará todas las transacciones y movimientos de tu cuenta
+                                personal (ingresos, gastos, préstamos, ahorros, presupuestos y transferencias)
+                                y pondrá en cero el saldo de tus cuentas personales. No afecta ninguna cuenta
+                                compartida.
+                            </p>
+
+                            <div className="space-y-3 rounded-md bg-muted/60 p-3">
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs text-muted-foreground">
+                                        1. Entiendo que se borrarán todos mis datos financieros personales.
+                                    </p>
+                                    <Switch
+                                        checked={wipeConfirm1}
+                                        onCheckedChange={(v) => setWipeConfirm1(!!v)}
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs text-muted-foreground">
+                                        2. Entiendo que esta acción es irreversible.
+                                    </p>
+                                    <Switch
+                                        checked={wipeConfirm2}
+                                        onCheckedChange={(v) => setWipeConfirm2(!!v)}
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs text-muted-foreground">
+                                        3. Confirmo que quiero limpiar mi cuenta personal.
+                                    </p>
+                                    <Switch
+                                        checked={wipeConfirm3}
+                                        onCheckedChange={(v) => setWipeConfirm3(!!v)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="wipe_password">Contraseña de tu cuenta</Label>
+                                <Input
+                                    id="wipe_password"
+                                    type="password"
+                                    value={wipePassword}
+                                    onChange={(e) => setWipePassword(e.target.value)}
+                                    placeholder="Ingresa tu contraseña para confirmar"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Se usará solo para confirmar tu identidad antes de ejecutar la limpieza.
+                                </p>
+                            </div>
+
+                            <div className="flex justify-end">
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    disabled={
+                                        isPending ||
+                                        !wipeConfirm1 ||
+                                        !wipeConfirm2 ||
+                                        !wipeConfirm3 ||
+                                        !wipePassword
+                                    }
+                                    onClick={handleWipeAccount}
+                                >
+                                    {isPending ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                    )}
+                                    Limpiar cuenta personal
                                 </Button>
                             </div>
                         </CardContent>

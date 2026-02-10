@@ -45,6 +45,10 @@ const dashboardSettingsSchema = z.object({
     .optional(),
 });
 
+const wipePersonalDataSchema = z.object({
+  password: z.string().min(6, "La contraseña es requerida."),
+});
+
 export async function getMyProfile() {
   const supabase = await createClient();
   const {
@@ -137,6 +141,108 @@ export async function updateMyDashboardSettings(input: z.infer<typeof dashboardS
 
   revalidatePath("/settings");
   revalidatePath("/dashboard");
+  return { error: null };
+}
+
+export async function wipeMyPersonalData(input: z.infer<typeof wipePersonalDataSchema>) {
+  const parsed = wipePersonalDataSchema.safeParse(input);
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i) => i.message).join(" ");
+    return { error: msg || "Datos inválidos" };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || !user.email) return { error: "No autenticado" };
+
+  // Verificar contraseña solicitando un login explícito con el mismo usuario
+  const { error: authError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: parsed.data.password,
+  });
+
+  if (authError) {
+    return { error: "Contraseña incorrecta. No se realizaron cambios." };
+  }
+
+  const userId = user.id;
+
+  try {
+    // 1. Préstamos personales (no compartidos)
+    const { data: personalLoans } = await supabase
+      .from("loans")
+      .select("id")
+      .eq("user_id", userId)
+      .is("shared_account_id", null);
+    const loanIds = (personalLoans ?? []).map((l) => l.id);
+    if (loanIds.length) {
+      await supabase.from("loan_payments").delete().in("loan_id", loanIds);
+      await supabase.from("loans").delete().in("id", loanIds);
+    }
+
+    // 2. Metas de ahorro personales
+    const { data: personalGoals } = await supabase
+      .from("savings_goals")
+      .select("id")
+      .eq("user_id", userId)
+      .is("shared_account_id", null);
+    const goalIds = (personalGoals ?? []).map((g) => g.id);
+    if (goalIds.length) {
+      await supabase.from("savings_transactions").delete().in("savings_goal_id", goalIds);
+      await supabase.from("savings_plans").delete().in("savings_goal_id", goalIds);
+      await supabase.from("savings_goals").delete().in("id", goalIds);
+    }
+
+    // 3. Ingresos y gastos personales (sin cuentas compartidas)
+    await supabase
+      .from("incomes")
+      .delete()
+      .eq("user_id", userId)
+      .is("shared_account_id", null);
+
+    await supabase
+      .from("expenses")
+      .delete()
+      .eq("user_id", userId)
+      .is("shared_account_id", null);
+
+    // 4. Suscripciones, impuestos personales
+    await supabase
+      .from("subscriptions")
+      .delete()
+      .eq("user_id", userId)
+      .is("shared_account_id", null);
+
+    await supabase
+      .from("tax_obligations")
+      .delete()
+      .eq("user_id", userId)
+      .is("shared_account_id", null);
+
+    // 5. Presupuestos y transferencias de billeteras
+    await supabase.from("budgets").delete().eq("user_id", userId);
+    await supabase.from("wallet_transfers").delete().eq("user_id", userId);
+
+    // 6. Poner en cero el balance de las billeteras personales (no tocar compartidas)
+    await supabase.from("wallets").update({ balance: 0 }).eq("user_id", userId);
+  } catch (e: unknown) {
+    console.error("Error al limpiar datos personales:", e);
+    return {
+      error:
+        e instanceof Error
+          ? e.message
+          : "Ocurrió un error al limpiar tu cuenta personal. Intenta nuevamente.",
+    };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/incomes");
+  revalidatePath("/expenses");
+  revalidatePath("/loans");
+  revalidatePath("/savings");
+  revalidatePath("/wallets");
   return { error: null };
 }
 
