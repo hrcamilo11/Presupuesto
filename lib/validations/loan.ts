@@ -6,7 +6,7 @@ export const loanSchema = z.object({
   annual_interest_rate: z.coerce.number().min(0, "La tasa no puede ser negativa"),
   term_months: z.coerce.number().int().positive("Plazo en meses debe ser positivo"),
   start_date: z.string().min(1, "Fecha de inicio requerida"),
-  currency: z.string().min(1).default("MXN"),
+  currency: z.string().min(1).default("COP"),
   description: z.string().optional(),
 });
 

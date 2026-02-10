@@ -53,17 +53,17 @@ export function TrendChart({ data }: Props) {
     <div className="w-full" style={{ minHeight: chartHeight, height: chartHeight }}>
       <ResponsiveContainer width="100%" height={chartHeight} minHeight={chartHeight}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-        <XAxis dataKey="month" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-        <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" tickFormatter={(v) => (Number.isFinite(v) ? `$${v >= 1000 ? (v / 1000) + "k" : v}` : "")} />
-        <Tooltip
-          formatter={(value: number | undefined) => [`$${formatChartValue(value ?? 0)}`, ""]}
-          labelFormatter={(label) => `Mes: ${label}`}
-          contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }}
-        />
-        <Legend />
-        <Bar dataKey="ingresos" name="Ingresos" fill="#22c55e" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="gastos" name="Gastos" fill="#ef4444" radius={[4, 4, 0, 0]} />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <XAxis dataKey="month" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+          <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" tickFormatter={(v) => (Number.isFinite(v) ? `$${v >= 1000 ? (v / 1000) + "k" : v}` : "")} />
+          <Tooltip
+            formatter={(value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)}
+            labelFormatter={(label) => `Mes: ${label}`}
+            contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }}
+          />
+          <Legend />
+          <Bar dataKey="ingresos" name="Ingresos" fill="#22c55e" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="gastos" name="Gastos" fill="#ef4444" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

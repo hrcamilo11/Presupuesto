@@ -38,24 +38,24 @@ export function ExpensePieChart({ data }: Props) {
     <div className="w-full" style={{ minWidth: 1, minHeight: chartHeight }}>
       <ResponsiveContainer width="100%" height={chartHeight} minHeight={chartHeight} minWidth={1}>
         <PieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          innerRadius={60}
-          outerRadius={90}
-          paddingAngle={2}
-          dataKey="value"
-          label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-        >
-          {chartData.map((_, i) => (
-            <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="transparent" />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value: number | undefined) => [`$${formatCurrency(value ?? 0)}`, ""]} />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={90}
+            paddingAngle={2}
+            dataKey="value"
+            label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+          >
+            {chartData.map((_, i) => (
+              <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="transparent" />
+            ))}
+          </Pie>
+          <Tooltip formatter={(value: number) => [new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value), ""]} />
+          <Legend />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   );
 }
