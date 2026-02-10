@@ -11,6 +11,7 @@ export async function createExpense(formData: {
   expense_priority: ExpensePriority;
   description?: string;
   date: string;
+  shared_account_id?: string | null;
 }) {
   const parsed = expenseSchema.safeParse(formData);
   if (!parsed.success) {
@@ -32,6 +33,7 @@ export async function createExpense(formData: {
     expense_priority: formData.expense_priority,
     description: formData.description || null,
     date: formData.date,
+    shared_account_id: formData.shared_account_id || null,
   });
 
   if (error) return { error: error.message };
@@ -72,8 +74,7 @@ export async function updateExpense(
       description: formData.description || null,
       date: formData.date,
     })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
 
   if (error) return { error: error.message };
   revalidatePath("/expenses");
@@ -88,11 +89,7 @@ export async function deleteExpense(id: string) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  const { error } = await supabase
-    .from("expenses")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+  const { error } = await supabase.from("expenses").delete().eq("id", id);
 
   if (error) return { error: error.message };
   revalidatePath("/expenses");

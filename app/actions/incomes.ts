@@ -11,6 +11,7 @@ export async function createIncome(formData: {
   income_type: IncomeType;
   description?: string;
   date: string;
+  shared_account_id?: string | null;
 }) {
   const parsed = incomeSchema.safeParse(formData);
   if (!parsed.success) {
@@ -32,6 +33,7 @@ export async function createIncome(formData: {
     income_type: formData.income_type,
     description: formData.description || null,
     date: formData.date,
+    shared_account_id: formData.shared_account_id || null,
   });
 
   if (error) return { error: error.message };
@@ -72,8 +74,7 @@ export async function updateIncome(
       description: formData.description || null,
       date: formData.date,
     })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
 
   if (error) return { error: error.message };
   revalidatePath("/incomes");
@@ -88,11 +89,7 @@ export async function deleteIncome(id: string) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  const { error } = await supabase
-    .from("incomes")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+  const { error } = await supabase.from("incomes").delete().eq("id", id);
 
   if (error) return { error: error.message };
   revalidatePath("/incomes");

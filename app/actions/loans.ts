@@ -12,6 +12,7 @@ export async function createLoan(formData: {
   start_date: string;
   currency: string;
   description?: string;
+  shared_account_id?: string | null;
 }) {
   const parsed = loanSchema.safeParse(formData);
   if (!parsed.success) {
@@ -25,6 +26,7 @@ export async function createLoan(formData: {
     user_id: user.id,
     ...parsed.data,
     description: parsed.data.description || null,
+    shared_account_id: formData.shared_account_id || null,
   });
   if (error) return { error: error.message };
   revalidatePath("/loans");
@@ -47,8 +49,7 @@ export async function updateLoan(
   const { error } = await supabase
     .from("loans")
     .update({ ...parsed.data, description: parsed.data.description || null })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/loans");
   revalidatePath("/dashboard");
@@ -59,7 +60,7 @@ export async function deleteLoan(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
-  const { error } = await supabase.from("loans").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase.from("loans").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/loans");
   revalidatePath("/dashboard");
@@ -77,7 +78,7 @@ export async function recordLoanPayment(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
-  const { data: loan } = await supabase.from("loans").select("id").eq("id", loanId).eq("user_id", user.id).single();
+  const { data: loan } = await supabase.from("loans").select("id").eq("id", loanId).single();
   if (!loan) return { error: "Préstamo no encontrado" };
 
   const { data: lastPayment } = await supabase

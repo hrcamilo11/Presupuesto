@@ -10,7 +10,6 @@ export default async function SubscriptionsPage() {
   const { data: subscriptions } = await supabase
     .from("subscriptions")
     .select("*")
-    .eq("user_id", user.id)
     .order("next_due_date", { ascending: true });
 
   return (

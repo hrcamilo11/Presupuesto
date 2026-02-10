@@ -10,7 +10,6 @@ export default async function TaxesPage() {
   const { data: taxes } = await supabase
     .from("tax_obligations")
     .select("*")
-    .eq("user_id", user.id)
     .order("due_date", { ascending: true });
 
   return (

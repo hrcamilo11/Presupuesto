@@ -19,6 +19,7 @@ export async function createSubscription(formData: {
   frequency: SubscriptionFrequency;
   next_due_date: string;
   description?: string;
+  shared_account_id?: string | null;
 }) {
   const parsed = subscriptionSchema.safeParse(formData);
   if (!parsed.success) {
@@ -32,6 +33,7 @@ export async function createSubscription(formData: {
     user_id: user.id,
     ...parsed.data,
     description: parsed.data.description || null,
+    shared_account_id: formData.shared_account_id || null,
   });
   if (error) return { error: error.message };
   revalidatePath("/subscriptions");
@@ -54,8 +56,7 @@ export async function updateSubscription(
   const { error } = await supabase
     .from("subscriptions")
     .update({ ...parsed.data, description: parsed.data.description || null, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/subscriptions");
   revalidatePath("/dashboard");
@@ -66,7 +67,7 @@ export async function deleteSubscription(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
-  const { error } = await supabase.from("subscriptions").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase.from("subscriptions").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/subscriptions");
   revalidatePath("/dashboard");
@@ -78,14 +79,13 @@ export async function markSubscriptionPaid(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
-  const { data: sub } = await supabase.from("subscriptions").select("next_due_date, frequency").eq("id", id).eq("user_id", user.id).single();
+  const { data: sub } = await supabase.from("subscriptions").select("next_due_date, frequency").eq("id", id).single();
   if (!sub) return { error: "Suscripción no encontrada" };
   const next = nextDueFromFrequency(sub.next_due_date, sub.frequency as SubscriptionFrequency);
   const { error } = await supabase
     .from("subscriptions")
     .update({ next_due_date: next, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/subscriptions");
   revalidatePath("/dashboard");

@@ -22,16 +22,18 @@ import {
 import { INCOME_TYPE_LABELS } from "@/lib/database.types";
 import { deleteIncome } from "@/app/actions/incomes";
 import { IncomeForm } from "./income-form";
-import type { Income } from "@/lib/database.types";
+import type { Income, SharedAccount, Wallet } from "@/lib/database.types";
 import { Pencil, Trash2 } from "lucide-react";
 
 type IncomeListProps = {
   incomes: Income[];
   year: number;
   month: number;
+  sharedAccounts: SharedAccount[];
+  wallets: Wallet[];
 };
 
-export function IncomeList({ incomes, year, month }: IncomeListProps) {
+export function IncomeList({ incomes, year, month, sharedAccounts, wallets }: IncomeListProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Income | null>(null);
@@ -133,6 +135,8 @@ export function IncomeList({ incomes, year, month }: IncomeListProps) {
           if (!open) setEditing(null);
         }}
         editIncome={editing}
+        sharedAccounts={sharedAccounts}
+        wallets={wallets}
       />
 
       <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

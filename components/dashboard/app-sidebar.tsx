@@ -10,6 +10,9 @@ import {
   Repeat,
   Landmark,
   Receipt,
+  UsersRound,
+  Wallet,
+  PiggyBank,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +23,9 @@ const navItems = [
   { href: "/subscriptions", label: "Suscripciones", icon: Repeat },
   { href: "/loans", label: "Préstamos", icon: Landmark },
   { href: "/taxes", label: "Impuestos", icon: Receipt },
+  { href: "/wallets", label: "Cuentas", icon: Wallet },
+  { href: "/savings", label: "Ahorros", icon: PiggyBank },
+  { href: "/shared", label: "Cuentas compartidas", icon: UsersRound },
 ] as const;
 
 export function AppSidebar() {

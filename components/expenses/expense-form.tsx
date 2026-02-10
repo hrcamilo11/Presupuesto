@@ -22,15 +22,17 @@ import {
 } from "@/components/ui/dialog";
 import { EXPENSE_PRIORITY_LABELS, type ExpensePriority } from "@/lib/database.types";
 import { createExpense, updateExpense } from "@/app/actions/expenses";
-import type { Expense } from "@/lib/database.types";
+import type { Expense, SharedAccount, Wallet } from "@/lib/database.types";
 
 type ExpenseFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editExpense?: Expense | null;
+  sharedAccounts?: SharedAccount[];
+  wallets: Wallet[];
 };
 
-export function ExpenseForm({ open, onOpenChange, editExpense }: ExpenseFormProps) {
+export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = [], wallets = [] }: ExpenseFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,6 +40,8 @@ export function ExpenseForm({ open, onOpenChange, editExpense }: ExpenseFormProp
   const [priority, setPriority] = useState<ExpensePriority>("necessary");
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
+  const [sharedAccountId, setSharedAccountId] = useState<string | null>(null);
+  const [walletId, setWalletId] = useState<string>("");
 
   const isEdit = Boolean(editExpense?.id);
 
@@ -47,6 +51,8 @@ export function ExpenseForm({ open, onOpenChange, editExpense }: ExpenseFormProp
       setPriority(editExpense?.expense_priority ?? "necessary");
       setDate(editExpense?.date ?? new Date().toISOString().slice(0, 10));
       setDescription(editExpense?.description ?? "");
+      setSharedAccountId(editExpense?.shared_account_id ?? null);
+      setWalletId(editExpense?.wallet_id ?? "");
       setError(null);
     }
   }, [open, editExpense]);
@@ -61,6 +67,8 @@ export function ExpenseForm({ open, onOpenChange, editExpense }: ExpenseFormProp
       expense_priority: priority,
       description: description || undefined,
       date,
+      wallet_id: walletId || undefined,
+      ...(isEdit ? {} : { shared_account_id: sharedAccountId || null }),
     };
 
     const result = isEdit
@@ -87,6 +95,47 @@ export function ExpenseForm({ open, onOpenChange, editExpense }: ExpenseFormProp
             <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">
               {error}
             </p>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="wallet">Cuenta de origen (pago)</Label>
+            <Select value={walletId} onValueChange={setWalletId}>
+              <SelectTrigger id="wallet">
+                <SelectValue placeholder="Selecciona una cuenta" />
+              </SelectTrigger>
+              <SelectContent>
+                {wallets.map((w) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    {w.name} ({w.currency})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Si no seleccionas cuenta, se considerará efectivo sin cuenta específica (o cuenta por defecto).
+            </p>
+          </div>
+
+          {!isEdit && sharedAccounts.length > 0 && (
+            <div className="space-y-2">
+              <Label>Añadir a</Label>
+              <Select
+                value={sharedAccountId ?? "personal"}
+                onValueChange={(v) => setSharedAccountId(v === "personal" ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Mi cuenta" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="personal">Mi cuenta</SelectItem>
+                  {sharedAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
           <div className="space-y-2">
             <Label htmlFor="amount">Monto</Label>

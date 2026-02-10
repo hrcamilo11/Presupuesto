@@ -22,16 +22,18 @@ import {
 import { EXPENSE_PRIORITY_LABELS } from "@/lib/database.types";
 import { deleteExpense } from "@/app/actions/expenses";
 import { ExpenseForm } from "./expense-form";
-import type { Expense } from "@/lib/database.types";
+import type { Expense, SharedAccount, Wallet } from "@/lib/database.types";
 import { Pencil, Trash2 } from "lucide-react";
 
 type ExpenseListProps = {
   expenses: Expense[];
   year: number;
   month: number;
+  sharedAccounts: SharedAccount[];
+  wallets: Wallet[];
 };
 
-export function ExpenseList({ expenses, year, month }: ExpenseListProps) {
+export function ExpenseList({ expenses, year, month, sharedAccounts, wallets }: ExpenseListProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
@@ -133,6 +135,8 @@ export function ExpenseList({ expenses, year, month }: ExpenseListProps) {
           if (!open) setEditing(null);
         }}
         editExpense={editing}
+        sharedAccounts={sharedAccounts}
+        wallets={wallets}
       />
 
       <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

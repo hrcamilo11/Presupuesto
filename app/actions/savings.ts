@@ -1,0 +1,258 @@
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { savingsGoalSchema, contributionSchema } from "@/lib/validations/savings";
+
+export async function getSavingsGoals() {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "No autenticado" };
+
+    // Fetch own goals OR shared goals
+    // The RLS policy handles filtering, but we need to ensure we select correctly.
+    const { data, error } = await supabase
+        .from("savings_goals")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) return { data: [], error: error.message };
+    return { data: data ?? [], error: null };
+}
+
+export async function createSavingsGoal(formData: {
+    name: string;
+    target_amount: number;
+    target_date?: string;
+    type?: "manual" | "recurring";
+    shared_account_id?: string | null;
+    color?: string;
+    icon?: string;
+    plan?: {
+        wallet_id: string;
+        amount: number;
+        frequency: "weekly" | "monthly";
+        day_of_period: number;
+    };
+}) {
+    // ... validation (skipping zod for brevity of complex nested plan for now or updating schema)
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "No autenticado" };
+
+    // 1. Create the Goal
+    const { data: goal, error: goalError } = await supabase
+        .from("savings_goals")
+        .insert({
+            user_id: user.id,
+            name: formData.name,
+            target_amount: formData.target_amount,
+            target_date: formData.target_date || null,
+            type: formData.type || "manual",
+            shared_account_id: formData.shared_account_id || null,
+            color: formData.color,
+            icon: formData.icon,
+        })
+        .select()
+        .single();
+
+    if (goalError) return { error: goalError.message };
+
+    // 2. Create the Plan if requested
+    if (formData.type === "recurring" && formData.plan && goal) {
+        const { error: planError } = await supabase.from("savings_plans").insert({
+            user_id: user.id,
+            savings_goal_id: goal.id,
+            wallet_id: formData.plan.wallet_id,
+            amount: formData.plan.amount,
+            frequency: formData.plan.frequency,
+            day_of_period: formData.plan.day_of_period,
+        });
+
+        if (planError) {
+            // Rollback goal? Or just warn? For now just return error.
+            return { error: `La meta fue creada pero el plan de ahorro falló: ${planError.message}` };
+        }
+    }
+
+    revalidatePath("/savings");
+    revalidatePath("/dashboard");
+    return { error: null };
+}
+
+export async function contributeToSavings(formData: {
+    savings_goal_id: string;
+    wallet_id: string;
+    amount: number;
+    date: string;
+    notes?: string;
+}) {
+    const parsed = contributionSchema.safeParse(formData);
+    if (!parsed.success) {
+        return { error: parsed.error.issues[0].message };
+    }
+
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "No autenticado" };
+
+    // Call the RPC function
+    const { error } = await supabase.rpc("contribute_to_savings", {
+        p_savings_goal_id: formData.savings_goal_id,
+        p_wallet_id: formData.wallet_id,
+        p_amount: formData.amount,
+        p_date: formData.date,
+        p_notes: formData.notes || "",
+    });
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/savings");
+    revalidatePath("/wallets");
+    revalidatePath("/dashboard");
+    return { error: null };
+}
+
+export async function deleteSavingsGoal(id: string) {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "No autenticado" };
+
+    const { error } = await supabase
+        .from("savings_goals")
+        .delete()
+        .eq("id", id);
+
+    if (error) return { error: error.message };
+    revalidatePath("/savings");
+    revalidatePath("/dashboard");
+    return { error: null };
+}
+
+export async function getSavingsPlans() {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "No autenticado" };
+
+    const { data, error } = await supabase
+        .from("savings_plans")
+        .select(`
+            *,
+            goal:savings_goals(name),
+            wallet:wallets(name)
+        `)
+        .eq("user_id", user.id);
+
+    if (error) return { data: [], error: error.message };
+    return { data: data ?? [], error: null };
+}
+
+export async function createSavingsPlan(formData: {
+    savings_goal_id: string;
+    wallet_id: string;
+    amount: number;
+    frequency: "weekly" | "monthly";
+    day_of_period: number;
+}) {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "No autenticado" };
+
+    const { error } = await supabase.from("savings_plans").insert({
+        user_id: user.id,
+        savings_goal_id: formData.savings_goal_id,
+        wallet_id: formData.wallet_id,
+        amount: formData.amount,
+        frequency: formData.frequency,
+        day_of_period: formData.day_of_period,
+    });
+
+    if (error) return { error: error.message };
+    revalidatePath("/savings");
+    return { error: null };
+}
+
+/**
+ * Basic logic to process recurring savings.
+ * In a real app, this would be a CRON job.
+ * Here we can call it when the user logs in as a fallback.
+ */
+export async function processRecurringSavings() {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "No autenticado" };
+
+    // Get active plans
+    const { data: plans, error } = await supabase
+        .from("savings_plans")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+    if (error) return { error: error.message };
+    if (!plans || plans.length === 0) return { success: true };
+
+    const now = new Date();
+
+    for (const plan of plans) {
+        let shouldExecute = false;
+        const lastExec = plan.last_executed ? new Date(plan.last_executed) : null;
+
+        if (plan.frequency === "monthly") {
+            const currentDay = now.getDate();
+            if (currentDay >= plan.day_of_period) {
+                // If it hasn't been executed this month
+                if (!lastExec ||
+                    lastExec.getMonth() !== now.getMonth() ||
+                    lastExec.getFullYear() !== now.getFullYear()) {
+                    shouldExecute = true;
+                }
+            }
+        } else if (plan.frequency === "weekly") {
+            const currentDayOfWeek = now.getDay() || 7; // 1-7 (Mon-Sun)
+            if (currentDayOfWeek >= plan.day_of_period) {
+                // If it hasn't been executed this week
+                if (!lastExec || (now.getTime() - lastExec.getTime()) > 6 * 24 * 60 * 60 * 1000) {
+                    shouldExecute = true;
+                }
+            }
+        }
+
+        if (shouldExecute) {
+            // Execute transfer
+            const { error: contribError } = await supabase.rpc("contribute_to_savings", {
+                p_savings_goal_id: plan.savings_goal_id,
+                p_wallet_id: plan.wallet_id,
+                p_amount: plan.amount,
+                p_date: now.toISOString().split("T")[0],
+                p_notes: `Ahorro automático (${plan.frequency})`,
+            });
+
+            if (!contribError) {
+                // Update last_executed
+                await supabase
+                    .from("savings_plans")
+                    .update({ last_executed: now.toISOString() })
+                    .eq("id", plan.id);
+            }
+        }
+    }
+
+    revalidatePath("/savings");
+    revalidatePath("/dashboard");
+    return { success: true };
+}

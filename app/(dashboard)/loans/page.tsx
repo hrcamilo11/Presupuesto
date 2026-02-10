@@ -11,7 +11,6 @@ export default async function LoansPage() {
   const { data: loans } = await supabase
     .from("loans")
     .select("*")
-    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   const loanIds = (loans ?? []).map((l) => l.id);

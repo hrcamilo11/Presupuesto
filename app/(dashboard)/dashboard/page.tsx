@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight } from "lucide-react";
 import { DashboardSummaryBanner } from "@/components/dashboard/dashboard-summary-banner";
+import { WalletFilter } from "@/components/dashboard/wallet-filter";
 
 function getMonthBounds(monthOffset: number) {
   const d = new Date();
@@ -24,30 +25,54 @@ function getMonthBounds(monthOffset: number) {
   return { start, end, label: d.toLocaleString("es", { month: "short", year: "2-digit" }) };
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { wallet?: string };
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Process any pending recurring savings fallback
+  const { processRecurringSavings } = await import("@/app/actions/savings");
+  await processRecurringSavings();
+
+  const selectedWalletId = searchParams.wallet;
   const { start, end } = getMonthBounds(0);
   const monthName = new Date().toLocaleString("es", { month: "long", year: "numeric" });
+
+  // Base queries
+  let incomeQuery = supabase.from("incomes").select("amount, income_type").gte("date", start).lte("date", end);
+  let expenseQuery = supabase.from("expenses").select("amount, expense_priority").gte("date", start).lte("date", end);
+
+  if (selectedWalletId) {
+    incomeQuery = incomeQuery.eq("wallet_id", selectedWalletId);
+    expenseQuery = expenseQuery.eq("wallet_id", selectedWalletId);
+  }
 
   const [
     incomesRes,
     expensesRes,
     subscriptionsRes,
     taxRes,
+    walletsRes,
+    savingsRes,
     trendIncomes,
     trendExpenses,
   ] = await Promise.all([
-    supabase.from("incomes").select("amount, income_type").eq("user_id", user.id).gte("date", start).lte("date", end),
-    supabase.from("expenses").select("amount, expense_priority").eq("user_id", user.id).gte("date", start).lte("date", end),
-    supabase.from("subscriptions").select("amount, frequency").eq("user_id", user.id),
-    supabase.from("tax_obligations").select("amount, paid_at").eq("user_id", user.id),
+    incomeQuery,
+    expenseQuery,
+    supabase.from("subscriptions").select("amount, frequency"),
+    supabase.from("tax_obligations").select("amount, paid_at"),
+    supabase.from("wallets").select("*").order("balance", { ascending: false }),
+    supabase.from("savings_goals").select("*").order("target_date", { ascending: true }),
     Promise.all(
       [0, -1, -2, -3, -4, -5].map(async (offset) => {
         const { start: s, end: e, label } = getMonthBounds(offset);
-        const { data } = await supabase.from("incomes").select("amount").eq("user_id", user.id).gte("date", s).lte("date", e);
+        let q = supabase.from("incomes").select("amount").gte("date", s).lte("date", e);
+        if (selectedWalletId) q = q.eq("wallet_id", selectedWalletId);
+        const { data } = await q;
         const total = (data ?? []).reduce((sum, i) => sum + Number(i.amount), 0);
         return { label, total };
       })
@@ -55,7 +80,9 @@ export default async function DashboardPage() {
     Promise.all(
       [0, -1, -2, -3, -4, -5].map(async (offset) => {
         const { start: s, end: e } = getMonthBounds(offset);
-        const { data } = await supabase.from("expenses").select("amount").eq("user_id", user.id).gte("date", s).lte("date", e);
+        let q = supabase.from("expenses").select("amount").gte("date", s).lte("date", e);
+        if (selectedWalletId) q = q.eq("wallet_id", selectedWalletId);
+        const { data } = await q;
         const total = (data ?? []).reduce((sum, i) => sum + Number(i.amount), 0);
         return total;
       })
@@ -66,6 +93,8 @@ export default async function DashboardPage() {
   const expenses = expensesRes.data ?? [];
   const subscriptions = subscriptionsRes.data ?? [];
   const taxObligations = taxRes.data ?? [];
+  const wallets = walletsRes.data ?? [];
+  const savingsGoals = savingsRes.data ?? [];
 
   const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
   const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
@@ -105,9 +134,12 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Encabezado */}
-      <header className="space-y-0.5">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
-        <p className="text-sm text-muted-foreground capitalize sm:text-base">{monthName}</p>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-0.5">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
+          <p className="text-sm text-muted-foreground capitalize sm:text-base">{monthName}</p>
+        </div>
+        <WalletFilter wallets={wallets} />
       </header>
 
       <DashboardSummaryBanner
@@ -159,6 +191,84 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
             <p className="text-lg font-bold text-amber-600 dark:text-amber-400 sm:text-2xl">{savingsRate}%</p>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Cuentas y Ahorros */}
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Mis Cuentas */}
+        <Card className="card-hover shadow-sm lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2">
+            <CardTitle className="text-base sm:text-lg">Mis Cuentas</CardTitle>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/wallets" className="gap-1">
+                Ver todas <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {wallets.slice(0, 3).map((wallet) => (
+                <div key={wallet.id} className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm flex flex-col justify-between">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-medium text-sm truncate">{wallet.name}</span>
+                    <span className="text-xs text-muted-foreground uppercase">{wallet.currency}</span>
+                  </div>
+                  <div className="text-xl font-bold">
+                    ${Number(wallet.balance).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 capitalize">
+                    {wallet.type === 'debit' ? 'Débito' : wallet.type === 'credit' ? 'Crédito' : wallet.type === 'cash' ? 'Efectivo' : wallet.type}
+                  </div>
+                </div>
+              ))}
+              {wallets.length === 0 && (
+                <div className="col-span-full text-center py-4 text-muted-foreground text-sm">
+                  No tienes cuentas registradas.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Metas de Ahorro */}
+        <Card className="card-hover shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2">
+            <CardTitle className="text-base sm:text-lg">Metas de Ahorro</CardTitle>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/savings" className="gap-1">
+                Ver todas <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <div className="space-y-4">
+              {savingsGoals.slice(0, 3).map((goal) => {
+                const progress = goal.target_amount > 0 ? (goal.current_amount / goal.target_amount) * 100 : 0;
+                return (
+                  <div key={goal.id} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium truncate">{goal.name}</span>
+                      <span className="text-muted-foreground">
+                        ${Number(goal.current_amount).toLocaleString("es-MX")} / ${Number(goal.target_amount).toLocaleString("es-MX")}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-secondary">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${Math.min(100, progress)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {savingsGoals.length === 0 && (
+                <div className="text-center py-4 text-muted-foreground text-sm">
+                  No tienes metas de ahorro.
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </section>

@@ -74,7 +74,8 @@ function LoginForm() {
       setError(signInError.message);
       return;
     }
-    router.push("/dashboard");
+    const redirectTo = searchParams.get("redirect");
+    router.push(redirectTo && redirectTo.startsWith("/") ? redirectTo : "/dashboard");
     router.refresh();
   }
 

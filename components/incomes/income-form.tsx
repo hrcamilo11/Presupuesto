@@ -22,15 +22,17 @@ import {
 } from "@/components/ui/dialog";
 import { INCOME_TYPE_LABELS, type IncomeType } from "@/lib/database.types";
 import { createIncome, updateIncome } from "@/app/actions/incomes";
-import type { Income } from "@/lib/database.types";
+import type { Income, SharedAccount, Wallet } from "@/lib/database.types";
 
 type IncomeFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editIncome?: Income | null;
+  sharedAccounts?: SharedAccount[];
+  wallets: Wallet[];
 };
 
-export function IncomeForm({ open, onOpenChange, editIncome }: IncomeFormProps) {
+export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = [], wallets = [] }: IncomeFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,6 +40,8 @@ export function IncomeForm({ open, onOpenChange, editIncome }: IncomeFormProps) 
   const [incomeType, setIncomeType] = useState<IncomeType>("monthly");
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
+  const [sharedAccountId, setSharedAccountId] = useState<string | null>(null);
+  const [walletId, setWalletId] = useState<string>("");
 
   const isEdit = Boolean(editIncome?.id);
 
@@ -47,6 +51,8 @@ export function IncomeForm({ open, onOpenChange, editIncome }: IncomeFormProps) 
       setIncomeType(editIncome?.income_type ?? "monthly");
       setDate(editIncome?.date ?? new Date().toISOString().slice(0, 10));
       setDescription(editIncome?.description ?? "");
+      setSharedAccountId(editIncome?.shared_account_id ?? null);
+      setWalletId(editIncome?.wallet_id ?? "");
       setError(null);
     }
   }, [open, editIncome]);
@@ -61,6 +67,8 @@ export function IncomeForm({ open, onOpenChange, editIncome }: IncomeFormProps) 
       income_type: incomeType,
       description: description || undefined,
       date,
+      wallet_id: walletId || undefined,
+      ...(isEdit ? {} : { shared_account_id: sharedAccountId || null }),
     };
 
     const result = isEdit
@@ -88,6 +96,47 @@ export function IncomeForm({ open, onOpenChange, editIncome }: IncomeFormProps) 
               {error}
             </p>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="wallet">Cuenta de destino</Label>
+            <Select value={walletId} onValueChange={setWalletId}>
+              <SelectTrigger id="wallet">
+                <SelectValue placeholder="Selecciona una cuenta" />
+              </SelectTrigger>
+              <SelectContent>
+                {wallets.map((w) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    {w.name} ({w.currency})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Si no seleccionas cuenta, se considerará efectivo sin cuenta específica (o cuenta por defecto).
+            </p>
+          </div>
+
+          {!isEdit && sharedAccounts.length > 0 && (
+            <div className="space-y-2">
+              <Label>Añadir a grupo compartido</Label>
+              <Select
+                value={sharedAccountId ?? "personal"}
+                onValueChange={(v) => setSharedAccountId(v === "personal" ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Mi cuenta personal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="personal">Mi cuenta personal</SelectItem>
+                  {sharedAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="amount">Monto</Label>
             <Input
@@ -102,7 +151,7 @@ export function IncomeForm({ open, onOpenChange, editIncome }: IncomeFormProps) 
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="income_type">Tipo</Label>
+            <Label htmlFor="income_type">Tipo de ingreso</Label>
             <Select value={incomeType} onValueChange={(v) => setIncomeType(v as IncomeType)}>
               <SelectTrigger id="income_type">
                 <SelectValue placeholder="Selecciona tipo" />

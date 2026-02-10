@@ -13,6 +13,7 @@ export async function createTaxObligation(formData: {
   due_date: string;
   paid_at?: string;
   notes?: string;
+  shared_account_id?: string | null;
 }) {
   const parsed = taxObligationSchema.safeParse(formData);
   if (!parsed.success) {
@@ -31,6 +32,7 @@ export async function createTaxObligation(formData: {
     due_date: parsed.data.due_date,
     paid_at: parsed.data.paid_at || null,
     notes: parsed.data.notes || null,
+    shared_account_id: formData.shared_account_id || null,
   });
   if (error) return { error: error.message };
   revalidatePath("/taxes");
@@ -62,8 +64,7 @@ export async function updateTaxObligation(
       notes: parsed.data.notes || null,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/taxes");
   revalidatePath("/dashboard");
@@ -74,7 +75,7 @@ export async function deleteTaxObligation(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
-  const { error } = await supabase.from("tax_obligations").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase.from("tax_obligations").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/taxes");
   revalidatePath("/dashboard");
@@ -88,8 +89,7 @@ export async function markTaxPaid(id: string, paidAt: string) {
   const { error } = await supabase
     .from("tax_obligations")
     .update({ paid_at: paidAt, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/taxes");
   revalidatePath("/dashboard");

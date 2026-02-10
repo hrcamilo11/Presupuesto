@@ -12,33 +12,64 @@ export interface Profile {
   updated_at: string;
 }
 
-export interface Income {
+export interface SharedAccount {
   id: string;
+  name: string;
+  created_by: string;
+  created_at: string;
+  invite_code: string;
+  member_count?: number;
+}
+
+export interface SharedAccountMember {
+  id: string;
+  shared_account_id: string;
   user_id: string;
-  amount: number;
-  currency: string;
-  income_type: IncomeType;
-  description: string | null;
-  date: string;
+  role: "owner" | "member";
+  joined_at: string;
+}
+
+export interface SharedAccountInvite {
+  id: string;
+  shared_account_id: string;
+  token: string;
+  invited_by: string;
+  expires_at: string;
   created_at: string;
 }
 
-export interface Expense {
+export type Income = {
   id: string;
   user_id: string;
+  shared_account_id?: string | null;
+  wallet_id?: string | null;
+  amount: number;
+  currency: string;
+  income_type: IncomeType;
+  description?: string;
+  date: string;
+  created_at: string;
+};
+
+export type Expense = {
+  id: string;
+  user_id: string;
+  shared_account_id?: string | null;
+  wallet_id?: string | null;
   amount: number;
   currency: string;
   expense_priority: ExpensePriority;
-  description: string | null;
+  description?: string | null;
   date: string;
   created_at: string;
   subscription_id?: string | null;
   loan_payment_id?: string | null;
-}
+};
 
 export interface Subscription {
   id: string;
   user_id: string;
+  shared_account_id: string | null;
   name: string;
   amount: number;
   currency: string;
@@ -52,6 +83,7 @@ export interface Subscription {
 export interface Loan {
   id: string;
   user_id: string;
+  shared_account_id: string | null;
   name: string;
   principal: number;
   annual_interest_rate: number;
@@ -77,6 +109,7 @@ export interface LoanPayment {
 export interface TaxObligation {
   id: string;
   user_id: string;
+  shared_account_id: string | null;
   name: string;
   amount: number;
   currency: string;
@@ -134,4 +167,71 @@ export const TAX_PERIOD_LABELS: Record<TaxPeriodType, string> = {
   monthly: "Mensual",
   quarterly: "Trimestral",
   yearly: "Anual",
+};
+
+export type WalletType = "cash" | "debit" | "credit" | "savings" | "investment";
+
+export type Wallet = {
+  id: string;
+  user_id: string;
+  name: string;
+  type: WalletType;
+  currency: string;
+  balance: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SavingsGoalType = "emergency" | "purchase" | "travel" | "investment" | "other";
+
+export type SavingsGoal = {
+  id: string;
+  user_id: string;
+  shared_account_id?: string | null;
+  name: string;
+  target_amount: number;
+  current_amount: number;
+  target_date?: string | null;
+  type: SavingsGoalType;
+  color: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SavingsTransaction = {
+  id: string;
+  savings_goal_id: string;
+  amount: number;
+  type: "deposit" | "withdrawal";
+  date: string;
+  notes?: string | null;
+  created_at: string;
+};
+
+export type WalletTransfer = {
+  id: string;
+  user_id: string;
+  from_wallet_id: string;
+  to_wallet_id: string;
+  amount: number;
+  description?: string | null;
+  date: string;
+  created_at: string;
+};
+
+export type SavingsFrequency = "weekly" | "monthly";
+
+export type SavingsPlan = {
+  id: string;
+  user_id: string;
+  savings_goal_id: string;
+  wallet_id: string;
+  amount: number;
+  frequency: SavingsFrequency;
+  day_of_period: number;
+  last_executed?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 };
