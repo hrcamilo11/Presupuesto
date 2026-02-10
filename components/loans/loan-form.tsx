@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -89,7 +90,7 @@ export function LoanForm({ open, onOpenChange, editLoan }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="principal">Capital</Label>
-              <Input id="principal" type="number" step="0.01" min="0.01" value={principal} onChange={(e) => setPrincipal(e.target.value)} required />
+              <CurrencyInput id="principal" value={principal} onChange={(v) => setPrincipal(String(v))} placeholder="0" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="rate">Tasa anual (%)</Label>

@@ -26,6 +26,7 @@ import {
     FormDescription
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -133,11 +134,9 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                 <FormItem>
                                     <FormLabel>Monto objetivo</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            type="number"
-                                            placeholder="0.00"
+                                        <CurrencyInput
+                                            placeholder="0"
                                             {...field}
-                                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -193,11 +192,9 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                             <FormItem>
                                                 <FormLabel>Monto a ahorrar</FormLabel>
                                                 <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="0.00"
+                                                    <CurrencyInput
+                                                        placeholder="0"
                                                         {...field}
-                                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
