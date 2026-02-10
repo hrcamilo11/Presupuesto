@@ -21,9 +21,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { EXPENSE_PRIORITY_LABELS, type ExpensePriority } from "@/lib/database.types";
+import { EXPENSE_PRIORITY_LABELS, type ExpensePriority, type Tag } from "@/lib/database.types";
 import { createExpense, updateExpense } from "@/app/actions/expenses";
+import { getTags, setTransactionTags } from "@/app/actions/tags";
 import type { Expense, SharedAccount, Wallet, Category } from "@/lib/database.types";
+import { TagSelector } from "@/components/tags/tag-selector";
 
 type ExpenseFormProps = {
   open: boolean;
@@ -45,6 +47,8 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
   const [sharedAccountId, setSharedAccountId] = useState<string | null>(null);
   const [walletId, setWalletId] = useState<string>("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const isEdit = Boolean(editExpense?.id);
 
@@ -57,7 +61,13 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
       setSharedAccountId(editExpense?.shared_account_id ?? null);
       setWalletId(editExpense?.wallet_id ?? "");
       setCategoryId(editExpense?.category_id ?? null);
+      setSelectedTagIds(editExpense?.tags?.map(t => t.id) ?? []);
       setError(null);
+
+      // Fetch tags
+      getTags().then(res => {
+        if (res.data) setAvailableTags(res.data);
+      });
     }
   }, [open, editExpense]);
 
@@ -76,15 +86,23 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
       ...(isEdit ? {} : { shared_account_id: sharedAccountId || null }),
     };
 
-    const result = isEdit
+    const result: any = isEdit
       ? await updateExpense(editExpense!.id, formData)
       : await createExpense(formData);
 
-    setLoading(false);
     if (result.error) {
+      setLoading(false);
       setError(result.error);
       return;
     }
+
+    // Save tags
+    const transactionId = isEdit ? editExpense!.id : result.data?.id;
+    if (transactionId) {
+      await setTransactionTags(transactionId, selectedTagIds, "expense");
+    }
+
+    setLoading(false);
     onOpenChange(false);
     router.refresh();
   }
@@ -200,13 +218,24 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Descripción (opcional)</Label>
             <Textarea
               id="description"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Ej. Supermercado, renta..."
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Etiquetas</Label>
+            <TagSelector
+              allTags={availableTags}
+              selectedTagIds={selectedTagIds}
+              onToggleTag={(id) => {
+                setSelectedTagIds(prev =>
+                  prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+                );
+              }}
             />
           </div>
           <DialogFooter>

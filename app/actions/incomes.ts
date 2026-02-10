@@ -28,7 +28,7 @@ export async function createIncome(formData: {
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  const { error } = await supabase.from("incomes").insert({
+  const { data: income, error } = await supabase.from("incomes").insert({
     user_id: user.id,
     amount: formData.amount,
     currency: formData.currency,
@@ -38,12 +38,12 @@ export async function createIncome(formData: {
     category_id: formData.category_id || null,
     wallet_id: formData.wallet_id || null,
     shared_account_id: formData.shared_account_id || null,
-  });
+  }).select().single();
 
   if (error) return { error: error.message };
   revalidatePath("/incomes");
   revalidatePath("/dashboard");
-  return { error: null };
+  return { data: income, error: null };
 }
 
 export async function updateIncome(
@@ -71,7 +71,7 @@ export async function updateIncome(
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  const { error } = await supabase
+  const { data: income, error } = await supabase
     .from("incomes")
     .update({
       amount: formData.amount,
@@ -82,12 +82,12 @@ export async function updateIncome(
       category_id: formData.category_id || null,
       wallet_id: formData.wallet_id || null,
     })
-    .eq("id", id);
+    .eq("id", id).select().single();
 
   if (error) return { error: error.message };
   revalidatePath("/incomes");
   revalidatePath("/dashboard");
-  return { error: null };
+  return { data: income, error: null };
 }
 
 export async function deleteIncome(id: string) {
@@ -103,4 +103,29 @@ export async function deleteIncome(id: string) {
   revalidatePath("/incomes");
   revalidatePath("/dashboard");
   return { error: null };
+}
+export async function getIncomes(sharedAccountId?: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  let query = supabase.from("incomes").select("*, categories(*), wallet:wallets(*), tags:income_tags(tags(*))");
+
+  if (sharedAccountId) {
+    query = query.eq("shared_account_id", sharedAccountId);
+  } else {
+    query = query.is("shared_account_id", null).eq("user_id", user.id);
+  }
+
+  const { data, error } = await query.order("date", { ascending: false });
+
+  // Map the nested tags for easier usage
+  const formattedData = data?.map((i: any) => ({
+    ...i,
+    tags: i.tags?.map((t: any) => t.tags).filter(Boolean) || []
+  }));
+
+  return { data: formattedData, error: error?.message };
 }

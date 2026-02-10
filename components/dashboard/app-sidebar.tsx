@@ -13,6 +13,7 @@ import {
   UsersRound,
   Wallet,
   PiggyBank,
+  Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/taxes", label: "Impuestos", icon: Receipt },
   { href: "/wallets", label: "Cuentas", icon: Wallet },
   { href: "/savings", label: "Ahorros", icon: PiggyBank },
+  { href: "/tags", label: "Etiquetas", icon: Tag },
   { href: "/shared", label: "Cuentas compartidas", icon: UsersRound },
 ] as const;
 

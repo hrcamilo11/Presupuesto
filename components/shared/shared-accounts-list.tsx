@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { UsersRound, Plus, Link2, Copy, Check, Settings } from "lucide-react";
+import { UsersRound, Plus, Link2, Copy, Check, Settings, LayoutDashboard } from "lucide-react";
 import type { SharedAccount } from "@/lib/database.types";
 import { MemberAdminDialog } from "./member-admin-dialog";
 import {
@@ -189,6 +189,15 @@ export function SharedAccountsList({ initialAccounts }: Props) {
                     </Button>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="gap-2 col-span-2 bg-primary/90 hover:bg-primary font-bold"
+                      onClick={() => router.push(`/shared/${account.id}`)}
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      Ver detalles y metas
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"

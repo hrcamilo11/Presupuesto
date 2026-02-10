@@ -68,6 +68,7 @@ export type Income = {
   date: string;
   category_id?: string | null;
   created_at: string;
+  tags?: Tag[];
 };
 
 export interface Budget {
@@ -94,6 +95,7 @@ export type Expense = {
   created_at: string;
   subscription_id?: string | null;
   loan_payment_id?: string | null;
+  tags?: Tag[];
 };
 
 export interface Subscription {
@@ -266,3 +268,23 @@ export type SavingsPlan = {
   created_at: string;
   updated_at: string;
 };
+
+export interface Tag {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
+export interface SharedSavingsGoal {
+  id: string;
+  shared_account_id: string;
+  name: string;
+  target_amount: number;
+  current_amount: number;
+  status: "active" | "completed" | "cancelled";
+  deadline: string | null;
+  created_at: string;
+  updated_at: string;
+}

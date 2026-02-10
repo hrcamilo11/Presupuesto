@@ -21,9 +21,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { INCOME_TYPE_LABELS, type IncomeType } from "@/lib/database.types";
+import { INCOME_TYPE_LABELS, type IncomeType, type Tag } from "@/lib/database.types";
 import { createIncome, updateIncome } from "@/app/actions/incomes";
+import { getTags, setTransactionTags } from "@/app/actions/tags";
 import type { Income, SharedAccount, Wallet, Category } from "@/lib/database.types";
+import { TagSelector } from "@/components/tags/tag-selector";
 
 type IncomeFormProps = {
   open: boolean;
@@ -45,6 +47,8 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
   const [sharedAccountId, setSharedAccountId] = useState<string | null>(null);
   const [walletId, setWalletId] = useState<string>("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const isEdit = Boolean(editIncome?.id);
 
@@ -57,7 +61,13 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
       setSharedAccountId(editIncome?.shared_account_id ?? null);
       setWalletId(editIncome?.wallet_id ?? "");
       setCategoryId(editIncome?.category_id ?? null);
+      setSelectedTagIds(editIncome?.tags?.map(t => t.id) ?? []);
       setError(null);
+
+      // Fetch tags
+      getTags().then(res => {
+        if (res.data) setAvailableTags(res.data);
+      });
     }
   }, [open, editIncome]);
 
@@ -76,15 +86,23 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
       ...(isEdit ? {} : { shared_account_id: sharedAccountId || null }),
     };
 
-    const result = isEdit
+    const result: any = isEdit
       ? await updateIncome(editIncome!.id, formData)
       : await createIncome(formData);
 
-    setLoading(false);
     if (result.error) {
+      setLoading(false);
       setError(result.error);
       return;
     }
+
+    // Save tags
+    const transactionId = isEdit ? editIncome!.id : result.data?.id;
+    if (transactionId) {
+      await setTransactionTags(transactionId, selectedTagIds, "income");
+    }
+
+    setLoading(false);
     onOpenChange(false);
     router.refresh();
   }
@@ -208,6 +226,18 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Ej. Sueldo, freelance..."
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Etiquetas</Label>
+            <TagSelector
+              allTags={availableTags}
+              selectedTagIds={selectedTagIds}
+              onToggleTag={(id) => {
+                setSelectedTagIds(prev =>
+                  prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+                );
+              }}
             />
           </div>
           <DialogFooter>

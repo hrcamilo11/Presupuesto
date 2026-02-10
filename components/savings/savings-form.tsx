@@ -74,6 +74,11 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
             data.type = "recurring";
         }
 
+        // Ensure shared_account_id is null if it's empty string
+        if (!data.shared_account_id) {
+            data.shared_account_id = null;
+        }
+
         const result = await createSavingsGoal(data);
 
         if (result.error) {

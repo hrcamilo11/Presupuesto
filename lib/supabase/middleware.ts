@@ -40,6 +40,11 @@ export async function updateSession(request: NextRequest) {
     pathname === "/subscriptions" ||
     pathname === "/loans" ||
     pathname === "/taxes" ||
+    pathname === "/wallets" ||
+    pathname === "/savings" ||
+    pathname === "/tags" ||
+    pathname === "/shared" ||
+    pathname.startsWith("/shared/") ||
     pathname === "/update-password" ||
     pathname === "/";
 
