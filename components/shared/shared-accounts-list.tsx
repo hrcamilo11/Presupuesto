@@ -45,13 +45,28 @@ export function SharedAccountsList({ initialAccounts }: Props) {
     setCreateLoading(true);
     const result = await createSharedAccount(newName.trim());
     setCreateLoading(false);
+
     if (result.error) {
       setCreateError(result.error);
       return;
     }
+
     setCreateOpen(false);
     setNewName("");
     router.refresh();
+
+    // Show invite dialog immediately
+    if (result.data) {
+      const inviteResult = await createInvite(result.data.id, typeof window !== "undefined" ? window.location.origin : undefined);
+      if (inviteResult.link) {
+        setInviteLink({
+          accountName: result.data.name,
+          link: inviteResult.link,
+          code: result.data.invite_code
+        });
+      }
+    }
+
     const { data } = await getMySharedAccounts();
     if (data) setAccounts(data);
   }

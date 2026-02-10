@@ -56,23 +56,41 @@ export async function createSharedAccount(name: string) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "No autenticado" };
+  if (!user) return { data: null, error: "No autenticado" };
   const trimmed = name.trim();
-  if (!trimmed) return { error: "El nombre es obligatorio" };
+  if (!trimmed) return { data: null, error: "El nombre es obligatorio" };
 
   // Generate 6-char random code
   const inviteCode = randomBytes(3).toString("hex").toUpperCase();
 
-  const { error } = await supabase.from("shared_accounts").insert({
-    name: trimmed,
-    created_by: user.id,
-    invite_code: inviteCode,
+  // 1. Create the account
+  const { data: account, error: accountError } = await supabase
+    .from("shared_accounts")
+    .insert({
+      name: trimmed,
+      created_by: user.id,
+      invite_code: inviteCode,
+    })
+    .select()
+    .single();
+
+  if (accountError) return { data: null, error: accountError.message };
+
+  // 2. Add creator as admin member
+  const { error: memberError } = await supabase.from("shared_account_members").insert({
+    shared_account_id: account.id,
+    user_id: user.id,
+    role: "admin",
   });
 
-  if (error) return { error: error.message };
+  if (memberError) {
+    // We might want to handle this better, but for now we return the error
+    return { data: null, error: `Cuenta creada pero error al añadirte como miembro: ${memberError.message}` };
+  }
+
   revalidatePath("/shared");
   revalidatePath("/dashboard");
-  return { error: null };
+  return { data: account, error: null };
 }
 
 export async function joinSharedAccount(code: string) {
