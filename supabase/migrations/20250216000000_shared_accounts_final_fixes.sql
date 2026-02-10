@@ -9,6 +9,7 @@ DROP POLICY IF EXISTS "Owner can update shared account" ON public.shared_account
 DROP POLICY IF EXISTS "Owner can delete shared account" ON public.shared_accounts;
 
 -- 2. Refined helper functions (SECURITY DEFINER to break recursion)
+DROP FUNCTION IF EXISTS public.user_shared_account_ids(UUID) CASCADE;
 CREATE OR REPLACE FUNCTION public.user_shared_account_ids(uid UUID)
 RETURNS SETOF UUID AS $$
   -- Accounts where user is a member
@@ -18,6 +19,7 @@ RETURNS SETOF UUID AS $$
   SELECT id FROM public.shared_accounts WHERE created_by = uid;
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
+DROP FUNCTION IF EXISTS public.is_shared_account_owner(UUID, UUID) CASCADE;
 CREATE OR REPLACE FUNCTION public.is_shared_account_owner(p_account_id UUID, p_uid UUID)
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
