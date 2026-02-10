@@ -101,6 +101,24 @@ export async function createSavingsGoal(formData: SavingsGoalSchema) {
 
         if (!user) return { error: "No autenticado" };
 
+        // Optional: validate wallet balance for recurring plans on creation
+        if (data.type === "recurring" && data.plan?.wallet_id) {
+            const { data: walletRow, error: walletError } = await supabase
+                .from("wallets")
+                .select("balance")
+                .eq("id", data.plan.wallet_id)
+                .single();
+
+            if (walletError) {
+                console.error("Error fetching wallet for savings plan:", walletError);
+                return { error: "No se pudo verificar el saldo de la cuenta de origen." };
+            }
+
+            if ((walletRow?.balance ?? 0) < Number(data.plan.amount)) {
+                return { error: "La cuenta seleccionada no tiene fondos suficientes para el monto de ahorro recurrente." };
+            }
+        }
+
         // Log what we're about to insert
         const insertData = {
             user_id: user.id,
@@ -173,6 +191,22 @@ export async function contributeToSavings(formData: {
     } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
 
+    // Validate wallet balance before calling RPC
+    const { data: walletRow, error: walletError } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("id", formData.wallet_id)
+        .single();
+
+    if (walletError) {
+        console.error("Error fetching wallet for contribution:", walletError);
+        return { error: "No se pudo verificar el saldo de la cuenta de origen." };
+    }
+
+    if ((walletRow?.balance ?? 0) < formData.amount) {
+        return { error: "Fondos insuficientes en la cuenta seleccionada para este ahorro." };
+    }
+
     // Call the RPC function
     const { error } = await supabase.rpc("contribute_to_savings", {
         p_savings_goal_id: formData.savings_goal_id,
@@ -241,6 +275,22 @@ export async function createSavingsPlan(formData: {
     } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
 
+    // Validate wallet balance for the plan amount
+    const { data: walletRow, error: walletError } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("id", formData.wallet_id)
+        .single();
+
+    if (walletError) {
+        console.error("Error fetching wallet for savings plan:", walletError);
+        return { error: "No se pudo verificar el saldo de la cuenta de origen." };
+    }
+
+    if ((walletRow?.balance ?? 0) < formData.amount) {
+        return { error: "La cuenta seleccionada no tiene fondos suficientes para este plan de ahorro." };
+    }
+
     const { error } = await supabase.from("savings_plans").insert({
         user_id: user.id,
         savings_goal_id: formData.savings_goal_id,
@@ -252,6 +302,63 @@ export async function createSavingsPlan(formData: {
 
     if (error) return { error: error.message };
     revalidatePath("/savings");
+    return { error: null };
+}
+
+export async function contributeToSharedSavings(input: {
+    shared_savings_goal_id: string;
+    wallet_id: string;
+    amount: number;
+    date: string;
+    notes?: string;
+}) {
+    const parsed = contributionSchema.safeParse({
+        savings_goal_id: input.shared_savings_goal_id,
+        wallet_id: input.wallet_id,
+        amount: input.amount,
+        date: input.date,
+        notes: input.notes,
+    });
+
+    if (!parsed.success) {
+        return { error: parsed.error.issues[0].message };
+    }
+
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "No autenticado" };
+
+    // Validate wallet balance
+    const { data: walletRow, error: walletError } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("id", input.wallet_id)
+        .single();
+
+    if (walletError) {
+        console.error("Error fetching wallet for shared savings contribution:", walletError);
+        return { error: "No se pudo verificar el saldo de la cuenta de origen." };
+    }
+
+    if ((walletRow?.balance ?? 0) < input.amount) {
+        return { error: "Fondos insuficientes en la cuenta seleccionada para este ahorro compartido." };
+    }
+
+    const { error } = await supabase.rpc("contribute_to_shared_savings", {
+        p_shared_goal_id: input.shared_savings_goal_id,
+        p_wallet_id: input.wallet_id,
+        p_amount: input.amount,
+        p_date: input.date,
+        p_notes: input.notes || "",
+    });
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/savings");
+    revalidatePath("/wallets");
+    revalidatePath("/dashboard");
     return { error: null };
 }
 

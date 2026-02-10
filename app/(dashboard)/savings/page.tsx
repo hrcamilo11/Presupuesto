@@ -90,7 +90,7 @@ export default async function SavingsPage() {
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {sharedGoals.map((goal) => (
-                                <SharedSavingsCard key={goal.id} goal={goal} />
+                                <SharedSavingsCard key={goal.id} goal={goal} wallets={wallets} />
                             ))}
                         </div>
                     )}

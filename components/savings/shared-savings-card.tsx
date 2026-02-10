@@ -7,14 +7,17 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
-import type { SharedSavingsGoal } from "@/lib/database.types";
+import type { SharedSavingsGoal, Wallet } from "@/lib/database.types";
+import { SharedContributionForm } from "./shared-contribution-form";
 
 interface SharedSavingsCardProps {
   goal: SharedSavingsGoal;
+  wallets: Wallet[];
 }
 
-export function SharedSavingsCard({ goal }: SharedSavingsCardProps) {
+export function SharedSavingsCard({ goal, wallets }: SharedSavingsCardProps) {
   const percentage = useMemo(() => {
     if (goal.target_amount <= 0) return 0;
     return Math.min(100, (goal.current_amount / goal.target_amount) * 100);
@@ -53,6 +56,9 @@ export function SharedSavingsCard({ goal }: SharedSavingsCardProps) {
             : "Activa"}
         </p>
       </CardContent>
+      <CardFooter>
+        <SharedContributionForm goalId={goal.id} wallets={wallets} />
+      </CardFooter>
     </Card>
   );
 }
