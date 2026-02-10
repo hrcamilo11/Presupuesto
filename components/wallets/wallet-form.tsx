@@ -20,6 +20,7 @@ import {
     Form,
     FormControl,
     FormField,
+    FormDescription,
     FormItem,
     FormLabel,
     FormMessage,
@@ -46,6 +47,18 @@ const walletTypes = [
     { value: "investment", label: "Inversión" },
 ] as const;
 
+const CARD_BRANDS = [
+    { value: "visa", label: "Visa" },
+    { value: "mastercard", label: "Mastercard" },
+    { value: "amex", label: "American Express" },
+    { value: "diners", label: "Diners Club" },
+    { value: "discover", label: "Discover" },
+    { value: "jcb", label: "JCB" },
+    { value: "unionpay", label: "UnionPay" },
+    { value: "maestro", label: "Maestro" },
+    { value: "other", label: "Otra" },
+] as const;
+
 export function WalletForm() {
     const [open, setOpen] = useState(false);
     const router = useRouter();
@@ -64,6 +77,12 @@ export function WalletForm() {
     const isLoading = form.formState.isSubmitting;
     const watchType = form.watch("type");
     const isCredit = watchType === "credit";
+    const watchCreditMode = form.watch("credit_mode");
+    const isCreditCard = isCredit && watchCreditMode === "card";
+    const balanceLabel = isCredit ? "Deuda inicial" : "Balance inicial";
+    const balanceHelp = isCredit
+        ? "Si ya tienes saldo por pagar en esta tarjeta/crédito, colócalo aquí. Si está en $0, déjalo en 0."
+        : "Dinero disponible con el que inicias esta cuenta.";
 
     async function onSubmit(data: WalletSchema) {
         const result = await createWallet(data);
@@ -177,13 +196,14 @@ export function WalletForm() {
                             name="balance"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Balance Inicial</FormLabel>
+                                    <FormLabel>{balanceLabel}</FormLabel>
                                     <FormControl>
                                         <CurrencyInput
                                             placeholder="0"
                                             {...field}
                                         />
                                     </FormControl>
+                                    <FormDescription>{balanceHelp}</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -217,22 +237,37 @@ export function WalletForm() {
                                         )}
                                     />
 
-                                    <FormField
-                                        control={form.control}
-                                        name="card_brand"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Franquicia / marca</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        placeholder="Visa, MasterCard, Amex..."
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                    {isCreditCard ? (
+                                        <FormField
+                                            control={form.control}
+                                            name="card_brand"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Franquicia / marca</FormLabel>
+                                                    <Select
+                                                        onValueChange={field.onChange}
+                                                        defaultValue={field.value}
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Selecciona" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {CARD_BRANDS.map((b) => (
+                                                                <SelectItem key={b.value} value={b.value}>
+                                                                    {b.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    ) : (
+                                        <div />
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -258,6 +293,7 @@ export function WalletForm() {
                                                         }
                                                     />
                                                 </FormControl>
+                                                <FormDescription>Solo aplica para tarjetas.</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -275,82 +311,87 @@ export function WalletForm() {
                                                         {...field}
                                                     />
                                                 </FormControl>
+                                                <FormDescription>Límite máximo de crédito (no es tu deuda).</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="cash_advance_limit"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Cupo para avances (opcional)</FormLabel>
-                                                <FormControl>
-                                                    <CurrencyInput
-                                                        placeholder="0"
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                {isCreditCard && (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="cash_advance_limit"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Cupo para avances (opcional)</FormLabel>
+                                                        <FormControl>
+                                                            <CurrencyInput
+                                                                placeholder="0"
+                                                                {...field}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
 
-                                    <FormField
-                                        control={form.control}
-                                        name="purchase_interest_rate"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Tasa interés compras (% mensual)</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        placeholder="Ej. 2.3"
-                                                        value={field.value ?? ""}
-                                                        onChange={(e) =>
-                                                            field.onChange(
-                                                                e.target.value
-                                                                    ? Number(e.target.value)
-                                                                    : undefined,
-                                                            )
-                                                        }
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
+                                            <FormField
+                                                control={form.control}
+                                                name="purchase_interest_rate"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Tasa interés compras (% mensual)</FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                type="number"
+                                                                step="0.01"
+                                                                placeholder="Ej. 2.3"
+                                                                value={field.value ?? ""}
+                                                                onChange={(e) =>
+                                                                    field.onChange(
+                                                                        e.target.value
+                                                                            ? Number(e.target.value)
+                                                                            : undefined,
+                                                                    )
+                                                                }
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
 
-                                <FormField
-                                    control={form.control}
-                                    name="cash_advance_interest_rate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Tasa interés avances (% mensual)</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    placeholder="Ej. 2.8"
-                                                    value={field.value ?? ""}
-                                                    onChange={(e) =>
-                                                        field.onChange(
-                                                            e.target.value
-                                                                ? Number(e.target.value)
-                                                                : undefined,
-                                                        )
-                                                    }
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                        <FormField
+                                            control={form.control}
+                                            name="cash_advance_interest_rate"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Tasa interés avances (% mensual)</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            placeholder="Ej. 2.8"
+                                                            value={field.value ?? ""}
+                                                            onChange={(e) =>
+                                                                field.onChange(
+                                                                    e.target.value
+                                                                        ? Number(e.target.value)
+                                                                        : undefined,
+                                                                )
+                                                            }
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </>
+                                )}
                             </>
                         )}
 

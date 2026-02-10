@@ -63,7 +63,16 @@ export async function createWallet(formData: {
             formData.type === "credit" ? formData.cash_advance_interest_rate ?? null : null,
     });
 
-    if (error) return { error: error.message };
+    if (error) {
+        const msg = error.message || "Error al crear cuenta";
+        if (msg.includes("schema cache") && msg.includes("card_brand")) {
+            return {
+                error:
+                    "Tu Supabase aún no tiene aplicada la migración de tarjetas (columnas como card_brand, credit_limit, etc.) o el schema cache no se ha recargado. Aplica las migraciones y recarga el esquema, luego intenta de nuevo.",
+            };
+        }
+        return { error: msg };
+    }
     revalidatePath("/wallets"); // adjust path if needed
     revalidatePath("/dashboard");
     return { error: null };
