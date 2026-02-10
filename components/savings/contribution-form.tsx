@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -35,7 +35,7 @@ import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/use-toast";
 import { contributeToSavings } from "@/app/actions/savings";
-import { contributionSchema } from "@/lib/validations/savings";
+import { contributionSchema, type ContributionSchema } from "@/lib/validations/savings";
 import type { Wallet } from "@/lib/database.types";
 
 export function ContributionForm({ goalId, wallets }: { goalId: string; wallets: Wallet[] }) {
@@ -43,8 +43,12 @@ export function ContributionForm({ goalId, wallets }: { goalId: string; wallets:
     const router = useRouter();
     const { toast } = useToast();
 
-    const form = useForm({
-        resolver: zodResolver(contributionSchema),
+    const contributionResolver = zodResolver(
+        contributionSchema
+    ) as unknown as Resolver<ContributionSchema>;
+
+    const form = useForm<ContributionSchema>({
+        resolver: contributionResolver,
         defaultValues: {
             savings_goal_id: goalId,
             wallet_id: "",
@@ -55,10 +59,8 @@ export function ContributionForm({ goalId, wallets }: { goalId: string; wallets:
 
     const isLoading = form.formState.isSubmitting;
 
-    async function onSubmit(data: unknown) {
-        // El resolver de Zod ya valida y convierte tipos, así que aquí solo casteamos
-        const parsed = contributionSchema.parse(data);
-        const result = await contributeToSavings(parsed);
+    async function onSubmit(data: ContributionSchema) {
+        const result = await contributeToSavings(data);
 
         if (result.error) {
             toast({

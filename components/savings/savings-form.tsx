@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, type ControllerRenderProps } from "react-hook-form";
+import { useForm, type ControllerRenderProps, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -49,8 +49,12 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
     const router = useRouter();
     const { toast } = useToast();
 
+    const savingsResolver = zodResolver(
+        savingsGoalSchema
+    ) as unknown as Resolver<SavingsGoalSchema>;
+
     const form = useForm<SavingsGoalSchema>({
-        resolver: zodResolver(savingsGoalSchema),
+        resolver: savingsResolver,
         defaultValues: {
             name: "",
             target_amount: 0,
