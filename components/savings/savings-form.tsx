@@ -38,7 +38,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-import { savingsGoalSchema } from "@/lib/validations/savings";
+import { savingsGoalSchema, type SavingsGoalSchema } from "@/lib/validations/savings";
 import { createSavingsGoal } from "@/app/actions/savings";
 import { Wallet } from "@/lib/database.types";
 
@@ -49,7 +49,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
     const router = useRouter();
     const { toast } = useToast();
 
-    const form = useForm<any>({ // eslint-disable-line @typescript-eslint/no-explicit-any
+    const form = useForm<SavingsGoalSchema>({
         resolver: zodResolver(savingsGoalSchema),
         defaultValues: {
             name: "",
@@ -66,38 +66,57 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
 
     const isLoading = form.formState.isSubmitting;
 
-    async function onSubmit(data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-        if (!isRecurring) {
-            data.type = "manual";
-            delete data.plan;
-        } else {
-            data.type = "recurring";
-        }
+    async function onSubmit(data: any) {
+        console.log("Form submitted with data:", data);
+        try {
+            if (!isRecurring) {
+                data.type = "manual";
+                delete data.plan;
+            } else {
+                data.type = "recurring";
+                // If amount is still 0 or empty, try to ensure it's a number
+                if (data.plan) {
+                    data.plan.amount = Number(data.plan.amount);
+                    data.plan.day_of_period = Number(data.plan.day_of_period) || 1;
+                }
+            }
 
-        // Ensure shared_account_id is null if it's empty string
-        if (!data.shared_account_id) {
-            data.shared_account_id = null;
-        }
+            // Ensure shared_account_id is null if it's empty string
+            if (!data.shared_account_id) {
+                data.shared_account_id = null;
+            }
 
-        const result = await createSavingsGoal(data);
+            console.log("Calling createSavingsGoal server action...");
+            const result = await createSavingsGoal(data);
+            console.log("Server action finished with result:", result);
 
-        if (result.error) {
+            if (result.error) {
+                console.error("Server error:", result.error);
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: result.error,
+                });
+            } else {
+                console.log("Goal created success, resetting form");
+                toast({
+                    title: "Meta creada",
+                    description: isRecurring
+                        ? "Meta y plan de ahorro recurrente creados."
+                        : "Tu meta de ahorro ha sido creada.",
+                });
+                form.reset();
+                setIsRecurring(false);
+                setOpen(false);
+                router.refresh();
+            }
+        } catch (error: any) {
+            console.error("Client-side error in onSubmit:", error);
             toast({
                 variant: "destructive",
-                title: "Error",
-                description: result.error,
+                title: "Error inesperado",
+                description: error.message || "Ocurrió un error al procesar el formulario",
             });
-        } else {
-            toast({
-                title: "Meta creada",
-                description: isRecurring
-                    ? "Meta y plan de ahorro recurrente creados."
-                    : "Tu meta de ahorro ha sido creada.",
-            });
-            form.reset();
-            setIsRecurring(false);
-            setOpen(false);
-            router.refresh();
         }
     }
 
@@ -121,7 +140,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                         <FormField
                             control={form.control}
                             name="name"
-                            render={({ field }) => (
+                            render={({ field }: { field: any }) => (
                                 <FormItem>
                                     <FormLabel>Nombre de la meta</FormLabel>
                                     <FormControl>
@@ -135,7 +154,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                         <FormField
                             control={form.control}
                             name="target_amount"
-                            render={({ field }) => (
+                            render={({ field }: { field: any }) => (
                                 <FormItem>
                                     <FormLabel>Monto objetivo</FormLabel>
                                     <FormControl>
@@ -167,7 +186,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                 <FormField
                                     control={form.control}
                                     name="plan.wallet_id"
-                                    render={({ field }) => (
+                                    render={({ field }: { field: any }) => (
                                         <FormItem>
                                             <FormLabel>Cuenta de origen</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -193,7 +212,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                     <FormField
                                         control={form.control}
                                         name="plan.amount"
-                                        render={({ field }) => (
+                                        render={({ field }: { field: any }) => (
                                             <FormItem>
                                                 <FormLabel>Monto a ahorrar</FormLabel>
                                                 <FormControl>
@@ -209,7 +228,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                     <FormField
                                         control={form.control}
                                         name="plan.frequency"
-                                        render={({ field }) => (
+                                        render={({ field }: { field: any }) => (
                                             <FormItem>
                                                 <FormLabel>Frecuencia</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -235,7 +254,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                             <FormField
                                 control={form.control}
                                 name="target_date"
-                                render={({ field }) => (
+                                render={({ field }: { field: any }) => (
                                     <FormItem>
                                         <FormLabel>Fecha objetivo (Opcional)</FormLabel>
                                         <FormControl>

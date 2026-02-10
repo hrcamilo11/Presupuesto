@@ -22,66 +22,61 @@ export async function getSavingsGoals() {
     return { data: data ?? [], error: null };
 }
 
-export async function createSavingsGoal(formData: {
-    name: string;
-    target_amount: number;
-    target_date?: string;
-    type?: "manual" | "recurring";
-    shared_account_id?: string | null;
-    color?: string;
-    icon?: string;
-    plan?: {
-        wallet_id: string;
-        amount: number;
-        frequency: "weekly" | "monthly";
-        day_of_period: number;
-    };
-}) {
-    // ... validation (skipping zod for brevity of complex nested plan for now or updating schema)
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return { error: "No autenticado" };
+export async function createSavingsGoal(formData: any) {
+    try {
+        console.log("Creating savings goal with data:", formData);
+        const supabase = await createClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return { error: "No autenticado" };
 
-    // 1. Create the Goal
-    const { data: goal, error: goalError } = await supabase
-        .from("savings_goals")
-        .insert({
-            user_id: user.id,
-            name: formData.name,
-            target_amount: formData.target_amount,
-            target_date: formData.target_date || null,
-            type: formData.type || "manual",
-            shared_account_id: formData.shared_account_id || null,
-            color: formData.color,
-            icon: formData.icon,
-        })
-        .select()
-        .single();
+        // 1. Create the Goal
+        const { data: goal, error: goalError } = await supabase
+            .from("savings_goals")
+            .insert({
+                user_id: user.id,
+                name: formData.name,
+                target_amount: Number(formData.target_amount),
+                target_date: formData.target_date || null,
+                type: formData.type || "manual",
+                shared_account_id: formData.shared_account_id || null,
+                color: formData.color,
+                icon: formData.icon,
+            })
+            .select()
+            .single();
 
-    if (goalError) return { error: goalError.message };
-
-    // 2. Create the Plan if requested
-    if (formData.type === "recurring" && formData.plan && goal) {
-        const { error: planError } = await supabase.from("savings_plans").insert({
-            user_id: user.id,
-            savings_goal_id: goal.id,
-            wallet_id: formData.plan.wallet_id,
-            amount: formData.plan.amount,
-            frequency: formData.plan.frequency,
-            day_of_period: formData.plan.day_of_period,
-        });
-
-        if (planError) {
-            // Rollback goal? Or just warn? For now just return error.
-            return { error: `La meta fue creada pero el plan de ahorro falló: ${planError.message}` };
+        if (goalError) {
+            console.error("Error creating goal:", goalError);
+            return { error: goalError.message };
         }
-    }
 
-    revalidatePath("/savings");
-    revalidatePath("/dashboard");
-    return { error: null };
+        // 2. Create the Plan if requested
+        if (formData.type === "recurring" && formData.plan && goal) {
+            const { error: planError } = await supabase.from("savings_plans").insert({
+                user_id: user.id,
+                savings_goal_id: goal.id,
+                wallet_id: formData.plan.wallet_id,
+                amount: Number(formData.plan.amount),
+                frequency: formData.plan.frequency,
+                day_of_period: Number(formData.plan.day_of_period),
+            });
+
+            if (planError) {
+                console.error("Error creating plan:", planError);
+                return { error: `La meta fue creada pero el plan de ahorro falló: ${planError.message}` };
+            }
+        }
+
+        console.log("Savings goal created successfully");
+        revalidatePath("/savings");
+        revalidatePath("/dashboard");
+        return { error: null };
+    } catch (e: any) {
+        console.error("Critical error in createSavingsGoal:", e);
+        return { error: e.message || "Error interno del servidor" };
+    }
 }
 
 export async function contributeToSavings(formData: {
