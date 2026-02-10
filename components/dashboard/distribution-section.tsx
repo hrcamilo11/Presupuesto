@@ -380,18 +380,6 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
           </Tabs>
         )}
 
-        {allocations.length > 0 && (
-          <div className="mt-2 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-            {allocations.map((a) => (
-              <div key={a.label} className="flex items-center justify-between rounded-md bg-muted px-3 py-1.5">
-                <span className="truncate">{a.label}</span>
-                <span className="font-semibold text-foreground">
-                  ${formatNumber(a.amount)}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
