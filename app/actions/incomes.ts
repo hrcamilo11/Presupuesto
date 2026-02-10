@@ -5,6 +5,21 @@ import { revalidatePath } from "next/cache";
 import type { IncomeType, Income, Tag } from "@/lib/database.types";
 import { incomeSchema } from "@/lib/validations/income";
 
+async function adjustWalletBalance(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  walletId: string | null | undefined,
+  delta: number
+) {
+  if (!walletId || delta === 0) return;
+  const { error } = await supabase.rpc("adjust_wallet_balance", {
+    p_wallet_id: walletId,
+    p_delta: delta,
+  });
+  if (error) {
+    console.error("Error adjusting wallet balance:", error);
+  }
+}
+
 export async function createIncome(formData: {
   amount: number;
   currency: string;
@@ -41,6 +56,9 @@ export async function createIncome(formData: {
   }).select().single();
 
   if (error) return { error: error.message };
+
+  // Reflect income in wallet balance
+  await adjustWalletBalance(supabase, formData.wallet_id, formData.amount);
   revalidatePath("/incomes");
   revalidatePath("/dashboard");
   return { data: income, error: null };
@@ -71,6 +89,15 @@ export async function updateIncome(
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
+  // Fetch previous income to adjust wallet balances correctly
+  const { data: previous, error: prevError } = await supabase
+    .from("incomes")
+    .select("amount, wallet_id")
+    .eq("id", id)
+    .single();
+
+  if (prevError) return { error: prevError.message };
+
   const { data: income, error } = await supabase
     .from("incomes")
     .update({
@@ -82,9 +109,15 @@ export async function updateIncome(
       category_id: formData.category_id || null,
       wallet_id: formData.wallet_id || null,
     })
-    .eq("id", id).select().single();
+    .eq("id", id)
+    .select()
+    .single();
 
   if (error) return { error: error.message };
+
+  // Revert previous wallet impact, then apply new one
+  await adjustWalletBalance(supabase, previous?.wallet_id, -Number(previous?.amount ?? 0));
+  await adjustWalletBalance(supabase, formData.wallet_id, formData.amount);
   revalidatePath("/incomes");
   revalidatePath("/dashboard");
   return { data: income, error: null };
@@ -97,9 +130,21 @@ export async function deleteIncome(id: string) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
+  // Fetch income before delete to adjust wallet
+  const { data: income, error: prevError } = await supabase
+    .from("incomes")
+    .select("amount, wallet_id")
+    .eq("id", id)
+    .single();
+
+  if (prevError) return { error: prevError.message };
+
   const { error } = await supabase.from("incomes").delete().eq("id", id);
 
   if (error) return { error: error.message };
+
+  // Remove income from wallet balance
+  await adjustWalletBalance(supabase, income?.wallet_id, -Number(income?.amount ?? 0));
   revalidatePath("/incomes");
   revalidatePath("/dashboard");
   return { error: null };

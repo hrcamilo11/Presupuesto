@@ -5,6 +5,21 @@ import { revalidatePath } from "next/cache";
 import type { ExpensePriority, Expense, Tag } from "@/lib/database.types";
 import { expenseSchema } from "@/lib/validations/expense";
 
+async function adjustWalletBalance(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  walletId: string | null | undefined,
+  delta: number
+) {
+  if (!walletId || delta === 0) return;
+  const { error } = await supabase.rpc("adjust_wallet_balance", {
+    p_wallet_id: walletId,
+    p_delta: delta,
+  });
+  if (error) {
+    console.error("Error adjusting wallet balance (expense):", error);
+  }
+}
+
 export async function createExpense(formData: {
   amount: number;
   currency: string;
@@ -41,6 +56,9 @@ export async function createExpense(formData: {
   }).select().single();
 
   if (error) return { error: error.message };
+
+  // Reflect expense in wallet balance (subtract)
+  await adjustWalletBalance(supabase, formData.wallet_id, -formData.amount);
   revalidatePath("/expenses");
   revalidatePath("/dashboard");
   return { data: expense, error: null };
@@ -72,6 +90,15 @@ export async function updateExpense(
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
+  // Fetch previous expense
+  const { data: previous, error: prevError } = await supabase
+    .from("expenses")
+    .select("amount, wallet_id")
+    .eq("id", id)
+    .single();
+
+  if (prevError) return { error: prevError.message };
+
   const { data: expense, error } = await supabase
     .from("expenses")
     .update({
@@ -83,9 +110,15 @@ export async function updateExpense(
       category_id: formData.category_id || null,
       wallet_id: formData.wallet_id || null,
     })
-    .eq("id", id).select().single();
+    .eq("id", id)
+    .select()
+    .single();
 
   if (error) return { error: error.message };
+
+  // Revert old amount, apply new one
+  await adjustWalletBalance(supabase, previous?.wallet_id, Number(previous?.amount ?? 0));
+  await adjustWalletBalance(supabase, formData.wallet_id, -formData.amount);
   revalidatePath("/expenses");
   revalidatePath("/dashboard");
   return { data: expense, error: null };
@@ -98,9 +131,21 @@ export async function deleteExpense(id: string) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
+  // Fetch expense before delete
+  const { data: expense, error: prevError } = await supabase
+    .from("expenses")
+    .select("amount, wallet_id")
+    .eq("id", id)
+    .single();
+
+  if (prevError) return { error: prevError.message };
+
   const { error } = await supabase.from("expenses").delete().eq("id", id);
 
   if (error) return { error: error.message };
+
+  // Add back amount to wallet balance
+  await adjustWalletBalance(supabase, expense?.wallet_id, Number(expense?.amount ?? 0));
   revalidatePath("/expenses");
   revalidatePath("/dashboard");
   return { error: null };
