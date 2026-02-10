@@ -19,15 +19,19 @@ import {
   createSharedAccount,
   createInvite,
   leaveSharedAccount,
+  deleteSharedAccount,
   joinSharedAccount,
   getMySharedAccounts,
 } from "@/app/actions/shared-accounts";
+import { createClient } from "@/lib/supabase/client";
+import { useEffect } from "react";
 
 type Props = { initialAccounts: SharedAccount[] };
 
 export function SharedAccountsList({ initialAccounts }: Props) {
   const router = useRouter();
   const [accounts, setAccounts] = useState(initialAccounts);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -38,6 +42,15 @@ export function SharedAccountsList({ initialAccounts }: Props) {
   const [joinLoading, setJoinLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState<{ accountName: string; link: string; code: string } | null>(null);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    async function getUsr() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setCurrentUserId(user.id);
+    }
+    getUsr();
+  }, []);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -108,6 +121,14 @@ export function SharedAccountsList({ initialAccounts }: Props) {
     setAccounts((prev) => prev.filter((a) => a.id !== accountId));
   }
 
+  async function handleDelete(accountId: string) {
+    if (!confirm("¿ESTÁS SEGURO? Esto eliminará la cuenta para TODOS los miembros. No se puede deshacer.")) return;
+    const result = await deleteSharedAccount(accountId);
+    if (result.error) return alert(result.error);
+    router.refresh();
+    setAccounts((prev) => prev.filter((a) => a.id !== accountId));
+  }
+
   return (
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -174,14 +195,25 @@ export function SharedAccountsList({ initialAccounts }: Props) {
                       <Link2 className="h-4 w-4" />
                       Enlace
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground"
-                      onClick={() => handleLeave(account.id)}
-                    >
-                      Salir
-                    </Button>
+                    {currentUserId === account.created_by ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => handleDelete(account.id)}
+                      >
+                        Eliminar
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground"
+                        onClick={() => handleLeave(account.id)}
+                      >
+                        Salir
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>

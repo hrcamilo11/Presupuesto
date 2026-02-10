@@ -90,34 +90,15 @@ export async function joinSharedAccount(code: string) {
   const trimmedCode = code.trim().toUpperCase();
   if (!trimmedCode) return { error: "El código es obligatorio" };
 
-  // Find account by code
-  const { data: account, error: findError } = await supabase
-    .from("shared_accounts")
-    .select("id, name")
-    .eq("invite_code", trimmedCode)
-    .single();
-
-  if (findError || !account) return { error: "Código inválido o cuenta no encontrada" };
-
-  // Check member limit (Max 5)
-  const { count, error: countError } = await supabase
-    .from("shared_account_members")
-    .select("*", { count: "exact", head: true })
-    .eq("shared_account_id", account.id);
-
-  if (countError) return { error: "Error al verificar el límite de miembros" };
-  if (count !== null && count >= 5) return { error: "Este grupo ya ha alcanzado el límite de 5 miembros" };
-
-  // Add member
-  const { error: insertError } = await supabase.from("shared_account_members").insert({
-    shared_account_id: account.id,
-    user_id: user.id,
-    role: "member",
+  // Use the secure RPC function to join
+  const { error } = await supabase.rpc("join_shared_account_by_code", {
+    p_code: trimmedCode,
   });
 
-  if (insertError) {
-    if (insertError.code === "23505") return { error: "Ya eres miembro de esta cuenta" };
-    return { error: insertError.message };
+  if (error) {
+    if (error.message.includes("max 5")) return { error: "Este grupo ya ha alcanzado el límite de 5 miembros" };
+    if (error.message.includes("Invalid")) return { error: "Código inválido o cuenta no encontrada" };
+    return { error: error.message };
   }
 
   revalidatePath("/shared");
@@ -157,36 +138,17 @@ export async function acceptInvite(token: string) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Inicia sesión para aceptar la invitación" };
 
-  const { data: invite, error: fetchError } = await supabase
-    .from("shared_account_invites")
-    .select("id, shared_account_id, expires_at")
-    .eq("token", token)
-    .single();
-
-  if (fetchError || !invite) return { error: "Enlace inválido o expirado" };
-  if (new Date(invite.expires_at) < new Date()) return { error: "Este enlace ha expirado" };
-
-  // Check member limit (Max 5)
-  const { count, error: countError } = await supabase
-    .from("shared_account_members")
-    .select("*", { count: "exact", head: true })
-    .eq("shared_account_id", invite.shared_account_id);
-
-  if (countError) return { error: "Error al verificar el límite de miembros" };
-  if (count !== null && count >= 5) return { error: "Este grupo ya ha alcanzado el límite de 5 miembros" };
-
-  const { error: insertError } = await supabase.from("shared_account_members").insert({
-    shared_account_id: invite.shared_account_id,
-    user_id: user.id,
-    role: "member",
+  // Use the secure RPC function to accept invite
+  const { error } = await supabase.rpc("accept_shared_account_invite", {
+    p_token: token,
   });
 
-  if (insertError) {
-    if (insertError.code === "23505") return { error: "Ya eres miembro de esta cuenta" };
-    return { error: insertError.message };
+  if (error) {
+    if (error.message.includes("expired")) return { error: "Enlace inválido o expirado" };
+    if (error.message.includes("max 5")) return { error: "Este grupo ya ha alcanzado el límite de 5 miembros" };
+    return { error: error.message };
   }
 
-  await supabase.from("shared_account_invites").delete().eq("id", invite.id);
   revalidatePath("/shared");
   revalidatePath("/dashboard");
   revalidatePath("/invite");
@@ -205,6 +167,26 @@ export async function leaveSharedAccount(sharedAccountId: string) {
     .delete()
     .eq("shared_account_id", sharedAccountId)
     .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/shared");
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
+export async function deleteSharedAccount(sharedAccountId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  // Delete the account. RLS will ensure only the owner can do this.
+  const { error } = await supabase
+    .from("shared_accounts")
+    .delete()
+    .eq("id", sharedAccountId)
+    .eq("created_by", user.id);
 
   if (error) return { error: error.message };
   revalidatePath("/shared");
