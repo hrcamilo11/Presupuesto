@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,14 +48,19 @@ export function CategoryForm({ open, onOpenChange, editCategory, type = "expense
 
     const isEdit = Boolean(editCategory?.id);
 
-    useState(() => {
+    useEffect(() => {
         if (editCategory) {
             setName(editCategory.name);
             setColor(editCategory.color);
             setIcon(editCategory.icon);
             setCatType(editCategory.type);
+        } else {
+            setName("");
+            setColor(COLORS[0]);
+            setIcon("Tag");
+            setCatType(type);
         }
-    });
+    }, [editCategory, type]);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();

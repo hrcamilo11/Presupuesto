@@ -41,6 +41,7 @@ export async function updateSession(request: NextRequest) {
     pathname === "/loans" ||
     pathname === "/taxes" ||
     pathname === "/wallets" ||
+    pathname === "/categories" ||
     pathname === "/savings" ||
     pathname === "/tags" ||
     pathname === "/shared" ||

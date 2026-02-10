@@ -8,6 +8,12 @@ export const savingsGoalSchema = z.object({
     shared_account_id: z.string().optional().nullable(),
     color: z.string().optional(),
     icon: z.string().optional(),
+    plan: z.object({
+        wallet_id: z.string().uuid("Selecciona una cuenta de origen"),
+        amount: z.number().positive("El monto debe ser mayor a 0"),
+        frequency: z.enum(["weekly", "monthly"]),
+        day_of_period: z.number().min(1).max(31),
+    }).optional(),
 });
 
 export const contributionSchema = z.object({

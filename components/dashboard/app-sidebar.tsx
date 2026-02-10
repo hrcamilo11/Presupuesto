@@ -14,6 +14,7 @@ import {
   Wallet,
   PiggyBank,
   Tag,
+  LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/loans", label: "Préstamos", icon: Landmark },
   { href: "/taxes", label: "Impuestos", icon: Receipt },
   { href: "/wallets", label: "Cuentas", icon: Wallet },
+  { href: "/categories", label: "Categorías", icon: LayoutGrid },
   { href: "/savings", label: "Ahorros", icon: PiggyBank },
   { href: "/tags", label: "Etiquetas", icon: Tag },
   { href: "/shared", label: "Cuentas compartidas", icon: UsersRound },
