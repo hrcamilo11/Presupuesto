@@ -108,6 +108,7 @@ export default async function DashboardPage({
     taxRes,
     walletsRes,
     savingsRes,
+    sharedSavingsRes,
     budgetsRes,
     sharedAccountsRes,
     trendIncomes,
@@ -119,6 +120,7 @@ export default async function DashboardPage({
     supabase.from("tax_obligations").select("amount, paid_at"),
     supabase.from("wallets").select("*").order("balance", { ascending: false }),
     supabase.from("savings_goals").select("*").order("target_date", { ascending: true }),
+    supabase.from("shared_savings_goals").select("*").order("created_at", { ascending: false }),
     getBudgets(),
     getMySharedAccounts(),
     Promise.all(
@@ -153,6 +155,7 @@ export default async function DashboardPage({
   const taxObligations = (taxRes.data ?? []) as any[];
   const wallets = (walletsRes.data ?? []) as any[];
   const savingsGoals = (savingsRes.data ?? []) as any[];
+  const sharedSavingsGoals = (sharedSavingsRes.data ?? []) as any[];
   const budgets = (budgetsRes.data ?? []) as any[];
   const sharedAccounts = (sharedAccountsRes.data ?? []) as any[];
 
@@ -160,6 +163,15 @@ export default async function DashboardPage({
   const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const balance = totalIncome - totalExpense;
   const savingsRate = totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0;
+
+  const totalPersonalSavings = savingsGoals.reduce(
+    (s, g) => s + Number(g.current_amount ?? 0),
+    0
+  );
+  const sharedAccountIds = new Set(sharedAccounts.map((a: any) => a.id));
+  const totalSharedSavings = sharedSavingsGoals
+    .filter((g: any) => !g.shared_account_id || sharedAccountIds.has(g.shared_account_id))
+    .reduce((s, g) => s + Number(g.current_amount ?? 0), 0);
 
   const subscriptionsMonthly = subscriptions.reduce((s, sub) => {
     const amt = Number(sub.amount);
@@ -212,6 +224,22 @@ export default async function DashboardPage({
         totalIncome={totalIncome}
         totalExpense={totalExpense}
       />
+
+      {/* Totales de ahorro: no se suman al balance, solo informativos */}
+      <section className="rounded-lg border bg-card px-4 py-3 text-xs sm:text-sm flex flex-wrap gap-4">
+        <div className="flex items-baseline gap-1">
+          <span className="font-medium">Ahorro personal:</span>
+          <span className="tabular-nums">
+            ${totalPersonalSavings.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+          </span>
+        </div>
+        <div className="flex items-baseline gap-1">
+          <span className="font-medium">Ahorro grupal:</span>
+          <span className="tabular-nums">
+            ${totalSharedSavings.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+          </span>
+        </div>
+      </section>
 
       {dashboardSettings.show_summary_cards !== false && (
         <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
