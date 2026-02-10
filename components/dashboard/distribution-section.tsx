@@ -17,11 +17,6 @@ type TagSlice = {
   expense: number;
 };
 
-type AllocationInfo = {
-  label: string;
-  amount: number;
-};
-
 type AccountSlice = {
   name: string;
   income: number;
@@ -31,7 +26,6 @@ type AccountSlice = {
 interface DistributionSectionProps {
   categories: CategorySlice[];
   tags: TagSlice[];
-  allocations: AllocationInfo[];
   accounts: AccountSlice[];
 }
 
@@ -39,7 +33,7 @@ const CATEGORY_COLORS = ["#0ea5e9", "#8b5cf6", "#f97316", "#22c55e", "#e11d48", 
 const TAG_COLORS = ["#22c55e", "#f97316", "#a855f7", "#eab308", "#06b6d4", "#f43f5e"];
 const ACCOUNT_COLORS = ["#0f766e", "#2563eb", "#f97316", "#a855f7", "#22c55e", "#dc2626"];
 
-export function DistributionSection({ categories, tags, allocations, accounts }: DistributionSectionProps) {
+export function DistributionSection({ categories, tags, accounts }: DistributionSectionProps) {
   const incomeByCategory = categories.filter((c) => c.income > 0).map((c) => ({
     name: c.name,
     value: Math.round(c.income),

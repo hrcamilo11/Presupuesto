@@ -338,13 +338,6 @@ export default async function DashboardPage({
     .filter((t) => t.income > 0 || t.expense > 0)
     .sort((a, b) => b.income + b.expense - (a.income + a.expense));
 
-  const allocations = [
-    { label: "Ahorro personal (saldo actual)", amount: totalPersonalSavings },
-    { label: "Ahorro grupal (saldo actual)", amount: totalSharedSavings },
-    { label: "Suscripciones (equivalente mensual)", amount: subscriptionsMonthly },
-    { label: "Impuestos pendientes", amount: taxPending },
-  ].filter((a) => a.amount > 0);
-
   // Distribución por cuenta (wallet)
   type AccountAgg = { name: string; income: number; expense: number };
   const accountMap = new Map<string, AccountAgg>();
@@ -676,7 +669,6 @@ export default async function DashboardPage({
           <DistributionSection
             categories={categoryDistribution}
             tags={tagDistribution}
-            allocations={allocations}
             accounts={accountsDistribution}
           />
         );
