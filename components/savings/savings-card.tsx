@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDateYMD } from "@/lib/utils";
 import {
     Card,
     CardContent,
@@ -98,7 +98,7 @@ export function SavingsCard({ goal, wallets }: SavingsCardProps) {
                         </div>
                         {goal.target_date && (
                             <div className="text-xs text-muted-foreground text-right">
-                                Meta: {new Date(goal.target_date).toLocaleDateString()}
+                                Meta: {formatDateYMD(goal.target_date as unknown as string)}
                             </div>
                         )}
                     </div>

@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Target, Calendar } from "lucide-react";
 import type { SharedSavingsGoal } from "@/lib/database.types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDateYMD } from "@/lib/utils";
 
 type Props = {
     goal: SharedSavingsGoal;
@@ -46,7 +46,7 @@ export function SharedSavingsGoalCard({ goal }: Props) {
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground">
                     <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {goal.deadline ? new Date(goal.deadline).toLocaleDateString() : 'Sin fecha límite'}
+                        {goal.deadline ? formatDateYMD(goal.deadline as unknown as string) : 'Sin fecha límite'}
                     </div>
                     {remaining > 0 && (
                         <span>Faltan {formatCurrency(remaining)}</span>

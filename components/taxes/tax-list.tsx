@@ -24,6 +24,7 @@ import { deleteTaxObligation, markTaxPaid } from "@/app/actions/tax";
 import { TaxForm } from "./tax-form";
 import type { TaxObligation } from "@/lib/database.types";
 import { Pencil, Trash2, Check } from "lucide-react";
+import { formatDateYMD, formatNumber } from "@/lib/utils";
 
 type Props = { taxes: TaxObligation[] };
 
@@ -56,7 +57,7 @@ export function TaxList({ taxes }: Props) {
       </div>
       {totalPending > 0 && (
         <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-2">
-          Total pendiente por pagar: ${totalPending.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+          Total pendiente por pagar: ${formatNumber(totalPending)}
         </p>
       )}
       {taxes.length === 0 ? (
@@ -77,16 +78,16 @@ export function TaxList({ taxes }: Props) {
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium truncate">{t.name}</span>
                   <span className="text-sm font-semibold text-primary">
-                    ${Number(t.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                    ${formatNumber(Number(t.amount))}
                   </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
                   <span>{TAX_PERIOD_LABELS[t.period_type]}</span>
-                  <span>{new Date(t.due_date).toLocaleDateString("es")}</span>
+                  <span>{formatDateYMD(t.due_date)}</span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t.paid_at
-                    ? `Pagado ${new Date(t.paid_at).toLocaleDateString("es")}`
+                    ? `Pagado ${formatDateYMD(t.paid_at)}`
                     : "Pendiente"}
                 </p>
               </button>
@@ -111,13 +112,13 @@ export function TaxList({ taxes }: Props) {
                   <TableRow key={t.id}>
                     <TableCell className="font-medium">{t.name}</TableCell>
                     <TableCell>
-                      ${Number(t.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                      ${formatNumber(Number(t.amount))}
                     </TableCell>
                     <TableCell>{TAX_PERIOD_LABELS[t.period_type]}</TableCell>
-                    <TableCell>{new Date(t.due_date).toLocaleDateString("es")}</TableCell>
+                    <TableCell>{formatDateYMD(t.due_date)}</TableCell>
                     <TableCell>
                       {t.paid_at
-                        ? `Pagado ${new Date(t.paid_at).toLocaleDateString("es")}`
+                        ? `Pagado ${formatDateYMD(t.paid_at)}`
                         : "Pendiente"}
                     </TableCell>
                     <TableCell>
@@ -178,16 +179,16 @@ export function TaxList({ taxes }: Props) {
                 <span className="font-medium truncate">{selectedTax.name}</span>
                 <span className="text-muted-foreground">Monto:</span>
                 <span className="font-semibold">
-                  ${Number(selectedTax.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                  ${formatNumber(Number(selectedTax.amount))}
                 </span>
                 <span className="text-muted-foreground">Periodo:</span>
                 <span>{TAX_PERIOD_LABELS[selectedTax.period_type]}</span>
                 <span className="text-muted-foreground">Vencimiento:</span>
-                <span>{new Date(selectedTax.due_date).toLocaleDateString("es")}</span>
+                <span>{formatDateYMD(selectedTax.due_date)}</span>
                 <span className="text-muted-foreground">Estado:</span>
                 <span>
                   {selectedTax.paid_at
-                    ? `Pagado ${new Date(selectedTax.paid_at).toLocaleDateString("es")}`
+                    ? `Pagado ${formatDateYMD(selectedTax.paid_at)}`
                     : "Pendiente"}
                 </span>
               </div>

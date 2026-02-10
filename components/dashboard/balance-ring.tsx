@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-function formatBalance(n: number): string {
-  const value = Math.abs(n);
-  if (!Number.isFinite(value)) return "0.00";
-  return value.toLocaleString("es-CO", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
+import { formatNumber } from "@/lib/utils";
 
 type Props = {
   balance: number;
@@ -76,7 +71,7 @@ export function BalanceRing({ balance, totalIncome, totalExpense }: Props) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold tabular-nums">
-            ${formatBalance(balance)}
+            ${formatNumber(balance)}
           </span>
           <span className="text-xs text-muted-foreground">{balance >= 0 ? "Superávit" : "Déficit"}</span>
         </div>

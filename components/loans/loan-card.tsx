@@ -27,6 +27,7 @@ import type { Loan } from "@/lib/database.types";
 import type { LoanPayment } from "@/lib/database.types";
 import { Pencil, Trash2, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { LoanForm } from "./loan-form";
+import { formatDateYMD, formatNumber } from "@/lib/utils";
 
 type Props = {
   loan: Loan;
@@ -108,13 +109,13 @@ export function LoanCard({ loan, payments }: Props) {
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="text-sm text-muted-foreground">
-          Capital: ${Number(loan.principal).toLocaleString("es-CO", { minimumFractionDigits: 0 })} ·
+          Capital: ${formatNumber(Number(loan.principal))} ·
           Tasa: {Number(loan.annual_interest_rate)}% anual ·
-          Cuota: ${monthly.toLocaleString("es-CO", { minimumFractionDigits: 0 })}/mes
+          Cuota: ${formatNumber(monthly)}/mes
         </p>
         <p className="text-sm">
           Pagos realizados: {payments.length} / {loan.term_months} ·
-          Saldo restante: ${balanceRemaining.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+          Saldo restante: ${formatNumber(balanceRemaining)}
         </p>
         <div className="flex gap-2 pt-2">
           <Button size="sm" onClick={openRecordWithSuggested} disabled={!nextPayment}>
@@ -141,11 +142,11 @@ export function LoanCard({ loan, payments }: Props) {
                 {schedule.map((row) => (
                   <TableRow key={row.paymentNumber}>
                     <TableCell>{row.paymentNumber}</TableCell>
-                    <TableCell>{new Date(row.dueDate).toLocaleDateString("es")}</TableCell>
-                    <TableCell className="text-right">${row.payment.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</TableCell>
-                    <TableCell className="text-right">${row.principalPortion.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</TableCell>
-                    <TableCell className="text-right">${row.interestPortion.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</TableCell>
-                    <TableCell className="text-right">${row.balanceAfter.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</TableCell>
+                    <TableCell>{formatDateYMD(row.dueDate)}</TableCell>
+                    <TableCell className="text-right">${formatNumber(row.payment)}</TableCell>
+                    <TableCell className="text-right">${formatNumber(row.principalPortion)}</TableCell>
+                    <TableCell className="text-right">${formatNumber(row.interestPortion)}</TableCell>
+                    <TableCell className="text-right">${formatNumber(row.balanceAfter)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

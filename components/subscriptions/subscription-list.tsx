@@ -24,6 +24,7 @@ import { deleteSubscription, markSubscriptionPaid } from "@/app/actions/subscrip
 import { SubscriptionForm } from "./subscription-form";
 import type { Subscription } from "@/lib/database.types";
 import { Pencil, Trash2, Check } from "lucide-react";
+import { formatDateYMD, formatNumber } from "@/lib/utils";
 
 type Props = { subscriptions: Subscription[] };
 
@@ -77,12 +78,12 @@ export function SubscriptionList({ subscriptions }: Props) {
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium truncate">{s.name}</span>
                   <span className="text-sm font-semibold text-primary">
-                    ${Number(s.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                    ${formatNumber(Number(s.amount))}
                   </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
                   <span>{SUBSCRIPTION_FREQUENCY_LABELS[s.frequency]}</span>
-                  <span>{new Date(s.next_due_date).toLocaleDateString("es")}</span>
+                  <span>{formatDateYMD(s.next_due_date)}</span>
                 </div>
               </button>
             ))}
@@ -105,10 +106,10 @@ export function SubscriptionList({ subscriptions }: Props) {
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">{s.name}</TableCell>
                     <TableCell>
-                      ${Number(s.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                      ${formatNumber(Number(s.amount))}
                     </TableCell>
                     <TableCell>{SUBSCRIPTION_FREQUENCY_LABELS[s.frequency]}</TableCell>
-                    <TableCell>{new Date(s.next_due_date).toLocaleDateString("es")}</TableCell>
+                    <TableCell>{formatDateYMD(s.next_due_date)}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button
@@ -146,7 +147,7 @@ export function SubscriptionList({ subscriptions }: Props) {
           </div>
 
           <p className="mt-2 text-sm font-medium">
-            Total equivalente mensual: ${totalMonthly.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+            Total equivalente mensual: ${formatNumber(totalMonthly)}
           </p>
         </>
       )}
@@ -170,12 +171,12 @@ export function SubscriptionList({ subscriptions }: Props) {
                 <span className="font-medium truncate">{selectedSubscription.name}</span>
                 <span className="text-muted-foreground">Monto:</span>
                 <span className="font-semibold">
-                  ${Number(selectedSubscription.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                  ${formatNumber(Number(selectedSubscription.amount))}
                 </span>
                 <span className="text-muted-foreground">Frecuencia:</span>
                 <span>{SUBSCRIPTION_FREQUENCY_LABELS[selectedSubscription.frequency]}</span>
                 <span className="text-muted-foreground">Próximo pago:</span>
-                <span>{new Date(selectedSubscription.next_due_date).toLocaleDateString("es")}</span>
+                <span>{formatDateYMD(selectedSubscription.next_due_date)}</span>
               </div>
             </div>
           )}

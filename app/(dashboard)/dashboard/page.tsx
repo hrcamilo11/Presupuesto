@@ -22,6 +22,7 @@ import { ExportReportButton } from "@/components/dashboard/export-report-button"
 import { DashboardContextSelector } from "@/components/dashboard/dashboard-context-selector";
 import { getBudgets } from "@/app/actions/budgets";
 import { getMySharedAccounts } from "@/app/actions/shared-accounts";
+import { formatNumber } from "@/lib/utils";
 
 const DEFAULT_DASHBOARD_SETTINGS = {
   show_summary_cards: true,
@@ -33,12 +34,19 @@ const DEFAULT_DASHBOARD_SETTINGS = {
   show_quick_access: true,
 };
 
+const MONTHS_ES_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const MONTHS_ES_LONG = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
 function getMonthBounds(monthOffset: number) {
-  const d = new Date();
-  d.setMonth(d.getMonth() + monthOffset);
-  const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
-  const end = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10);
-  return { start, end, label: d.toLocaleString("es", { month: "short", year: "2-digit" }) };
+  const now = new Date();
+  const utcYear = now.getUTCFullYear();
+  const utcMonth = now.getUTCMonth() + monthOffset;
+  const base = new Date(Date.UTC(utcYear, utcMonth, 1));
+  const start = base.toISOString().slice(0, 10);
+  const endDate = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 0));
+  const end = endDate.toISOString().slice(0, 10);
+  const label = `${MONTHS_ES_SHORT[base.getUTCMonth()]} '${String(base.getUTCFullYear()).slice(-2)}`;
+  return { start, end, label };
 }
 
 export default async function DashboardPage({
@@ -82,7 +90,8 @@ export default async function DashboardPage({
   const selectedWalletId = searchParams.wallet;
   const context = searchParams.context || "global";
   const { start, end } = getMonthBounds(0);
-  const monthName = new Date().toLocaleString("es", { month: "long", year: "numeric" });
+  const now = new Date();
+  const monthName = `${MONTHS_ES_LONG[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
 
   // Base queries
   let incomeQuery = supabase.from("incomes").select("amount, income_type").gte("date", start).lte("date", end);
@@ -234,7 +243,7 @@ export default async function DashboardPage({
             </CardHeader>
             <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
               <p className="truncate text-lg font-bold text-green-600 dark:text-green-400 sm:text-2xl">
-                ${totalIncome.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                {formatNumber(totalIncome)}
               </p>
             </CardContent>
           </Card>
@@ -245,7 +254,7 @@ export default async function DashboardPage({
             </CardHeader>
             <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
               <p className="truncate text-lg font-bold text-red-600 dark:text-red-400 sm:text-2xl">
-                ${totalExpense.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                {formatNumber(totalExpense)}
               </p>
             </CardContent>
           </Card>
@@ -256,7 +265,7 @@ export default async function DashboardPage({
             </CardHeader>
             <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
               <p className={`truncate text-lg font-bold sm:text-2xl ${balance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                ${balance.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                {formatNumber(balance)}
               </p>
             </CardContent>
           </Card>
@@ -283,7 +292,7 @@ export default async function DashboardPage({
           </CardHeader>
           <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
             <p className="truncate text-lg font-bold text-emerald-600 dark:text-emerald-400 sm:text-2xl">
-              ${totalPersonalSavings.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+              {formatNumber(totalPersonalSavings)}
             </p>
           </CardContent>
         </Card>
@@ -297,7 +306,7 @@ export default async function DashboardPage({
           </CardHeader>
           <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
             <p className="truncate text-lg font-bold text-sky-600 dark:text-sky-400 sm:text-2xl">
-              ${totalSharedSavings.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+              {formatNumber(totalSharedSavings)}
             </p>
           </CardContent>
         </Card>
@@ -327,7 +336,7 @@ export default async function DashboardPage({
                       <span className="text-xs text-muted-foreground uppercase">{w.currency}</span>
                     </div>
                     <div className="text-xl font-bold">
-                      ${Number(w.balance).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                      {formatNumber(Number(w.balance))}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1 capitalize">
                       {w.type === 'debit' ? 'Débito' : w.type === 'credit' ? 'Crédito' : w.type === 'cash' ? 'Efectivo' : w.type}
@@ -363,7 +372,7 @@ export default async function DashboardPage({
                       <div className="flex justify-between text-sm">
                         <span className="font-medium truncate">{g.name}</span>
                         <span className="text-muted-foreground">
-                          ${Number(g.current_amount).toLocaleString("es-CO")} / ${Number(g.target_amount).toLocaleString("es-CO")}
+                          {formatNumber(Number(g.current_amount))} / {formatNumber(Number(g.target_amount))}
                         </span>
                       </div>
                       <div className="h-2 w-full rounded-full bg-secondary">
@@ -423,7 +432,7 @@ export default async function DashboardPage({
                 {(Object.entries(byIncomeType) as [IncomeType, number][]).map(([type, amount]) => (
                   <li key={type} className="flex justify-between gap-2">
                     <span className="truncate">{INCOME_TYPE_LABELS[type]}</span>
-                    <span className="shrink-0 tabular-nums">${amount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</span>
+                    <span className="shrink-0 tabular-nums">${formatNumber(amount)}</span>
                   </li>
                 ))}
               </ul>
@@ -444,7 +453,7 @@ export default async function DashboardPage({
                 {(Object.entries(byExpensePriority) as [ExpensePriority, number][]).map(([priority, amount]) => (
                   <li key={priority} className="flex justify-between gap-2">
                     <span className="truncate">{EXPENSE_PRIORITY_LABELS[priority]}</span>
-                    <span className="shrink-0 tabular-nums">${amount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</span>
+                    <span className="shrink-0 tabular-nums">${formatNumber(amount)}</span>
                   </li>
                 ))}
               </ul>
@@ -471,13 +480,13 @@ export default async function DashboardPage({
             </Button>
             <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
               <Link href="/subscriptions" className="flex flex-col items-center gap-1">
-                <span className="text-base font-semibold tabular-nums sm:text-lg">${subscriptionsMonthly.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
+                <span className="text-base font-semibold tabular-nums sm:text-lg">${formatNumber(subscriptionsMonthly)}</span>
                 <span className="text-center text-xs text-muted-foreground">Suscripciones / mes</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
               <Link href="/taxes" className="flex flex-col items-center gap-1">
-                <span className="text-base font-semibold tabular-nums text-amber-600 sm:text-lg">${taxPending.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
+                <span className="text-base font-semibold tabular-nums text-amber-600 sm:text-lg">${formatNumber(taxPending)}</span>
                 <span className="text-center text-xs text-muted-foreground">Impuestos pendientes</span>
               </Link>
             </Button>

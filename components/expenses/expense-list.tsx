@@ -25,6 +25,7 @@ import { ExpenseForm } from "./expense-form";
 import type { Expense, SharedAccount, Wallet, Category } from "@/lib/database.types";
 import { Pencil, Trash2, MessageCircle } from "lucide-react";
 import { ExpenseComments } from "./expense-comments";
+import { formatDateYMD, formatNumber } from "@/lib/utils";
 
 type ExpenseListProps = {
   expenses: Expense[];
@@ -67,7 +68,7 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets, ca
     <>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">
-          Gastos — {new Date(year, month - 1).toLocaleString("es", { month: "long", year: "numeric" })}
+          Gastos — {month}/{year}
         </h2>
         <Button onClick={openCreate}>Agregar gasto</Button>
       </div>
@@ -89,10 +90,10 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets, ca
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium">
-                    {new Date(expense.date).toLocaleDateString("es")}
+                    {formatDateYMD(expense.date)}
                   </span>
                   <span className="text-sm font-semibold text-primary">
-                    ${Number(expense.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                    ${formatNumber(Number(expense.amount))}
                   </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -129,7 +130,7 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets, ca
                 {expenses.map((expense) => (
                   <TableRow key={expense.id}>
                     <TableCell>
-                      {new Date(expense.date).toLocaleDateString("es")}
+                      {formatDateYMD(expense.date)}
                     </TableCell>
                     <TableCell>{EXPENSE_PRIORITY_LABELS[expense.expense_priority]}</TableCell>
                     <TableCell>
@@ -139,7 +140,7 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets, ca
                       {expense.description || "—"}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      ${Number(expense.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                      ${formatNumber(Number(expense.amount))}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
@@ -176,7 +177,7 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets, ca
           </div>
 
           <p className="mt-2 text-sm font-medium">
-            Total: ${totalAmount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+            Total: ${formatNumber(totalAmount)}
           </p>
         </>
       )}
@@ -206,9 +207,15 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets, ca
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="text-muted-foreground">Monto:</span>
-              <span className="font-bold">${Number(selectedExpenseForComments?.amount || 0).toLocaleString("es-CO", { minimumFractionDigits: 0 })}</span>
+              <span className="font-bold">
+                ${formatNumber(Number(selectedExpenseForComments?.amount || 0))}
+              </span>
               <span className="text-muted-foreground">Fecha:</span>
-              <span>{selectedExpenseForComments?.date ? new Date(selectedExpenseForComments.date).toLocaleDateString("es") : "—"}</span>
+              <span>
+                {selectedExpenseForComments?.date
+                  ? formatDateYMD(selectedExpenseForComments.date)
+                  : "—"}
+              </span>
               <span className="text-muted-foreground">Categoría:</span>
               <span>{categories.find(c => c.id === selectedExpenseForComments?.category_id)?.name || "—"}</span>
             </div>

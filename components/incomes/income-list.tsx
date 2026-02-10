@@ -24,6 +24,7 @@ import { deleteIncome } from "@/app/actions/incomes";
 import { IncomeForm } from "./income-form";
 import type { Income, SharedAccount, Wallet, Category } from "@/lib/database.types";
 import { Pencil, Trash2 } from "lucide-react";
+import { formatDateYMD, formatNumber } from "@/lib/utils";
 
 type IncomeListProps = {
   incomes: Income[];
@@ -66,7 +67,7 @@ export function IncomeList({ incomes, year, month, sharedAccounts, wallets, cate
     <>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">
-          Ingresos — {new Date(year, month - 1).toLocaleString("es", { month: "long", year: "numeric" })}
+          Ingresos — {month}/{year}
         </h2>
         <Button onClick={openCreate}>Agregar ingreso</Button>
       </div>
@@ -88,10 +89,10 @@ export function IncomeList({ incomes, year, month, sharedAccounts, wallets, cate
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium">
-                    {new Date(income.date).toLocaleDateString("es")}
+                    {formatDateYMD(income.date)}
                   </span>
                   <span className="text-sm font-semibold text-primary">
-                    ${Number(income.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                    ${formatNumber(Number(income.amount))}
                   </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -128,7 +129,7 @@ export function IncomeList({ incomes, year, month, sharedAccounts, wallets, cate
                 {incomes.map((income) => (
                   <TableRow key={income.id}>
                     <TableCell>
-                      {new Date(income.date).toLocaleDateString("es")}
+                      {formatDateYMD(income.date)}
                     </TableCell>
                     <TableCell>{INCOME_TYPE_LABELS[income.income_type]}</TableCell>
                     <TableCell>
@@ -138,7 +139,7 @@ export function IncomeList({ incomes, year, month, sharedAccounts, wallets, cate
                       {income.description || "—"}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      ${Number(income.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                      ${formatNumber(Number(income.amount))}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
@@ -167,7 +168,7 @@ export function IncomeList({ incomes, year, month, sharedAccounts, wallets, cate
           </div>
 
           <p className="mt-2 text-sm font-medium">
-            Total: ${total.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+            Total: ${formatNumber(total)}
           </p>
         </>
       )}
@@ -199,12 +200,10 @@ export function IncomeList({ incomes, year, month, sharedAccounts, wallets, cate
             <div className="space-y-3 text-sm">
               <div className="grid grid-cols-2 gap-2">
                 <span className="text-muted-foreground">Fecha:</span>
-                <span>
-                  {new Date(selectedIncome.date).toLocaleDateString("es")}
-                </span>
+                <span>{formatDateYMD(selectedIncome.date)}</span>
                 <span className="text-muted-foreground">Monto:</span>
                 <span className="font-semibold">
-                  ${Number(selectedIncome.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                  ${formatNumber(Number(selectedIncome.amount))}
                 </span>
                 <span className="text-muted-foreground">Tipo:</span>
                 <span>{INCOME_TYPE_LABELS[selectedIncome.income_type]}</span>

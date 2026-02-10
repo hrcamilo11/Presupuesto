@@ -15,6 +15,7 @@ import type { Budget, Category } from "@/lib/database.types";
 import { BudgetForm } from "./budget-form";
 import { deleteBudget } from "@/app/actions/budgets";
 import { useRouter } from "next/navigation";
+import { formatNumber } from "@/lib/utils";
 
 interface BudgetListProps {
     budgets: (Budget & { category: Category })[];
@@ -58,7 +59,7 @@ export function BudgetList({ budgets, categories }: BudgetListProps) {
                             </TableCell>
                             <TableCell className="capitalize">{b.period}</TableCell>
                             <TableCell className="text-right font-medium">
-                                ${Number(b.amount).toLocaleString("es-CO")}
+                                ${formatNumber(Number(b.amount))}
                             </TableCell>
                             <TableCell>
                                 <div className="flex gap-1">
