@@ -73,71 +73,109 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets, ca
       </div>
 
       {expenses.length === 0 ? (
-        <p className="text-muted-foreground py-8 text-center">
+        <p className="py-8 text-center text-muted-foreground">
           No hay gastos este mes. Agrega uno para comenzar.
         </p>
       ) : (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Prioridad</TableHead>
-                <TableHead>Categoría</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead className="text-right">Monto</TableHead>
-                <TableHead className="w-[100px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {expenses.map((expense) => (
-                <TableRow key={expense.id}>
-                  <TableCell>
+          {/* Vista móvil: cards sin tabla para evitar scroll horizontal */}
+          <div className="space-y-3 md:hidden">
+            {expenses.map((expense) => (
+              <button
+                key={expense.id}
+                type="button"
+                onClick={() => setSelectedExpenseForComments(expense)}
+                className="w-full rounded-lg border bg-card p-3 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium">
                     {new Date(expense.date).toLocaleDateString("es")}
-                  </TableCell>
-                  <TableCell>{EXPENSE_PRIORITY_LABELS[expense.expense_priority]}</TableCell>
-                  <TableCell>
-                    {categories.find(c => c.id === expense.category_id)?.name || "—"}
-                  </TableCell>
-                  <TableCell className="max-w-[200px] truncate">
-                    {expense.description || "—"}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
+                  </span>
+                  <span className="text-sm font-semibold text-primary">
                     ${Number(expense.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setSelectedExpenseForComments(expense)}
-                        title="Ver comentarios"
-                      >
-                        <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEdit(expense)}
-                        aria-label="Editar"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteId(expense.id)}
-                        aria-label="Eliminar"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <span className="truncate">
+                    {EXPENSE_PRIORITY_LABELS[expense.expense_priority]}
+                  </span>
+                  <span className="truncate">
+                    {categories.find((c) => c.id === expense.category_id)?.name || "—"}
+                  </span>
+                </div>
+                {expense.description && (
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {expense.description}
+                  </p>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Vista de escritorio: tabla completa */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Prioridad</TableHead>
+                  <TableHead>Categoría</TableHead>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead className="text-right">Monto</TableHead>
+                  <TableHead className="w-[100px]"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <p className="text-sm font-medium mt-2">
+              </TableHeader>
+              <TableBody>
+                {expenses.map((expense) => (
+                  <TableRow key={expense.id}>
+                    <TableCell>
+                      {new Date(expense.date).toLocaleDateString("es")}
+                    </TableCell>
+                    <TableCell>{EXPENSE_PRIORITY_LABELS[expense.expense_priority]}</TableCell>
+                    <TableCell>
+                      {categories.find((c) => c.id === expense.category_id)?.name || "—"}
+                    </TableCell>
+                    <TableCell className="max-w-[200px] truncate">
+                      {expense.description || "—"}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      ${Number(expense.amount).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setSelectedExpenseForComments(expense)}
+                          title="Ver comentarios"
+                        >
+                          <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEdit(expense)}
+                          aria-label="Editar"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteId(expense.id)}
+                          aria-label="Eliminar"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <p className="mt-2 text-sm font-medium">
             Total: ${totalAmount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
           </p>
         </>
