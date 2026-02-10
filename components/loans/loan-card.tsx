@@ -49,7 +49,6 @@ export function LoanCard({ loan, payments, wallets }: Props) {
   const [walletId, setWalletId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [walletId, setWalletId] = useState<string>("");
 
   const schedule = getAmortizationSchedule(
     Number(loan.principal),
