@@ -129,7 +129,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                         <FormField
                             control={form.control}
                             name="target_amount"
-                            render={({ field }: { field: any }) => (
+                            render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Monto objetivo</FormLabel>
                                     <FormControl>
@@ -163,7 +163,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                 <FormField
                                     control={form.control}
                                     name="plan.wallet_id"
-                                    render={({ field }: { field: any }) => (
+                                    render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Cuenta de origen</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -189,7 +189,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                     <FormField
                                         control={form.control}
                                         name="plan.amount"
-                                        render={({ field }: { field: any }) => (
+                                        render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Monto a ahorrar</FormLabel>
                                                 <FormControl>
@@ -207,7 +207,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                     <FormField
                                         control={form.control}
                                         name="plan.frequency"
-                                        render={({ field }: { field: any }) => (
+                                        render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Frecuencia</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -233,7 +233,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                             <FormField
                                 control={form.control}
                                 name="target_date"
-                                render={({ field }: { field: any }) => (
+                                render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Fecha objetivo (Opcional)</FormLabel>
                                         <FormControl>
