@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { formatNumber } from "@/lib/utils";
 
 type CategorySlice = {
@@ -142,11 +142,6 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               "",
                             ]}
                           />
-                          <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                            formatter={(val) => <span className="text-xs">{val}</span>}
-                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -190,11 +185,6 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               `$${formatNumber(value ?? 0)}`,
                               "",
                             ]}
-                          />
-                          <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                            formatter={(val) => <span className="text-xs">{val}</span>}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -244,11 +234,6 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               "",
                             ]}
                           />
-                          <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                            formatter={(val) => <span className="text-xs">{val}</span>}
-                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -292,11 +277,6 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               `$${formatNumber(value ?? 0)}`,
                               "",
                             ]}
-                          />
-                          <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                            formatter={(val) => <span className="text-xs">{val}</span>}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -346,11 +326,6 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               "",
                             ]}
                           />
-                          <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                            formatter={(val) => <span className="text-xs">{val}</span>}
-                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -394,11 +369,6 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               `$${formatNumber(value ?? 0)}`,
                               "",
                             ]}
-                          />
-                          <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                            formatter={(val) => <span className="text-xs">{val}</span>}
                           />
                         </PieChart>
                       </ResponsiveContainer>
