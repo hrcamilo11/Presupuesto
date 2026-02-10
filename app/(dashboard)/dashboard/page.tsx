@@ -225,22 +225,6 @@ export default async function DashboardPage({
         totalExpense={totalExpense}
       />
 
-      {/* Totales de ahorro: no se suman al balance, solo informativos */}
-      <section className="rounded-lg border bg-card px-4 py-3 text-xs sm:text-sm flex flex-wrap gap-4">
-        <div className="flex items-baseline gap-1">
-          <span className="font-medium">Ahorro personal:</span>
-          <span className="tabular-nums">
-            ${totalPersonalSavings.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
-          </span>
-        </div>
-        <div className="flex items-baseline gap-1">
-          <span className="font-medium">Ahorro grupal:</span>
-          <span className="tabular-nums">
-            ${totalSharedSavings.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
-          </span>
-        </div>
-      </section>
-
       {dashboardSettings.show_summary_cards !== false && (
         <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-green-500/20 bg-green-500/5 shadow-sm sm:min-h-[110px]">
@@ -287,6 +271,37 @@ export default async function DashboardPage({
           </Card>
         </section>
       )}
+
+      {/* Ahorros personales y grupales como cards, sin afectar el balance */}
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-emerald-500/20 bg-emerald-500/5 shadow-sm sm:min-h-[110px]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
+            <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+              Ahorro personal
+            </CardTitle>
+            <PiggyBank className="h-4 w-4 shrink-0 text-emerald-600" />
+          </CardHeader>
+          <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
+            <p className="truncate text-lg font-bold text-emerald-600 dark:text-emerald-400 sm:text-2xl">
+              ${totalPersonalSavings.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-sky-500/20 bg-sky-500/5 shadow-sm sm:min-h-[110px]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
+            <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+              Ahorro grupal
+            </CardTitle>
+            <Wallet className="h-4 w-4 shrink-0 text-sky-600" />
+          </CardHeader>
+          <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
+            <p className="truncate text-lg font-bold text-sky-600 dark:text-sky-400 sm:text-2xl">
+              ${totalSharedSavings.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+            </p>
+          </CardContent>
+        </Card>
+      </section>
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {dashboardSettings.show_budget_summary !== false && (
