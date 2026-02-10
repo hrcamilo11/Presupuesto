@@ -76,18 +76,6 @@ export async function createSharedAccount(name: string) {
 
   if (accountError) return { data: null, error: accountError.message };
 
-  // 2. Add creator as admin member
-  const { error: memberError } = await supabase.from("shared_account_members").insert({
-    shared_account_id: account.id,
-    user_id: user.id,
-    role: "admin",
-  });
-
-  if (memberError) {
-    // We might want to handle this better, but for now we return the error
-    return { data: null, error: `Cuenta creada pero error al añadirte como miembro: ${memberError.message}` };
-  }
-
   revalidatePath("/shared");
   revalidatePath("/dashboard");
   return { data: account, error: null };
