@@ -63,6 +63,8 @@ export function WalletForm() {
     const [open, setOpen] = useState(false);
     const [showBalanceHelp, setShowBalanceHelp] = useState(false);
     const [showLimitHelp, setShowLimitHelp] = useState(false);
+    const [showPurchaseRateHelp, setShowPurchaseRateHelp] = useState(false);
+    const [showAdvanceRateHelp, setShowAdvanceRateHelp] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -373,7 +375,19 @@ export function WalletForm() {
                                                 name="purchase_interest_rate"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Tasa interés compras (% mensual)</FormLabel>
+                                                        <FormLabel className="flex items-center justify-between">
+                                                            <span>Tasa interés compras (% mensual)</span>
+                                                            <button
+                                                                type="button"
+                                                                className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                                                                onClick={() =>
+                                                                    setShowPurchaseRateHelp((v) => !v)
+                                                                }
+                                                                aria-label="Ayuda sobre tasa de interés de compras"
+                                                            >
+                                                                <HelpCircle className="h-4 w-4" />
+                                                            </button>
+                                                        </FormLabel>
                                                         <FormControl>
                                                             <Input
                                                                 type="number"
@@ -389,6 +403,13 @@ export function WalletForm() {
                                                                 }
                                                             />
                                                         </FormControl>
+                                                        {showPurchaseRateHelp && (
+                                                            <div className="mt-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                                                Porcentaje mensual que el banco cobra sobre las
+                                                                compras diferidas que no se pagan en la fecha de
+                                                                corte.
+                                                            </div>
+                                                        )}
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -400,7 +421,19 @@ export function WalletForm() {
                                             name="cash_advance_interest_rate"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Tasa interés avances (% mensual)</FormLabel>
+                                                    <FormLabel className="flex items-center justify-between">
+                                                        <span>Tasa interés avances (% mensual)</span>
+                                                        <button
+                                                            type="button"
+                                                            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                                                            onClick={() =>
+                                                                setShowAdvanceRateHelp((v) => !v)
+                                                            }
+                                                            aria-label="Ayuda sobre tasa de interés de avances"
+                                                        >
+                                                            <HelpCircle className="h-4 w-4" />
+                                                        </button>
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="number"
@@ -416,6 +449,12 @@ export function WalletForm() {
                                                             }
                                                         />
                                                     </FormControl>
+                                                    {showAdvanceRateHelp && (
+                                                        <div className="mt-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                                            Porcentaje mensual que el banco cobra sobre el dinero
+                                                            que retiras como avance en efectivo de la tarjeta.
+                                                        </div>
+                                                    )}
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
