@@ -23,6 +23,16 @@ import { DashboardContextSelector } from "@/components/dashboard/dashboard-conte
 import { getBudgets } from "@/app/actions/budgets";
 import { getMySharedAccounts } from "@/app/actions/shared-accounts";
 
+const DEFAULT_DASHBOARD_SETTINGS = {
+  show_summary_cards: true,
+  show_budget_summary: true,
+  show_accounts_preview: true,
+  show_savings_goals: true,
+  show_trend_chart: true,
+  show_pie_charts: true,
+  show_quick_access: true,
+};
+
 function getMonthBounds(monthOffset: number) {
   const d = new Date();
   d.setMonth(d.getMonth() + monthOffset);
@@ -40,9 +50,34 @@ export default async function DashboardPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Load profile settings to drive defaults and dashboard customization
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("dashboard_settings, default_dashboard_context, default_wallet_id")
+    .eq("id", user.id)
+    .single();
+
+  const dashboardSettings = {
+    ...DEFAULT_DASHBOARD_SETTINGS,
+    ...(profile?.dashboard_settings ?? {}),
+  };
+
   // Process any pending recurring savings fallback
   const { processRecurringSavings } = await import("@/app/actions/savings");
   await processRecurringSavings();
+
+  // Apply defaults (only when user didn't choose a filter yet)
+  const hasWalletParam = typeof searchParams.wallet === "string" && searchParams.wallet.length > 0;
+  const hasContextParam = typeof searchParams.context === "string" && searchParams.context.length > 0;
+  const defaultWalletId = profile?.default_wallet_id || null;
+  const defaultContext = profile?.default_dashboard_context || "global";
+
+  if (!hasWalletParam && !hasContextParam && (defaultWalletId || (defaultContext && defaultContext !== "global"))) {
+    const params = new URLSearchParams();
+    if (defaultContext && defaultContext !== "global") params.set("context", defaultContext);
+    if (defaultWalletId) params.set("wallet", defaultWalletId);
+    redirect(`/dashboard?${params.toString()}`);
+  }
 
   const selectedWalletId = searchParams.wallet;
   const context = searchParams.context || "global";
@@ -178,126 +213,134 @@ export default async function DashboardPage({
         totalExpense={totalExpense}
       />
 
-      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-green-500/20 bg-green-500/5 shadow-sm sm:min-h-[110px]">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
-            <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">Ingresos</CardTitle>
-            <TrendingUp className="h-4 w-4 shrink-0 text-green-600" />
-          </CardHeader>
-          <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
-            <p className="truncate text-lg font-bold text-green-600 dark:text-green-400 sm:text-2xl">
-              ${totalIncome.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-red-500/20 bg-red-500/5 shadow-sm sm:min-h-[110px]">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
-            <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">Gastos</CardTitle>
-            <TrendingDown className="h-4 w-4 shrink-0 text-red-600" />
-          </CardHeader>
-          <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
-            <p className="truncate text-lg font-bold text-red-600 dark:text-red-400 sm:text-2xl">
-              ${totalExpense.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-primary/20 bg-primary/5 shadow-sm sm:min-h-[110px]">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
-            <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">Balance</CardTitle>
-            <Wallet className="h-4 w-4 shrink-0 text-primary" />
-          </CardHeader>
-          <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
-            <p className={`truncate text-lg font-bold sm:text-2xl ${balance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-              ${balance.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-amber-500/20 bg-amber-500/5 shadow-sm sm:min-h-[110px]">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
-            <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">Tasa ahorro</CardTitle>
-            <PiggyBank className="h-4 w-4 shrink-0 text-amber-600" />
-          </CardHeader>
-          <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
-            <p className="text-lg font-bold text-amber-600 dark:text-amber-400 sm:text-2xl">{savingsRate}%</p>
-          </CardContent>
-        </Card>
-      </section>
+      {dashboardSettings.show_summary_cards !== false && (
+        <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-green-500/20 bg-green-500/5 shadow-sm sm:min-h-[110px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
+              <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">Ingresos</CardTitle>
+              <TrendingUp className="h-4 w-4 shrink-0 text-green-600" />
+            </CardHeader>
+            <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
+              <p className="truncate text-lg font-bold text-green-600 dark:text-green-400 sm:text-2xl">
+                ${totalIncome.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-red-500/20 bg-red-500/5 shadow-sm sm:min-h-[110px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
+              <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">Gastos</CardTitle>
+              <TrendingDown className="h-4 w-4 shrink-0 text-red-600" />
+            </CardHeader>
+            <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
+              <p className="truncate text-lg font-bold text-red-600 dark:text-red-400 sm:text-2xl">
+                ${totalExpense.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-primary/20 bg-primary/5 shadow-sm sm:min-h-[110px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
+              <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">Balance</CardTitle>
+              <Wallet className="h-4 w-4 shrink-0 text-primary" />
+            </CardHeader>
+            <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
+              <p className={`truncate text-lg font-bold sm:text-2xl ${balance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                ${balance.toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-amber-500/20 bg-amber-500/5 shadow-sm sm:min-h-[110px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
+              <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">Tasa ahorro</CardTitle>
+              <PiggyBank className="h-4 w-4 shrink-0 text-amber-600" />
+            </CardHeader>
+            <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
+              <p className="text-lg font-bold text-amber-600 dark:text-amber-400 sm:text-2xl">{savingsRate}%</p>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <BudgetSummary budgets={budgets} expenses={expenses} />
+        {dashboardSettings.show_budget_summary !== false && (
+          <BudgetSummary budgets={budgets} expenses={expenses} />
+        )}
 
-        <Card className="card-hover shadow-sm lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2">
-            <CardTitle className="text-base sm:text-lg">Mis Cuentas</CardTitle>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/wallets" className="gap-1">
-                Ver todas <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {wallets.slice(0, 3).map((w) => (
-                <div key={w.id} className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm flex flex-col justify-between">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-medium text-sm truncate">{w.name}</span>
-                    <span className="text-xs text-muted-foreground uppercase">{w.currency}</span>
-                  </div>
-                  <div className="text-xl font-bold">
-                    ${Number(w.balance).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1 capitalize">
-                    {w.type === 'debit' ? 'Débito' : w.type === 'credit' ? 'Crédito' : w.type === 'cash' ? 'Efectivo' : w.type}
-                  </div>
-                </div>
-              ))}
-              {wallets.length === 0 && (
-                <div className="col-span-full text-center py-4 text-muted-foreground text-sm">
-                  No tienes cuentas registradas.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="card-hover shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2">
-            <CardTitle className="text-base sm:text-lg">Metas de Ahorro</CardTitle>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/savings" className="gap-1">
-                Ver todas <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-            <div className="space-y-4">
-              {savingsGoals.slice(0, 3).map((g) => {
-                const progress = g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0;
-                return (
-                  <div key={g.id} className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium truncate">{g.name}</span>
-                      <span className="text-muted-foreground">
-                        ${Number(g.current_amount).toLocaleString("es-CO")} / ${Number(g.target_amount).toLocaleString("es-CO")}
-                      </span>
+        {dashboardSettings.show_accounts_preview !== false && (
+          <Card className="card-hover shadow-sm lg:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2">
+              <CardTitle className="text-base sm:text-lg">Mis Cuentas</CardTitle>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/wallets" className="gap-1">
+                  Ver todas <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {wallets.slice(0, 3).map((w) => (
+                  <div key={w.id} className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm flex flex-col justify-between">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-medium text-sm truncate">{w.name}</span>
+                      <span className="text-xs text-muted-foreground uppercase">{w.currency}</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-secondary">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${Math.min(100, progress)}%` }}
-                      />
+                    <div className="text-xl font-bold">
+                      ${Number(w.balance).toLocaleString("es-CO", { minimumFractionDigits: 0 })}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 capitalize">
+                      {w.type === 'debit' ? 'Débito' : w.type === 'credit' ? 'Crédito' : w.type === 'cash' ? 'Efectivo' : w.type}
                     </div>
                   </div>
-                );
-              })}
-              {savingsGoals.length === 0 && (
-                <div className="text-center py-4 text-muted-foreground text-sm">
-                  No tienes metas de ahorro.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+                {wallets.length === 0 && (
+                  <div className="col-span-full text-center py-4 text-muted-foreground text-sm">
+                    No tienes cuentas registradas.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {dashboardSettings.show_savings_goals !== false && (
+          <Card className="card-hover shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2">
+              <CardTitle className="text-base sm:text-lg">Metas de Ahorro</CardTitle>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/savings" className="gap-1">
+                  Ver todas <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <div className="space-y-4">
+                {savingsGoals.slice(0, 3).map((g) => {
+                  const progress = g.target_amount > 0 ? (g.current_amount / g.target_amount) * 100 : 0;
+                  return (
+                    <div key={g.id} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium truncate">{g.name}</span>
+                        <span className="text-muted-foreground">
+                          ${Number(g.current_amount).toLocaleString("es-CO")} / ${Number(g.target_amount).toLocaleString("es-CO")}
+                        </span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-secondary">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all"
+                          style={{ width: `${Math.min(100, progress)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {savingsGoals.length === 0 && (
+                  <div className="text-center py-4 text-muted-foreground text-sm">
+                    No tienes metas de ahorro.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       <section className="grid gap-4 md:gap-6 lg:grid-cols-3">
@@ -307,91 +350,97 @@ export default async function DashboardPage({
           </CardHeader>
           <BalanceRing balance={balance} totalIncome={totalIncome} totalExpense={totalExpense} />
         </Card>
-        <Card className="card-hover shadow-sm lg:col-span-2">
-          <CardHeader className="p-4 pb-0 sm:p-6 sm:pb-0">
-            <CardTitle className="text-base sm:text-lg">Tendencia (6 meses)</CardTitle>
-            <p className="text-xs text-muted-foreground sm:text-sm">Ingresos y gastos por mes</p>
-          </CardHeader>
-          <CardContent className="p-4 pt-2 sm:p-6 sm:pt-2">
-            <TrendChart data={trendData} />
-          </CardContent>
-        </Card>
+        {dashboardSettings.show_trend_chart !== false && (
+          <Card className="card-hover shadow-sm lg:col-span-2">
+            <CardHeader className="p-4 pb-0 sm:p-6 sm:pb-0">
+              <CardTitle className="text-base sm:text-lg">Tendencia (6 meses)</CardTitle>
+              <p className="text-xs text-muted-foreground sm:text-sm">Ingresos y gastos por mes</p>
+            </CardHeader>
+            <CardContent className="p-4 pt-2 sm:p-6 sm:pt-2">
+              <TrendChart data={trendData} />
+            </CardContent>
+          </Card>
+        )}
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 md:gap-6">
-        <Card className="card-hover shadow-sm">
-          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">Ingresos por tipo</CardTitle>
-            <Button asChild variant="ghost" size="sm" className="shrink-0">
-              <Link href="/incomes" className="gap-1">
-                Ver todo <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-            <IncomePieChart data={byIncomeType} />
-            <ul className="mt-3 space-y-1 text-xs text-muted-foreground sm:text-sm">
-              {(Object.entries(byIncomeType) as [IncomeType, number][]).map(([type, amount]) => (
-                <li key={type} className="flex justify-between gap-2">
-                  <span className="truncate">{INCOME_TYPE_LABELS[type]}</span>
-                  <span className="shrink-0 tabular-nums">${amount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-        <Card className="card-hover shadow-sm">
-          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">Gastos por prioridad</CardTitle>
-            <Button asChild variant="ghost" size="sm" className="shrink-0">
-              <Link href="/expenses" className="gap-1">
-                Ver todo <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-            <ExpensePieChart data={byExpensePriority} />
-            <ul className="mt-3 space-y-1 text-xs text-muted-foreground sm:text-sm">
-              {(Object.entries(byExpensePriority) as [ExpensePriority, number][]).map(([priority, amount]) => (
-                <li key={priority} className="flex justify-between gap-2">
-                  <span className="truncate">{EXPENSE_PRIORITY_LABELS[priority]}</span>
-                  <span className="shrink-0 tabular-nums">${amount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      </section>
+      {dashboardSettings.show_pie_charts !== false && (
+        <section className="grid gap-4 md:grid-cols-2 md:gap-6">
+          <Card className="card-hover shadow-sm">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg">Ingresos por tipo</CardTitle>
+              <Button asChild variant="ghost" size="sm" className="shrink-0">
+                <Link href="/incomes" className="gap-1">
+                  Ver todo <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <IncomePieChart data={byIncomeType} />
+              <ul className="mt-3 space-y-1 text-xs text-muted-foreground sm:text-sm">
+                {(Object.entries(byIncomeType) as [IncomeType, number][]).map(([type, amount]) => (
+                  <li key={type} className="flex justify-between gap-2">
+                    <span className="truncate">{INCOME_TYPE_LABELS[type]}</span>
+                    <span className="shrink-0 tabular-nums">${amount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+          <Card className="card-hover shadow-sm">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg">Gastos por prioridad</CardTitle>
+              <Button asChild variant="ghost" size="sm" className="shrink-0">
+                <Link href="/expenses" className="gap-1">
+                  Ver todo <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <ExpensePieChart data={byExpensePriority} />
+              <ul className="mt-3 space-y-1 text-xs text-muted-foreground sm:text-sm">
+                {(Object.entries(byExpensePriority) as [ExpensePriority, number][]).map(([priority, amount]) => (
+                  <li key={priority} className="flex justify-between gap-2">
+                    <span className="truncate">{EXPENSE_PRIORITY_LABELS[priority]}</span>
+                    <span className="shrink-0 tabular-nums">${amount.toLocaleString("es-CO", { minimumFractionDigits: 0 })}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
-      <section>
-        <h2 className="mb-3 text-base font-semibold sm:text-lg">Accesos rápidos</h2>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
-            <Link href="/incomes" className="flex flex-col items-center gap-1">
-              <TrendingUp className="h-5 w-5 shrink-0" />
-              <span className="text-center text-sm font-medium sm:text-base">Agregar ingreso</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
-            <Link href="/expenses" className="flex flex-col items-center gap-1">
-              <TrendingDown className="h-5 w-5 shrink-0" />
-              <span className="text-center text-sm font-medium sm:text-base">Agregar gasto</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
-            <Link href="/subscriptions" className="flex flex-col items-center gap-1">
-              <span className="text-base font-semibold tabular-nums sm:text-lg">${subscriptionsMonthly.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
-              <span className="text-center text-xs text-muted-foreground">Suscripciones / mes</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
-            <Link href="/taxes" className="flex flex-col items-center gap-1">
-              <span className="text-base font-semibold tabular-nums text-amber-600 sm:text-lg">${taxPending.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
-              <span className="text-center text-xs text-muted-foreground">Impuestos pendientes</span>
-            </Link>
-          </Button>
-        </div>
-      </section>
+      {dashboardSettings.show_quick_access !== false && (
+        <section>
+          <h2 className="mb-3 text-base font-semibold sm:text-lg">Accesos rápidos</h2>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
+              <Link href="/incomes" className="flex flex-col items-center gap-1">
+                <TrendingUp className="h-5 w-5 shrink-0" />
+                <span className="text-center text-sm font-medium sm:text-base">Agregar ingreso</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
+              <Link href="/expenses" className="flex flex-col items-center gap-1">
+                <TrendingDown className="h-5 w-5 shrink-0" />
+                <span className="text-center text-sm font-medium sm:text-base">Agregar gasto</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
+              <Link href="/subscriptions" className="flex flex-col items-center gap-1">
+                <span className="text-base font-semibold tabular-nums sm:text-lg">${subscriptionsMonthly.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
+                <span className="text-center text-xs text-muted-foreground">Suscripciones / mes</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto min-h-[72px] w-full flex-col gap-1 py-3 sm:min-h-0 sm:py-4">
+              <Link href="/taxes" className="flex flex-col items-center gap-1">
+                <span className="text-base font-semibold tabular-nums text-amber-600 sm:text-lg">${taxPending.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
+                <span className="text-center text-xs text-muted-foreground">Impuestos pendientes</span>
+              </Link>
+            </Button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

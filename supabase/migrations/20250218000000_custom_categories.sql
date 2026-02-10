@@ -22,11 +22,11 @@ CREATE POLICY "Users can manage own categories"
     ON public.categories FOR ALL
     USING (
         auth.uid() = user_id OR 
-        (shared_account_id IS NOT NULL AND shared_account_id IN (SELECT user_shared_account_ids()))
+        (shared_account_id IS NOT NULL AND shared_account_id IN (SELECT public.user_shared_account_ids(auth.uid())))
     )
     WITH CHECK (
         auth.uid() = user_id OR 
-        (shared_account_id IS NOT NULL AND shared_account_id IN (SELECT user_shared_account_ids()))
+        (shared_account_id IS NOT NULL AND shared_account_id IN (SELECT public.user_shared_account_ids(auth.uid())))
     );
 
 -- 4. Default categories trigger (optional but nice for new users)

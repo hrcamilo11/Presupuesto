@@ -21,6 +21,17 @@ export interface Profile {
   full_name: string | null;
   currency: string;
   timezone: string;
+  dashboard_settings?: {
+    show_summary_cards?: boolean;
+    show_budget_summary?: boolean;
+    show_accounts_preview?: boolean;
+    show_savings_goals?: boolean;
+    show_trend_chart?: boolean;
+    show_pie_charts?: boolean;
+    show_quick_access?: boolean;
+  } | null;
+  default_dashboard_context?: string;
+  default_wallet_id?: string | null;
   created_at: string;
   updated_at: string;
 }
