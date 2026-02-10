@@ -28,7 +28,7 @@ export async function getMySharedAccounts() {
 
   const formattedData = data?.map(account => ({
     ...account,
-    member_count: (account.shared_account_members as any)?.[0]?.count ?? 0
+    member_count: (account.shared_account_members as unknown as { count: number }[])?.[0]?.count ?? 0
   })) as SharedAccount[];
 
   return { data: formattedData ?? [], error: null };

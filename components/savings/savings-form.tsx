@@ -37,7 +37,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-import { savingsGoalSchema, type SavingsGoalSchema } from "@/lib/validations/savings";
+import { savingsGoalSchema } from "@/lib/validations/savings";
 import { createSavingsGoal } from "@/app/actions/savings";
 import { Wallet } from "@/lib/database.types";
 
@@ -48,7 +48,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
     const router = useRouter();
     const { toast } = useToast();
 
-    const form = useForm<any>({ // Use any for now or extend schema
+    const form = useForm<any>({ // eslint-disable-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(savingsGoalSchema),
         defaultValues: {
             name: "",
@@ -65,7 +65,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
 
     const isLoading = form.formState.isSubmitting;
 
-    async function onSubmit(data: any) {
+    async function onSubmit(data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
         if (!isRecurring) {
             data.type = "manual";
             delete data.plan;

@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { savingsGoalSchema, contributionSchema } from "@/lib/validations/savings";
+import { contributionSchema } from "@/lib/validations/savings";
 
 export async function getSavingsGoals() {
     const supabase = await createClient();
