@@ -82,7 +82,7 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
       <CardHeader className="flex flex-row items-center justify-between gap-2 p-4 sm:p-6 pb-2">
         <div>
           <CardTitle className="text-base sm:text-lg">
-            Distribución por categoría y etiqueta
+            Distribución por categoría, etiqueta y cuenta
           </CardTitle>
           <p className="text-xs text-muted-foreground sm:text-sm">
             Cómo se reparten tus ingresos y gastos este mes.
@@ -96,7 +96,7 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
           </p>
         ) : (
           <Tabs defaultValue="category" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-3 rounded-full bg-muted">
               <TabsTrigger value="category">Por categoría</TabsTrigger>
               <TabsTrigger value="tag">Por etiqueta</TabsTrigger>
               <TabsTrigger value="account">Por cuenta</TabsTrigger>
@@ -105,7 +105,7 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
             <TabsContent value="category" className="mt-2 space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Ingresos por categoría
                   </p>
                   {incomeByCategory.length === 0 ? (
@@ -120,11 +120,12 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                             data={incomeByCategory}
                             cx="50%"
                             cy="50%"
-                            outerRadius={80}
+                            innerRadius={40}
+                            outerRadius={70}
                             dataKey="value"
                             paddingAngle={2}
                             label={({ name, percent }) =>
-                              `${name} ${(percent ?? 0 * 100).toFixed(0)}%`
+                              `${name} ${(((percent ?? 0) * 100) | 0)}%`
                             }
                           >
                             {incomeByCategory.map((_, i) => (
@@ -141,7 +142,11 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               "",
                             ]}
                           />
-                          <Legend />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(val) => <span className="text-xs">{val}</span>}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -149,7 +154,7 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Gastos por categoría
                   </p>
                   {expenseByCategory.length === 0 ? (
@@ -164,11 +169,12 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                             data={expenseByCategory}
                             cx="50%"
                             cy="50%"
-                            outerRadius={80}
+                            innerRadius={40}
+                            outerRadius={70}
                             dataKey="value"
                             paddingAngle={2}
                             label={({ name, percent }) =>
-                              `${name} ${(percent ?? 0 * 100).toFixed(0)}%`
+                              `${name} ${(((percent ?? 0) * 100) | 0)}%`
                             }
                           >
                             {expenseByCategory.map((_, i) => (
@@ -185,7 +191,11 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               "",
                             ]}
                           />
-                          <Legend />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(val) => <span className="text-xs">{val}</span>}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -197,7 +207,7 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
             <TabsContent value="tag" className="mt-2 space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Ingresos por etiqueta
                   </p>
                   {incomeByTag.length === 0 ? (
@@ -212,11 +222,12 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                             data={incomeByTag}
                             cx="50%"
                             cy="50%"
-                            outerRadius={80}
+                            innerRadius={40}
+                            outerRadius={70}
                             dataKey="value"
                             paddingAngle={2}
                             label={({ name, percent }) =>
-                              `${name} ${(percent ?? 0 * 100).toFixed(0)}%`
+                              `${name} ${(((percent ?? 0) * 100) | 0)}%`
                             }
                           >
                             {incomeByTag.map((_, i) => (
@@ -233,7 +244,11 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               "",
                             ]}
                           />
-                          <Legend />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(val) => <span className="text-xs">{val}</span>}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -241,7 +256,7 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Gastos por etiqueta
                   </p>
                   {expenseByTag.length === 0 ? (
@@ -256,11 +271,12 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                             data={expenseByTag}
                             cx="50%"
                             cy="50%"
-                            outerRadius={80}
+                            innerRadius={40}
+                            outerRadius={70}
                             dataKey="value"
                             paddingAngle={2}
                             label={({ name, percent }) =>
-                              `${name} ${(percent ?? 0 * 100).toFixed(0)}%`
+                              `${name} ${(((percent ?? 0) * 100) | 0)}%`
                             }
                           >
                             {expenseByTag.map((_, i) => (
@@ -277,7 +293,11 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               "",
                             ]}
                           />
-                          <Legend />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(val) => <span className="text-xs">{val}</span>}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -289,7 +309,7 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
             <TabsContent value="account" className="mt-2 space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Ingresos por cuenta
                   </p>
                   {incomeByAccount.length === 0 ? (
@@ -304,11 +324,12 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                             data={incomeByAccount}
                             cx="50%"
                             cy="50%"
-                            outerRadius={80}
+                            innerRadius={40}
+                            outerRadius={70}
                             dataKey="value"
                             paddingAngle={2}
                             label={({ name, percent }) =>
-                              `${name} ${(percent ?? 0 * 100).toFixed(0)}%`
+                              `${name} ${(((percent ?? 0) * 100) | 0)}%`
                             }
                           >
                             {incomeByAccount.map((_, i) => (
@@ -325,7 +346,11 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               "",
                             ]}
                           />
-                          <Legend />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(val) => <span className="text-xs">{val}</span>}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -333,7 +358,7 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Gastos por cuenta
                   </p>
                   {expenseByAccount.length === 0 ? (
@@ -348,11 +373,12 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                             data={expenseByAccount}
                             cx="50%"
                             cy="50%"
-                            outerRadius={80}
+                            innerRadius={40}
+                            outerRadius={70}
                             dataKey="value"
                             paddingAngle={2}
                             label={({ name, percent }) =>
-                              `${name} ${(percent ?? 0 * 100).toFixed(0)}%`
+                              `${name} ${(((percent ?? 0) * 100) | 0)}%`
                             }
                           >
                             {expenseByAccount.map((_, i) => (
@@ -369,7 +395,11 @@ export function DistributionSection({ categories, tags, allocations, accounts }:
                               "",
                             ]}
                           />
-                          <Legend />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(val) => <span className="text-xs">{val}</span>}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
