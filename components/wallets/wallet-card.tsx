@@ -27,6 +27,8 @@ interface WalletProps {
     type: string;
     currency: string;
     balance: number;
+    credit_mode?: "account" | "card" | null;
+    card_brand?: string | null;
 }
 
 const typeIcons = {
@@ -70,15 +72,22 @@ export function WalletCard({ wallet }: { wallet: WalletProps }) {
         }
     }
 
+    const isCreditCard = wallet.type === "credit" && wallet.credit_mode === "card";
+
     return (
-        <Card>
+        <Card className={isCreditCard ? "overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-50" : ""}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                    {wallet.name}
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    {isCreditCard && wallet.card_brand && (
+                        <span className="rounded-full bg-slate-100/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border border-slate-500/40">
+                            {wallet.card_brand}
+                        </span>
+                    )}
+                    <span className="truncate">{wallet.name}</span>
                 </CardTitle>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant={isCreditCard ? "ghost" : "ghost"} className="h-8 w-8 p-0">
                             <span className="sr-only">Abrir menú</span>
                             <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -94,12 +103,16 @@ export function WalletCard({ wallet }: { wallet: WalletProps }) {
             </CardHeader>
             <CardContent>
                 <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-primary/10 rounded-full">
-                        <Icon className="h-6 w-6 text-primary" />
+                    <div className={isCreditCard ? "rounded-xl bg-slate-700/70 p-3" : "p-2 bg-primary/10 rounded-full"}>
+                        <Icon className={isCreditCard ? "h-7 w-7 text-slate-100" : "h-6 w-6 text-primary"} />
                     </div>
                     <div>
-                        <div className="text-2xl font-bold">{formatCurrency(wallet.balance, wallet.currency)}</div>
-                        <p className="text-xs text-muted-foreground capitalize">{label}</p>
+                        <div className={isCreditCard ? "text-2xl font-bold tracking-wide" : "text-2xl font-bold"}>
+                            {formatCurrency(wallet.balance, wallet.currency)}
+                        </div>
+                        <p className={isCreditCard ? "text-[11px] text-slate-200/80 capitalize" : "text-xs text-muted-foreground capitalize"}>
+                            {label}
+                        </p>
                     </div>
                 </div>
             </CardContent>

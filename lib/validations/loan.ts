@@ -16,6 +16,7 @@ export const loanPaymentSchema = z.object({
   principal_portion: z.coerce.number().min(0),
   interest_portion: z.coerce.number().min(0),
   balance_after: z.coerce.number().min(0),
+  wallet_id: z.string().uuid("Selecciona la cuenta desde la que pagas."),
 });
 
 export type LoanFormValues = z.infer<typeof loanSchema>;

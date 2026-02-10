@@ -26,6 +26,13 @@ export async function createWallet(formData: {
     type: "cash" | "debit" | "credit" | "savings" | "investment";
     currency: string;
     balance?: number;
+    credit_mode?: "account" | "card";
+    card_brand?: string;
+    cut_off_day?: number;
+    credit_limit?: number;
+    cash_advance_limit?: number;
+    purchase_interest_rate?: number;
+    cash_advance_interest_rate?: number;
 }) {
     const parsed = walletSchema.safeParse(formData);
     if (!parsed.success) {
@@ -44,6 +51,16 @@ export async function createWallet(formData: {
         type: formData.type,
         currency: formData.currency,
         balance: formData.balance || 0,
+        credit_mode: formData.type === "credit" ? formData.credit_mode ?? null : null,
+        card_brand: formData.type === "credit" ? formData.card_brand ?? null : null,
+        cut_off_day: formData.type === "credit" ? formData.cut_off_day ?? null : null,
+        credit_limit: formData.type === "credit" ? formData.credit_limit ?? null : null,
+        cash_advance_limit:
+            formData.type === "credit" ? formData.cash_advance_limit ?? null : null,
+        purchase_interest_rate:
+            formData.type === "credit" ? formData.purchase_interest_rate ?? null : null,
+        cash_advance_interest_rate:
+            formData.type === "credit" ? formData.cash_advance_interest_rate ?? null : null,
     });
 
     if (error) return { error: error.message };

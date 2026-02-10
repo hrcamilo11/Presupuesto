@@ -2,21 +2,36 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { LoanCard } from "@/components/loans/loan-card";
 import { LoansAddButton } from "@/components/loans/loans-add-button";
+import { getWallets } from "@/app/actions/wallets";
 
 export default async function LoansPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: loans } = await supabase
-    .from("loans")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  const loanIds = (loans ?? []).map((l) => l.id);
-  const { data: allPayments } = loanIds.length
-    ? await supabase.from("loan_payments").select("*").in("loan_id", loanIds)
-    : { data: [] as { loan_id: string; payment_number: number }[] };
+  const [{ data: loans }, { data: allPayments }, { data: wallets }] = await Promise.all([
+    supabase
+      .from("loans")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    (async () => {
+      const { data: innerLoans } = await supabase
+        .from("loans")
+        .select("id");
+      const loanIds = (innerLoans ?? []).map((l) => l.id);
+      if (!loanIds.length) {
+        return { data: [] as { loan_id: string; payment_number: number }[] };
+      }
+      const { data } = await supabase
+        .from("loan_payments")
+        .select("*")
+        .in("loan_id", loanIds);
+      return { data: data ?? [] };
+    })(),
+    getWallets(),
+  ]);
 
   const paymentsByLoan = (allPayments ?? []).reduce<Record<string, typeof allPayments>>((acc, p) => {
     const id = p.loan_id;
@@ -42,7 +57,10 @@ export default async function LoansPage() {
             <LoanCard
               key={loan.id}
               loan={loan}
-              payments={(paymentsByLoan[loan.id] ?? []).sort((a, b) => a.payment_number - b.payment_number)}
+              payments={(paymentsByLoan[loan.id] ?? []).sort(
+                (a, b) => a.payment_number - b.payment_number,
+              )}
+              wallets={wallets}
             />
           ))}
         </div>

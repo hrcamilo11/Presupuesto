@@ -224,6 +224,14 @@ export type Wallet = {
   type: WalletType;
   currency: string;
   balance: number;
+  // Campos opcionales para tarjetas / cuentas de crédito
+  credit_mode?: "account" | "card" | null;
+  card_brand?: string | null;
+  cut_off_day?: number | null;
+  credit_limit?: number | null;
+  cash_advance_limit?: number | null;
+  purchase_interest_rate?: number | null;
+  cash_advance_interest_rate?: number | null;
   created_at: string;
   updated_at: string;
 };

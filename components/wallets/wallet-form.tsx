@@ -62,6 +62,8 @@ export function WalletForm() {
     });
 
     const isLoading = form.formState.isSubmitting;
+    const watchType = form.watch("type");
+    const isCredit = watchType === "credit";
 
     async function onSubmit(data: WalletSchema) {
         const result = await createWallet(data);
@@ -186,6 +188,171 @@ export function WalletForm() {
                                 </FormItem>
                             )}
                         />
+
+                        {isCredit && (
+                            <>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="credit_mode"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tipo de crédito</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    defaultValue={field.value}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Selecciona" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="account">Cuenta de crédito</SelectItem>
+                                                        <SelectItem value="card">Tarjeta de crédito</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="card_brand"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Franquicia / marca</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Visa, MasterCard, Amex..."
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="cut_off_day"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Día de corte</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        min={1}
+                                                        max={31}
+                                                        placeholder="Ej. 15"
+                                                        value={field.value ?? ""}
+                                                        onChange={(e) =>
+                                                            field.onChange(
+                                                                e.target.value
+                                                                    ? Number(e.target.value)
+                                                                    : undefined,
+                                                            )
+                                                        }
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="credit_limit"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Cupo total</FormLabel>
+                                                <FormControl>
+                                                    <CurrencyInput
+                                                        placeholder="0"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="cash_advance_limit"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Cupo para avances (opcional)</FormLabel>
+                                                <FormControl>
+                                                    <CurrencyInput
+                                                        placeholder="0"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="purchase_interest_rate"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tasa interés compras (% mensual)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        placeholder="Ej. 2.3"
+                                                        value={field.value ?? ""}
+                                                        onChange={(e) =>
+                                                            field.onChange(
+                                                                e.target.value
+                                                                    ? Number(e.target.value)
+                                                                    : undefined,
+                                                            )
+                                                        }
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="cash_advance_interest_rate"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Tasa interés avances (% mensual)</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    placeholder="Ej. 2.8"
+                                                    value={field.value ?? ""}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value
+                                                                ? Number(e.target.value)
+                                                                : undefined,
+                                                        )
+                                                    }
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </>
+                        )}
 
                         <DialogFooter>
                             <Button type="submit" disabled={isLoading}>

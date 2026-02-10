@@ -23,18 +23,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAmortizationSchedule, monthlyPayment } from "@/lib/amortization";
 import { recordLoanPayment, deleteLoan } from "@/app/actions/loans";
-import type { Loan } from "@/lib/database.types";
-import type { LoanPayment } from "@/lib/database.types";
+import type { Loan, LoanPayment, Wallet } from "@/lib/database.types";
 import { Pencil, Trash2, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { LoanForm } from "./loan-form";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Props = {
   loan: Loan;
   payments: LoanPayment[];
+  wallets: Wallet[];
 };
 
-export function LoanCard({ loan, payments }: Props) {
+export function LoanCard({ loan, payments, wallets }: Props) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -45,8 +46,10 @@ export function LoanCard({ loan, payments }: Props) {
   const [principalPortion, setPrincipalPortion] = useState("");
   const [interestPortion, setInterestPortion] = useState("");
   const [balanceAfter, setBalanceAfter] = useState("");
+  const [walletId, setWalletId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [walletId, setWalletId] = useState<string>("");
 
   const schedule = getAmortizationSchedule(
     Number(loan.principal),
@@ -60,6 +63,10 @@ export function LoanCard({ loan, payments }: Props) {
 
   async function handleRecordPayment() {
     setError(null);
+    if (!walletId) {
+      setError("Selecciona la cuenta desde la que se paga la cuota.");
+      return;
+    }
     setSubmitting(true);
     const result = await recordLoanPayment(loan.id, {
       paid_at: paidAt,
@@ -67,6 +74,7 @@ export function LoanCard({ loan, payments }: Props) {
       principal_portion: Number(principalPortion),
       interest_portion: Number(interestPortion),
       balance_after: Number(balanceAfter),
+      wallet_id: walletId,
     });
     setSubmitting(false);
     if (result.error) {
@@ -78,6 +86,7 @@ export function LoanCard({ loan, payments }: Props) {
     setPrincipalPortion("");
     setInterestPortion("");
     setBalanceAfter("");
+    setWalletId("");
     router.refresh();
   }
 
@@ -164,6 +173,21 @@ export function LoanCard({ loan, payments }: Props) {
           </DialogHeader>
           <div className="space-y-4">
             {error && <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">{error}</p>}
+            <div className="space-y-2">
+              <Label>Cuenta desde la que pagas</Label>
+              <Select value={walletId} onValueChange={setWalletId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona una cuenta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {wallets.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name} ({w.type})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label>Fecha de pago</Label>
               <Input type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
