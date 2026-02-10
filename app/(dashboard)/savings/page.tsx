@@ -1,61 +1,101 @@
-import { getSavingsGoals } from "@/app/actions/savings";
+import { getSavingsGoals, getSharedSavingsGoals } from "@/app/actions/savings";
 import { getWallets } from "@/app/actions/wallets";
 import { SavingsGoalForm } from "@/components/savings/savings-form";
 import { SavingsCard } from "@/components/savings/savings-card";
+import { SharedSavingsForm } from "@/components/savings/shared-savings-form";
+import { SharedSavingsCard } from "@/components/savings/shared-savings-card";
+import { getMySharedAccounts } from "@/app/actions/shared-accounts";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default async function SavingsPage() {
-    const { data: goals, error } = await getSavingsGoals();
-    const { data: wallets } = await getWallets();
+    const [{ data: goals, error }, { data: wallets }, { data: sharedAccounts }, { data: sharedGoals }] =
+        await Promise.all([
+            getSavingsGoals(),
+            getWallets(),
+            getMySharedAccounts(),
+            getSharedSavingsGoals(),
+        ]);
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Metas de Ahorro</h1>
                     <p className="text-muted-foreground">
-                        Define tus objetivos y guarda dinero para alcanzarlos.
+                        Define objetivos personales o grupales para alcanzar tus metas.
                     </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <SavingsGoalForm wallets={wallets} />
                 </div>
             </div>
 
-            {error ? (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
-                    Error al cargar metas: {error}
-                </div>
-            ) : goals.length === 0 ? (
-                <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center animate-in fade-in-50">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="1.5"
-                            stroke="currentColor"
-                            className="h-6 w-6"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
+            <Tabs defaultValue="personal" className="space-y-4">
+                <TabsList className="w-full justify-start overflow-x-auto rounded-xl">
+                    <TabsTrigger value="personal">Personales</TabsTrigger>
+                    <TabsTrigger value="shared">Grupales</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="personal" className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold">Metas personales</h2>
+                        <SavingsGoalForm wallets={wallets} />
                     </div>
-                    <h3 className="mt-4 text-lg font-semibold">No tienes metas de ahorro</h3>
-                    <p className="mb-4 mt-2 text-sm text-muted-foreground">
-                        Crea tu primera meta para empezar a separar dinero.
-                    </p>
-                    <SavingsGoalForm wallets={wallets} />
-                </div>
-            ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {goals.map((goal) => (
-                        <SavingsCard key={goal.id} goal={goal} wallets={wallets} />
-                    ))}
-                </div>
-            )}
+                    {error ? (
+                        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
+                            Error al cargar metas: {error}
+                        </div>
+                    ) : goals.length === 0 ? (
+                        <div className="flex min-h-[280px] flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
+                            <h3 className="mt-2 text-lg font-semibold">No tienes metas personales</h3>
+                            <p className="mb-4 mt-1 text-sm text-muted-foreground">
+                                Crea tu primera meta para empezar a separar dinero.
+                            </p>
+                            <SavingsGoalForm wallets={wallets} />
+                        </div>
+                    ) : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {goals.map((goal) => (
+                                <SavingsCard key={goal.id} goal={goal} wallets={wallets} />
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="shared" className="space-y-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 className="text-lg font-semibold">Metas grupales</h2>
+                        <div className="flex flex-wrap items-center gap-2">
+                            {sharedAccounts.length > 0 ? (
+                                <>
+                                    <span className="text-xs text-muted-foreground">
+                                        Grupos: {sharedAccounts.length}
+                                    </span>
+                                    <SharedSavingsForm sharedAccounts={sharedAccounts} />
+                                </>
+                            ) : (
+                                <p className="text-xs text-muted-foreground">
+                                    Crea o únete a un grupo en &quot;Cuentas compartidas&quot; para empezar.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    {sharedAccounts.length === 0 ? (
+                        <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+                            Aún no perteneces a ningún grupo compartido. Crea uno o acepta una invitación para ver
+                            metas de ahorro grupales aquí.
+                        </div>
+                    ) : sharedGoals.length === 0 ? (
+                        <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+                            No hay metas compartidas todavía. Crea una meta vinculada a uno de tus grupos.
+                        </div>
+                    ) : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {sharedGoals.map((goal) => (
+                                <SharedSavingsCard key={goal.id} goal={goal} />
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

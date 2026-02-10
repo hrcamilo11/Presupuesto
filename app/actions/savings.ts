@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { contributionSchema, savingsGoalSchema, type SavingsGoalSchema } from "@/lib/validations/savings";
+import type { SharedSavingsGoal } from "@/lib/database.types";
 
 export async function getSavingsGoals() {
     const supabase = await createClient();
@@ -20,6 +21,59 @@ export async function getSavingsGoals() {
 
     if (error) return { data: [], error: error.message };
     return { data: data ?? [], error: null };
+}
+
+export async function getSharedSavingsGoals(sharedAccountId?: string) {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "No autenticado" };
+
+    let query = supabase
+        .from("shared_savings_goals")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (sharedAccountId) {
+        query = query.eq("shared_account_id", sharedAccountId);
+    }
+
+    const { data, error } = await query;
+    if (error) return { data: [], error: error.message };
+    return { data: (data ?? []) as SharedSavingsGoal[], error: null };
+}
+
+export async function createSharedSavingsGoal(input: {
+    shared_account_id: string;
+    name: string;
+    target_amount: number;
+    deadline?: string | null;
+}) {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "No autenticado" };
+
+    const trimmed = input.name.trim();
+    if (!trimmed) return { error: "El nombre es obligatorio" };
+    if (!input.shared_account_id) return { error: "Selecciona un grupo compartido" };
+    if (!input.target_amount || input.target_amount <= 0) {
+        return { error: "La meta debe ser mayor a 0" };
+    }
+
+    const { error } = await supabase.from("shared_savings_goals").insert({
+        shared_account_id: input.shared_account_id,
+        name: trimmed,
+        target_amount: input.target_amount,
+        deadline: input.deadline || null,
+    });
+
+    if (error) return { error: error.message };
+    revalidatePath("/savings");
+    revalidatePath("/dashboard");
+    return { error: null };
 }
 
 export async function createSavingsGoal(formData: SavingsGoalSchema) {
