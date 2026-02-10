@@ -290,7 +290,7 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                                                         }
                                                     }
                                                 }}
-                                                defaultValue={field.value}
+                                                defaultValue={field.value ?? undefined}
                                             >
                                                 <FormControl>
                                                     <SelectTrigger>
@@ -318,7 +318,7 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                                             <FormLabel>Franquicia de tarjeta</FormLabel>
                                             <Select
                                                 onValueChange={field.onChange}
-                                                defaultValue={field.value}
+                                                defaultValue={field.value ?? undefined}
                                             >
                                                 <FormControl>
                                                     <SelectTrigger>
@@ -358,7 +358,7 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                                                     }
                                                 }
                                             }}
-                                            defaultValue={field.value}
+                                            defaultValue={field.value ?? undefined}
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
