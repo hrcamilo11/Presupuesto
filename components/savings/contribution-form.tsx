@@ -35,28 +35,30 @@ import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/use-toast";
 import { contributeToSavings } from "@/app/actions/savings";
-import { contributionSchema, type ContributionSchema } from "@/lib/validations/savings";
+import { contributionSchema } from "@/lib/validations/savings";
 import type { Wallet } from "@/lib/database.types";
 
-export function ContributionForm({ goalId, wallets }: { goalId: string, wallets: Wallet[] }) {
+export function ContributionForm({ goalId, wallets }: { goalId: string; wallets: Wallet[] }) {
     const [open, setOpen] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
-    const form = useForm<ContributionSchema>({
+    const form = useForm({
         resolver: zodResolver(contributionSchema),
         defaultValues: {
             savings_goal_id: goalId,
             wallet_id: "",
             amount: 0,
-            date: new Date().toISOString().split('T')[0],
+            date: new Date().toISOString().split("T")[0],
         },
     });
 
     const isLoading = form.formState.isSubmitting;
 
-    async function onSubmit(data: ContributionSchema) {
-        const result = await contributeToSavings(data);
+    async function onSubmit(data: unknown) {
+        // El resolver de Zod ya valida y convierte tipos, así que aquí solo casteamos
+        const parsed = contributionSchema.parse(data);
+        const result = await contributeToSavings(parsed);
 
         if (result.error) {
             toast({
@@ -135,7 +137,8 @@ export function ContributionForm({ goalId, wallets }: { goalId: string, wallets:
                                     <FormControl>
                                         <CurrencyInput
                                             placeholder="0"
-                                            {...field}
+                                            value={field.value ?? 0}
+                                            onChange={(val) => field.onChange(val)}
                                         />
                                     </FormControl>
                                     <FormMessage />
