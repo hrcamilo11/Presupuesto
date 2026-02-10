@@ -72,6 +72,7 @@ CREATE POLICY "Users can manage own tax_obligations"
 
 -- 6. Fix Savings Goals RLS (Crucial for personal goals)
 DROP POLICY IF EXISTS "Users can insert savings goals (own or shared)" ON public.savings_goals;
+DROP POLICY IF EXISTS "Users can insert savings goals" ON public.savings_goals;
 CREATE POLICY "Users can insert savings goals"
   ON public.savings_goals FOR INSERT
   WITH CHECK (

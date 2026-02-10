@@ -26,29 +26,41 @@ export async function createSavingsGoal(formData: SavingsGoalSchema) {
     try {
         console.log("Creating savings goal with data:", formData);
         const supabase = await createClient();
+
+        // Get user and session
         const {
-            data: { user },
+            data: { user, session },
         } = await supabase.auth.getUser();
+
+        console.log("Auth check - User ID:", user?.id);
+        console.log("Auth check - Session exists:", !!session);
+
         if (!user) return { error: "No autenticado" };
+
+        // Log what we're about to insert
+        const insertData = {
+            user_id: user.id,
+            name: formData.name,
+            target_amount: Number(formData.target_amount),
+            target_date: formData.target_date || null,
+            type: formData.type || "manual",
+            shared_account_id: formData.shared_account_id || null,
+            color: formData.color,
+            icon: formData.icon,
+        };
+
+        console.log("Attempting to insert:", insertData);
 
         // 1. Create the Goal
         const { data: goal, error: goalError } = await supabase
             .from("savings_goals")
-            .insert({
-                user_id: user.id,
-                name: formData.name,
-                target_amount: Number(formData.target_amount),
-                target_date: formData.target_date || null,
-                type: formData.type || "manual",
-                shared_account_id: formData.shared_account_id || null,
-                color: formData.color,
-                icon: formData.icon,
-            })
+            .insert(insertData)
             .select()
             .single();
 
         if (goalError) {
             console.error("Error creating goal:", goalError);
+            console.error("Full error details:", JSON.stringify(goalError, null, 2));
             return { error: goalError.message };
         }
 
