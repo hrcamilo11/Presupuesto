@@ -114,7 +114,7 @@ export async function updateWallet(
     } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
 
-    const updateData: Record<string, any> = {
+    const updateData: Record<string, string | number | null> = {
         name: formData.name,
         type: formData.type,
         currency: formData.currency,
