@@ -59,8 +59,3 @@ export function ExpensePieChart({ data }: Props) {
     </div>
   );
 }
-
-function formatCurrency(n: number): string {
-  if (!Number.isFinite(n)) return "0.00";
-  return n.toLocaleString("es-CO", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
