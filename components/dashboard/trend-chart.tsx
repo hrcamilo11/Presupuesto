@@ -57,7 +57,7 @@ export function TrendChart({ data }: Props) {
           <XAxis dataKey="month" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
           <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" tickFormatter={(v) => (Number.isFinite(v) ? `$${v >= 1000 ? (v / 1000) + "k" : v}` : "")} />
           <Tooltip
-            formatter={(value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)}
+            formatter={(value: number | undefined) => [new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0), ""]}
             labelFormatter={(label) => `Mes: ${label}`}
             contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }}
           />

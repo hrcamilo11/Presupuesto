@@ -52,7 +52,7 @@ export function IncomePieChart({ data }: Props) {
               <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="transparent" />
             ))}
           </Pie>
-          <Tooltip formatter={(value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)} />
+          <Tooltip formatter={(value: number | undefined) => [new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0), ""]} />
           <Legend />
         </PieChart>
       </ResponsiveContainer>

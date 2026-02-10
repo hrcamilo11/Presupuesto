@@ -1,4 +1,3 @@
-```typescript
 import { z } from "zod";
 
 export const walletSchema = z.object({
@@ -9,4 +8,3 @@ export const walletSchema = z.object({
 });
 
 export type WalletSchema = z.infer<typeof walletSchema>;
-```
