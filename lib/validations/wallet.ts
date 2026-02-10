@@ -5,6 +5,9 @@ const baseWalletSchema = z.object({
   type: z.enum(["cash", "debit", "credit", "savings", "investment"]),
   currency: z.string().min(3).max(3),
   balance: z.number().min(0, "El balance no puede ser negativo").optional(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "El color debe ser un código hexadecimal válido (ej: #FF5733)").optional().nullable(),
+  bank: z.string().max(100).optional().nullable(),
+  debit_card_brand: z.string().max(50).optional().nullable(),
   // Campos opcionales para crédito; se validan condicionalmente más abajo
   credit_mode: z.enum(["account", "card"]).optional(),
   card_brand: z.string().max(50).optional(),
@@ -27,6 +30,15 @@ const baseWalletSchema = z.object({
 });
 
 export const walletSchema = baseWalletSchema.superRefine((value, ctx) => {
+  if (value.type === "debit") {
+    if (!value.bank) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["bank"],
+        message: "Selecciona el banco de la cuenta débito.",
+      });
+    }
+  }
   if (value.type === "credit") {
     if (!value.credit_mode) {
       ctx.addIssue({

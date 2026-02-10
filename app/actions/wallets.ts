@@ -26,6 +26,9 @@ export async function createWallet(formData: {
     type: "cash" | "debit" | "credit" | "savings" | "investment";
     currency: string;
     balance?: number;
+    color?: string | null;
+    bank?: string | null;
+    debit_card_brand?: string | null;
     credit_mode?: "account" | "card";
     card_brand?: string;
     cut_off_day?: number;
@@ -51,6 +54,9 @@ export async function createWallet(formData: {
         type: formData.type,
         currency: formData.currency,
         balance: formData.balance || 0,
+        color: formData.color || null,
+        bank: formData.type === "debit" || formData.type === "credit" ? formData.bank ?? null : null,
+        debit_card_brand: formData.type === "debit" ? formData.debit_card_brand ?? null : null,
         credit_mode: formData.type === "credit" ? formData.credit_mode ?? null : null,
         card_brand: formData.type === "credit" ? formData.card_brand ?? null : null,
         cut_off_day: formData.type === "credit" ? formData.cut_off_day ?? null : null,
@@ -84,15 +90,19 @@ export async function updateWallet(
         name: string;
         type: "cash" | "debit" | "credit" | "savings" | "investment";
         currency: string;
-        balance?: number; // Only if we allow manual balance adjustment which might break consistency if not careful, but maybe helpful for corrections.
+        balance?: number;
+        color?: string | null;
+        bank?: string | null;
+        debit_card_brand?: string | null;
+        credit_mode?: "account" | "card";
+        card_brand?: string;
+        cut_off_day?: number;
+        credit_limit?: number;
+        cash_advance_limit?: number;
+        purchase_interest_rate?: number;
+        cash_advance_interest_rate?: number;
     }
 ) {
-    // For now, allow checking balance updates directly ??? 
-    // Usually balance is calculated, but my schema stores it.
-    // Let's allow name/type updates. Balance updates should be transactions?
-    // User requested "correct logic". 
-    // Modifying balance manually is "Adjustment".
-
     const parsed = walletSchema.safeParse(formData);
     if (!parsed.success) {
         return { error: parsed.error.issues[0].message };
@@ -104,18 +114,51 @@ export async function updateWallet(
     } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
 
+    const updateData: Record<string, any> = {
+        name: formData.name,
+        type: formData.type,
+        currency: formData.currency,
+        color: formData.color || null,
+    };
+
+    if (formData.type === "debit") {
+        updateData.bank = formData.bank ?? null;
+        updateData.debit_card_brand = formData.debit_card_brand ?? null;
+        // Limpiar campos de crédito
+        updateData.credit_mode = null;
+        updateData.card_brand = null;
+        updateData.cut_off_day = null;
+        updateData.credit_limit = null;
+        updateData.cash_advance_limit = null;
+        updateData.purchase_interest_rate = null;
+        updateData.cash_advance_interest_rate = null;
+    } else if (formData.type === "credit") {
+        updateData.bank = formData.bank ?? null;
+        updateData.credit_mode = formData.credit_mode ?? null;
+        updateData.card_brand = formData.card_brand ?? null;
+        updateData.cut_off_day = formData.cut_off_day ?? null;
+        updateData.credit_limit = formData.credit_limit ?? null;
+        updateData.cash_advance_limit = formData.cash_advance_limit ?? null;
+        updateData.purchase_interest_rate = formData.purchase_interest_rate ?? null;
+        updateData.cash_advance_interest_rate = formData.cash_advance_interest_rate ?? null;
+        // Limpiar campos de débito
+        updateData.debit_card_brand = null;
+    } else {
+        // Limpiar campos de crédito y débito si cambia el tipo
+        updateData.bank = null;
+        updateData.debit_card_brand = null;
+        updateData.credit_mode = null;
+        updateData.card_brand = null;
+        updateData.cut_off_day = null;
+        updateData.credit_limit = null;
+        updateData.cash_advance_limit = null;
+        updateData.purchase_interest_rate = null;
+        updateData.cash_advance_interest_rate = null;
+    }
+
     const { error } = await supabase
         .from("wallets")
-        .update({
-            name: formData.name,
-            type: formData.type,
-            currency: formData.currency,
-            // balance: formData.balance, // CAREFUL. If we allow this, we overwrite transaction history logic.
-            // Better to NOT allow balance update here unless it's a "Correction" transaction.
-            // For simplicity in this action, I will IGNORING balance updates or treat it as a reset?
-            // "balance" is in the schema but maybe I should remove it from updateWallet for safety.
-            // I'll leave it out for now to ensure consistency.
-        })
+        .update(updateData)
         .eq("id", id)
         .eq("user_id", user.id);
 

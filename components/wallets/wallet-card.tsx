@@ -1,6 +1,7 @@
 "use client";
 
-import { Wallet, CreditCard, Banknote, PiggyBank, TrendingUp, MoreHorizontal, Trash } from "lucide-react";
+import { useState } from "react";
+import { Wallet, CreditCard, Banknote, PiggyBank, TrendingUp, MoreHorizontal, Trash, Pencil } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import {
     Card,
@@ -19,6 +20,9 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { WalletForm } from "./wallet-form";
+import type { Wallet as WalletType } from "@/lib/database.types";
+import { COLOMBIAN_BANKS, getBankColor, getBankGradient } from "@/lib/banks";
 
 
 interface WalletProps {
@@ -27,9 +31,61 @@ interface WalletProps {
     type: string;
     currency: string;
     balance: number;
+    color?: string | null;
+    bank?: string | null;
+    debit_card_brand?: string | null;
     credit_mode?: "account" | "card" | null;
     card_brand?: string | null;
 }
+
+// Colores por franquicia de tarjeta
+const CARD_BRAND_COLORS: Record<string, { gradient: string; bg: string; text: string }> = {
+    visa: {
+        gradient: "from-blue-600 via-blue-700 to-blue-800",
+        bg: "bg-blue-700/70",
+        text: "text-blue-50",
+    },
+    mastercard: {
+        gradient: "from-orange-500 via-red-600 to-red-700",
+        bg: "bg-red-600/70",
+        text: "text-red-50",
+    },
+    amex: {
+        gradient: "from-green-600 via-green-700 to-green-800",
+        bg: "bg-green-700/70",
+        text: "text-green-50",
+    },
+    diners: {
+        gradient: "from-purple-600 via-purple-700 to-purple-800",
+        bg: "bg-purple-700/70",
+        text: "text-purple-50",
+    },
+    discover: {
+        gradient: "from-orange-400 via-orange-500 to-orange-600",
+        bg: "bg-orange-500/70",
+        text: "text-orange-50",
+    },
+    jcb: {
+        gradient: "from-red-500 via-red-600 to-red-700",
+        bg: "bg-red-600/70",
+        text: "text-red-50",
+    },
+    unionpay: {
+        gradient: "from-yellow-500 via-yellow-600 to-yellow-700",
+        bg: "bg-yellow-600/70",
+        text: "text-yellow-50",
+    },
+    maestro: {
+        gradient: "from-indigo-600 via-indigo-700 to-indigo-800",
+        bg: "bg-indigo-700/70",
+        text: "text-indigo-50",
+    },
+    other: {
+        gradient: "from-slate-900 via-slate-800 to-slate-900",
+        bg: "bg-slate-700/70",
+        text: "text-slate-50",
+    },
+};
 
 const typeIcons = {
     cash: Banknote,
@@ -48,6 +104,7 @@ const typeLabels = {
 };
 
 export function WalletCard({ wallet }: { wallet: WalletProps }) {
+    const [editOpen, setEditOpen] = useState(false);
     const Icon = typeIcons[wallet.type as keyof typeof typeIcons] || Wallet;
     const label = typeLabels[wallet.type as keyof typeof typeLabels] || "Cuenta";
     const { toast } = useToast();
@@ -73,27 +130,90 @@ export function WalletCard({ wallet }: { wallet: WalletProps }) {
     }
 
     const isCreditCard = wallet.type === "credit" && wallet.credit_mode === "card";
+    const isDebit = wallet.type === "debit";
+    
+    // Determinar color: franquicia crédito > banco > personalizado > default
+    let cardStyle = "";
+    let iconBgStyle = "";
+    let textStyle = "";
+    let cardBorderStyle: React.CSSProperties = {};
+    
+    if (isCreditCard && wallet.card_brand) {
+        // Prioridad 1: Colores por franquicia para tarjetas de crédito
+        const brandColors = CARD_BRAND_COLORS[wallet.card_brand.toLowerCase()] || CARD_BRAND_COLORS.other;
+        cardStyle = `overflow-hidden bg-gradient-to-br ${brandColors.gradient} text-white`;
+        iconBgStyle = `rounded-xl ${brandColors.bg} p-3`;
+        textStyle = brandColors.text;
+    } else if ((isDebit || (wallet.type === "credit" && wallet.bank)) && wallet.bank) {
+        // Prioridad 2: Colores del banco para débito o crédito con banco
+        const bankGradient = getBankGradient(wallet.bank);
+        const bankColor = getBankColor(wallet.bank);
+        if (bankGradient) {
+            cardStyle = `overflow-hidden bg-gradient-to-br ${bankGradient} text-white`;
+            iconBgStyle = `rounded-xl bg-white/20 p-3`;
+            textStyle = "text-white";
+        } else if (bankColor) {
+            cardStyle = "overflow-hidden border-2";
+            cardBorderStyle = { borderColor: bankColor };
+            iconBgStyle = "p-2 rounded-full";
+            textStyle = "";
+        }
+    } else if (wallet.color) {
+        // Prioridad 3: Color personalizado
+        cardStyle = "overflow-hidden border-2";
+        cardBorderStyle = { borderColor: wallet.color };
+        iconBgStyle = "p-2 rounded-full";
+        textStyle = "";
+    } else {
+        // Default
+        cardStyle = "";
+        iconBgStyle = "p-2 bg-primary/10 rounded-full";
+        textStyle = "";
+    }
+    
+    const isDarkCard = cardStyle.includes("bg-gradient-to-br");
 
     return (
-        <Card className={isCreditCard ? "overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-50" : ""}>
+        <>
+            <Card className={cardStyle} style={cardBorderStyle}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    {isCreditCard && wallet.card_brand && (
-                        <span className="rounded-full bg-slate-100/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border border-slate-500/40">
+                <CardTitle className={`text-sm font-medium flex items-center gap-2 ${isDarkCard ? "text-white" : ""}`}>
+                    {(isCreditCard && wallet.card_brand) && (
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border ${
+                            isDarkCard ? "bg-white/10 border-white/20 text-white" : "bg-muted border-border"
+                        }`}>
                             {wallet.card_brand}
+                        </span>
+                    )}
+                    {(isDebit && wallet.debit_card_brand) && (
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border ${
+                            isDarkCard ? "bg-white/10 border-white/20 text-white" : "bg-muted border-border"
+                        }`}>
+                            {wallet.debit_card_brand}
+                        </span>
+                    )}
+                    {wallet.bank && (
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+                            isDarkCard ? "bg-white/10 border-white/20 text-white" : "bg-muted border-border"
+                        }`}>
+                            {COLOMBIAN_BANKS.find((b) => b.value === wallet.bank)?.label || wallet.bank}
                         </span>
                     )}
                     <span className="truncate">{wallet.name}</span>
                 </CardTitle>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant={isCreditCard ? "ghost" : "ghost"} className="h-8 w-8 p-0">
+                        <Button variant="ghost" className={`h-8 w-8 p-0 ${isDarkCard ? "text-white hover:bg-white/10" : ""}`}>
                             <span className="sr-only">Abrir menú</span>
                             <MoreHorizontal className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
                             <Trash className="mr-2 h-4 w-4" />
                             Eliminar
@@ -103,19 +223,36 @@ export function WalletCard({ wallet }: { wallet: WalletProps }) {
             </CardHeader>
             <CardContent>
                 <div className="flex items-center space-x-4">
-                    <div className={isCreditCard ? "rounded-xl bg-slate-700/70 p-3" : "p-2 bg-primary/10 rounded-full"}>
-                        <Icon className={isCreditCard ? "h-7 w-7 text-slate-100" : "h-6 w-6 text-primary"} />
+                    <div className={iconBgStyle} style={
+                        wallet.color && !isCreditCard && !isDarkCard 
+                            ? { backgroundColor: `${wallet.color}20` } 
+                            : wallet.bank && !isCreditCard && !isDarkCard
+                            ? { backgroundColor: `${getBankColor(wallet.bank)}20` }
+                            : {}
+                    }>
+                        <Icon 
+                            className={`${isDarkCard ? `h-7 w-7 ${textStyle}` : wallet.color ? `h-6 w-6` : wallet.bank && !isCreditCard ? `h-6 w-6` : "h-6 w-6 text-primary"}`} 
+                            style={
+                                wallet.color && !isDarkCard 
+                                    ? { color: wallet.color } 
+                                    : wallet.bank && !isCreditCard && !isDarkCard
+                                    ? { color: getBankColor(wallet.bank) || undefined }
+                                    : {}
+                            } 
+                        />
                     </div>
                     <div>
-                        <div className={isCreditCard ? "text-2xl font-bold tracking-wide" : "text-2xl font-bold"}>
+                        <div className={`text-2xl font-bold ${isDarkCard ? "tracking-wide text-white" : ""}`}>
                             {formatCurrency(wallet.balance, wallet.currency)}
                         </div>
-                        <p className={isCreditCard ? "text-[11px] text-slate-200/80 capitalize" : "text-xs text-muted-foreground capitalize"}>
+                        <p className={isDarkCard ? `text-[11px] ${textStyle}/80 capitalize` : "text-xs text-muted-foreground capitalize"}>
                             {label}
                         </p>
                     </div>
                 </div>
             </CardContent>
-        </Card>
+            </Card>
+            <WalletForm wallet={wallet as WalletType} open={editOpen} onOpenChange={setEditOpen} />
+        </>
     );
 }

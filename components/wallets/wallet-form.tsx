@@ -37,7 +37,9 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 
 import { walletSchema, type WalletSchema } from "@/lib/validations/wallet";
-import { createWallet } from "@/app/actions/wallets";
+import { createWallet, updateWallet } from "@/app/actions/wallets";
+import type { Wallet } from "@/lib/database.types";
+import { COLOMBIAN_BANKS } from "@/lib/banks";
 
 const walletTypes = [
     { value: "cash", label: "Efectivo" },
@@ -59,8 +61,40 @@ const CARD_BRANDS = [
     { value: "other", label: "Otra" },
 ] as const;
 
-export function WalletForm() {
-    const [open, setOpen] = useState(false);
+// Colores representativos por franquicia para asignación automática
+const CARD_BRAND_COLOR_MAP: Record<string, string> = {
+    visa: "#1A1F71",
+    mastercard: "#EB001B",
+    amex: "#006FCF",
+    diners: "#0079BE",
+    discover: "#FF6000",
+    jcb: "#0B4EA2",
+    unionpay: "#E21836",
+    maestro: "#0099DD",
+    other: "#1F2937",
+};
+
+const PRESET_COLORS = [
+    "#3B82F6", // blue
+    "#10B981", // green
+    "#F59E0B", // amber
+    "#EF4444", // red
+    "#8B5CF6", // purple
+    "#EC4899", // pink
+    "#06B6D4", // cyan
+    "#F97316", // orange
+    "#6366F1", // indigo
+    "#14B8A6", // teal
+];
+
+interface WalletFormProps {
+    wallet?: Wallet;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+}
+
+export function WalletForm({ wallet, open: controlledOpen, onOpenChange: controlledOnOpenChange }: WalletFormProps = {}) {
+    const [internalOpen, setInternalOpen] = useState(false);
     const [showBalanceHelp, setShowBalanceHelp] = useState(false);
     const [showLimitHelp, setShowLimitHelp] = useState(false);
     const [showPurchaseRateHelp, setShowPurchaseRateHelp] = useState(false);
@@ -68,28 +102,62 @@ export function WalletForm() {
     const router = useRouter();
     const { toast } = useToast();
 
+    const isEditMode = !!wallet;
+    const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+    const setOpen = controlledOnOpenChange || setInternalOpen;
+
     const form = useForm<WalletSchema>({
         resolver: zodResolver(walletSchema),
-        defaultValues: {
-            name: "",
-            type: "cash",
-            currency: "COP",
-            balance: 0,
-        },
+        defaultValues: wallet
+            ? {
+                  name: wallet.name,
+                  type: wallet.type,
+                  currency: wallet.currency,
+                  balance: wallet.balance,
+                  color: wallet.color || undefined,
+                  bank: wallet.bank || undefined,
+                  debit_card_brand: wallet.debit_card_brand || undefined,
+                  credit_mode: wallet.credit_mode || undefined,
+                  card_brand: wallet.card_brand || undefined,
+                  cut_off_day: wallet.cut_off_day || undefined,
+                  credit_limit: wallet.credit_limit || undefined,
+                  cash_advance_limit: wallet.cash_advance_limit || undefined,
+                  purchase_interest_rate: wallet.purchase_interest_rate || undefined,
+                  cash_advance_interest_rate: wallet.cash_advance_interest_rate || undefined,
+              }
+            : {
+                  name: "",
+                  type: "cash",
+                  currency: "COP",
+                  balance: 0,
+              },
     });
 
     const isLoading = form.formState.isSubmitting;
     const watchType = form.watch("type");
     const isCredit = watchType === "credit";
+    const isDebit = watchType === "debit";
     const watchCreditMode = form.watch("credit_mode");
     const isCreditCard = isCredit && watchCreditMode === "card";
+    const watchBank = form.watch("bank");
     const balanceLabel = isCredit ? "Deuda inicial" : "Balance inicial";
     const balanceHelp = isCredit
         ? "Si ya tienes saldo por pagar en esta tarjeta/crédito, colócalo aquí. Si está en $0, déjalo en 0."
         : "Dinero disponible con el que inicias esta cuenta.";
+    
+    // Auto-asignar color del banco si es débito o crédito y no hay color personalizado
+    const selectedBank = COLOMBIAN_BANKS.find((b) => b.value === watchBank);
+    if ((isDebit || isCredit) && selectedBank && !form.watch("color")) {
+        // No auto-asignar aquí, solo mostrar el color del banco como sugerencia
+    }
 
     async function onSubmit(data: WalletSchema) {
-        const result = await createWallet(data);
+        let result;
+        if (isEditMode && wallet) {
+            result = await updateWallet(wallet.id, data);
+        } else {
+            result = await createWallet(data);
+        }
 
         if (result.error) {
             toast({
@@ -99,10 +167,14 @@ export function WalletForm() {
             });
         } else {
             toast({
-                title: "Cuenta creada",
-                description: "La cuenta se ha registrado exitosamente.",
+                title: isEditMode ? "Cuenta actualizada" : "Cuenta creada",
+                description: isEditMode
+                    ? "La cuenta se ha actualizado exitosamente."
+                    : "La cuenta se ha registrado exitosamente.",
             });
-            form.reset();
+            if (!isEditMode) {
+                form.reset();
+            }
             setOpen(false);
             router.refresh();
         }
@@ -110,17 +182,21 @@ export function WalletForm() {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Nueva Cuenta
-                </Button>
-            </DialogTrigger>
+            {!isEditMode && (
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Nueva Cuenta
+                    </Button>
+                </DialogTrigger>
+            )}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Agregar Cuenta</DialogTitle>
+                    <DialogTitle>{isEditMode ? "Editar Cuenta" : "Agregar Cuenta"}</DialogTitle>
                     <DialogDescription>
-                        Registra una nueva cuenta o billetera para administrar tus gastos.
+                        {isEditMode
+                            ? "Modifica los datos de tu cuenta o billetera."
+                            : "Registra una nueva cuenta o billetera para administrar tus gastos."}
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -195,6 +271,115 @@ export function WalletForm() {
                             />
                         </div>
 
+                        {isDebit && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="bank"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Banco</FormLabel>
+                                            <Select
+                                                onValueChange={(value) => {
+                                                    field.onChange(value);
+                                                    // Auto-asignar color del banco si no hay color personalizado
+                                                    if (!form.watch("color")) {
+                                                        const bankData = COLOMBIAN_BANKS.find((b) => b.value === value);
+                                                        if (bankData) {
+                                                            form.setValue("color", bankData.color);
+                                                        }
+                                                    }
+                                                }}
+                                                defaultValue={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecciona el banco" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {COLOMBIAN_BANKS.map((bank) => (
+                                                        <SelectItem key={bank.value} value={bank.value}>
+                                                            {bank.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="debit_card_brand"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Franquicia de tarjeta</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecciona" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {CARD_BRANDS.map((brand) => (
+                                                        <SelectItem key={brand.value} value={brand.value}>
+                                                            {brand.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
+
+                        {isCredit && (
+                            <FormField
+                                control={form.control}
+                                name="bank"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Banco (opcional)</FormLabel>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                field.onChange(value);
+                                                // Auto-asignar color del banco si no hay color personalizado
+                                                if (!form.watch("color")) {
+                                                    const bankData = COLOMBIAN_BANKS.find((b) => b.value === value);
+                                                    if (bankData) {
+                                                        form.setValue("color", bankData.color);
+                                                    }
+                                                }
+                                            }}
+                                            defaultValue={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecciona el banco (opcional)" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="">Ninguno</SelectItem>
+                                                {COLOMBIAN_BANKS.map((bank) => (
+                                                    <SelectItem key={bank.value} value={bank.value}>
+                                                        {bank.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
                         <FormField
                             control={form.control}
                             name="balance"
@@ -222,6 +407,68 @@ export function WalletForm() {
                                             {balanceHelp}
                                         </div>
                                     )}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="color"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Color personalizado (opcional)</FormLabel>
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2 flex-wrap">
+                                            {PRESET_COLORS.map((color) => (
+                                                <button
+                                                    key={color}
+                                                    type="button"
+                                                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                                                        field.value === color
+                                                            ? "border-foreground scale-110"
+                                                            : "border-transparent hover:scale-105"
+                                                    }`}
+                                                    style={{ backgroundColor: color }}
+                                                    onClick={() => field.onChange(field.value === color ? null : color)}
+                                                    aria-label={`Seleccionar color ${color}`}
+                                                />
+                                            ))}
+                                            <button
+                                                type="button"
+                                                className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
+                                                    field.value && !PRESET_COLORS.includes(field.value)
+                                                        ? "border-foreground scale-110"
+                                                        : "border-transparent hover:scale-105"
+                                                }`}
+                                                onClick={() => {
+                                                    const customColor = prompt("Ingresa un color hexadecimal (ej: #FF5733):");
+                                                    if (customColor && /^#[0-9A-Fa-f]{6}$/.test(customColor)) {
+                                                        field.onChange(customColor);
+                                                    }
+                                                }}
+                                                aria-label="Color personalizado"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                        {field.value && (
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <div
+                                                    className="w-4 h-4 rounded border"
+                                                    style={{ backgroundColor: field.value }}
+                                                />
+                                                <span>{field.value}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => field.onChange(null)}
+                                                    className="text-destructive hover:underline"
+                                                >
+                                                    Quitar
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -263,7 +510,16 @@ export function WalletForm() {
                                                 <FormItem>
                                                     <FormLabel>Franquicia / marca</FormLabel>
                                                     <Select
-                                                        onValueChange={field.onChange}
+                                                        onValueChange={(value) => {
+                                                            field.onChange(value);
+                                                            // Auto-asignar color de la franquicia si no hay color personalizado
+                                                            if (!form.watch("color")) {
+                                                                const brandColor = CARD_BRAND_COLOR_MAP[value.toLowerCase()];
+                                                                if (brandColor) {
+                                                                    form.setValue("color", brandColor);
+                                                                }
+                                                            }
+                                                        }}
                                                         defaultValue={field.value}
                                                     >
                                                         <FormControl>

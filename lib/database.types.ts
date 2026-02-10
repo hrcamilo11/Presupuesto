@@ -224,6 +224,9 @@ export type Wallet = {
   type: WalletType;
   currency: string;
   balance: number;
+  color?: string | null;
+  bank?: string | null;
+  debit_card_brand?: string | null;
   // Campos opcionales para tarjetas / cuentas de crédito
   credit_mode?: "account" | "card" | null;
   card_brand?: string | null;
