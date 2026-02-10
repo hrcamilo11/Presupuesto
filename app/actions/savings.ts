@@ -27,13 +27,12 @@ export async function createSavingsGoal(formData: SavingsGoalSchema) {
         console.log("Creating savings goal with data:", formData);
         const supabase = await createClient();
 
-        // Get user and session
+        // Get user
         const {
-            data: { user, session },
+            data: { user },
         } = await supabase.auth.getUser();
 
         console.log("Auth check - User ID:", user?.id);
-        console.log("Auth check - Session exists:", !!session);
 
         if (!user) return { error: "No autenticado" };
 
