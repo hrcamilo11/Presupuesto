@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusCircle, Loader2 } from "lucide-react";
+import { PlusCircle, Loader2, HelpCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,8 @@ const CARD_BRANDS = [
 
 export function WalletForm() {
     const [open, setOpen] = useState(false);
+    const [showBalanceHelp, setShowBalanceHelp] = useState(false);
+    const [showLimitHelp, setShowLimitHelp] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -196,14 +198,28 @@ export function WalletForm() {
                             name="balance"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{balanceLabel}</FormLabel>
+                                    <FormLabel className="flex items-center justify-between">
+                                        <span>{balanceLabel}</span>
+                                        <button
+                                            type="button"
+                                            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                                            onClick={() => setShowBalanceHelp((v) => !v)}
+                                            aria-label="Ayuda sobre balance inicial"
+                                        >
+                                            <HelpCircle className="h-4 w-4" />
+                                        </button>
+                                    </FormLabel>
                                     <FormControl>
                                         <CurrencyInput
                                             placeholder="0"
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormDescription>{balanceHelp}</FormDescription>
+                                    {showBalanceHelp && (
+                                        <div className="mt-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                            {balanceHelp}
+                                        </div>
+                                    )}
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -304,14 +320,28 @@ export function WalletForm() {
                                         name="credit_limit"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Cupo total</FormLabel>
+                                                <FormLabel className="flex items-center justify-between">
+                                                    <span>Cupo total</span>
+                                                    <button
+                                                        type="button"
+                                                        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                                                        onClick={() => setShowLimitHelp((v) => !v)}
+                                                        aria-label="Ayuda sobre cupo total"
+                                                    >
+                                                        <HelpCircle className="h-4 w-4" />
+                                                    </button>
+                                                </FormLabel>
                                                 <FormControl>
                                                     <CurrencyInput
                                                         placeholder="0"
                                                         {...field}
                                                     />
                                                 </FormControl>
-                                                <FormDescription>Límite máximo de crédito (no es tu deuda).</FormDescription>
+                                                {showLimitHelp && (
+                                                    <div className="mt-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                                        Límite máximo de crédito (no es tu deuda).
+                                                    </div>
+                                                )}
                                                 <FormMessage />
                                             </FormItem>
                                         )}
