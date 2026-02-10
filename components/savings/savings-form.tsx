@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, type ControllerRenderProps, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, type ControllerRenderProps } from "react-hook-form";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -38,7 +37,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-import { savingsGoalSchema, type SavingsGoalSchema } from "@/lib/validations/savings";
+import { type SavingsGoalSchema } from "@/lib/validations/savings";
 import { createSavingsGoal } from "@/app/actions/savings";
 import { Wallet } from "@/lib/database.types";
 
@@ -48,12 +47,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
     const router = useRouter();
     const { toast } = useToast();
 
-    const savingsResolver = zodResolver(
-        savingsGoalSchema
-    ) as unknown as Resolver<SavingsGoalSchema>;
-
     const form = useForm<SavingsGoalSchema>({
-        resolver: savingsResolver,
         defaultValues: {
             name: "",
             target_amount: 0,
