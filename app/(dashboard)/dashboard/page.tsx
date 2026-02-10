@@ -159,12 +159,12 @@ export default async function DashboardPage({
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Encabezado */}
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-0.5">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
           <p className="text-sm text-muted-foreground capitalize sm:text-base">{monthName}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           <ExportReportButton />
           <DashboardContextSelector sharedAccounts={sharedAccounts} />
           <WalletFilter wallets={wallets} />
