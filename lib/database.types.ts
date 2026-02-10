@@ -30,6 +30,7 @@ export interface Profile {
     show_pie_charts?: boolean;
     show_quick_access?: boolean;
     show_distribution_section?: boolean;
+    show_debts_section?: boolean;
     sections_order?: string[];
   } | null;
   default_dashboard_context?: string;

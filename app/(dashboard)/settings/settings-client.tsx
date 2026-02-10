@@ -38,6 +38,7 @@ const DEFAULT_DASHBOARD_SETTINGS = {
     show_pie_charts: true,
     show_quick_access: true,
     show_distribution_section: true,
+    show_debts_section: true,
 };
 
 const DEFAULT_SECTIONS_ORDER = [
@@ -45,6 +46,7 @@ const DEFAULT_SECTIONS_ORDER = [
     "savings_totals",
     "budgets_accounts_savings",
     "ring_trend",
+    "debts_section",
     "pie_charts",
     "distribution_section",
     "quick_access",
@@ -79,6 +81,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
         savings_totals: "Totales de ahorro",
         budgets_accounts_savings: "Presupuesto, cuentas y metas",
         ring_trend: "Ingresos vs gastos y tendencia",
+        debts_section: "Deudas y obligaciones",
         pie_charts: "Gráficas circulares",
         distribution_section: "Distribución por categoría y etiqueta",
         quick_access: "Accesos rápidos",
@@ -330,6 +333,13 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                         <p className="text-xs text-muted-foreground">Muestra cómo se reparten ingresos y gastos.</p>
                                     </div>
                                     <Switch checked={dashSettings.show_distribution_section} onCheckedChange={() => toggleDashSetting("show_distribution_section")} />
+                                </div>
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <p className="text-sm font-medium">Deudas y obligaciones</p>
+                                        <p className="text-xs text-muted-foreground">Resumen de préstamos, tarjetas y pendientes.</p>
+                                    </div>
+                                    <Switch checked={dashSettings.show_debts_section} onCheckedChange={() => toggleDashSetting("show_debts_section")} />
                                 </div>
                                 <div className="flex items-center justify-between gap-4">
                                     <div>

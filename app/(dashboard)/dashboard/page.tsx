@@ -37,6 +37,7 @@ const DEFAULT_DASHBOARD_SETTINGS = {
   show_pie_charts: true,
   show_quick_access: true,
   show_distribution_section: true,
+   show_debts_section: true,
 };
 
 const DEFAULT_SECTIONS_ORDER = [
@@ -44,6 +45,7 @@ const DEFAULT_SECTIONS_ORDER = [
   "savings_totals",
   "budgets_accounts_savings",
   "ring_trend",
+  "debts_section",
   "pie_charts",
   "distribution_section",
   "quick_access",
@@ -148,6 +150,8 @@ export default async function DashboardPage({
     categoriesRes,
     savingsTxRes,
     sharedSavingsTxRes,
+    loansRes,
+    loanPaymentsRes,
     trendIncomes,
     trendExpenses,
   ] = await Promise.all([
@@ -171,6 +175,10 @@ export default async function DashboardPage({
       .select("amount, wallet_id, date")
       .gte("date", start)
       .lte("date", end),
+    supabase.from("loans").select("id, principal, currency"),
+    supabase
+      .from("loan_payments")
+      .select("loan_id, payment_number, balance_after"),
     Promise.all(
       [0, -1, -2, -3, -4, -5].map(async (offset) => {
         const { start: s, end: e, label } = getMonthBounds(offset);
@@ -209,6 +217,8 @@ export default async function DashboardPage({
   const categories = (categoriesRes.data ?? []) as Category[];
   const savingsTransactions = (savingsTxRes.data ?? []) as any[];
   const sharedSavingsTransactions = (sharedSavingsTxRes.data ?? []) as any[];
+  const loans = (loansRes.data ?? []) as any[];
+  const loanPayments = (loanPaymentsRes.data ?? []) as any[];
 
   const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
   const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
@@ -229,6 +239,38 @@ export default async function DashboardPage({
     return s + (sub.frequency === "yearly" ? amt / 12 : amt);
   }, 0);
   const taxPending = taxObligations.filter(t => !t.paid_at).reduce((s, t) => s + Number(t.amount), 0);
+
+  // Deudas
+  // 1) Préstamos: saldo restante usando último pago registrado o principal si no hay pagos
+  const remainingByLoan = new Map<string, number>();
+  loans.forEach((loan: any) => {
+    remainingByLoan.set(loan.id, Number(loan.principal ?? 0));
+  });
+  loanPayments.forEach((p: any) => {
+    const current = remainingByLoan.get(p.loan_id);
+    if (current === undefined) return;
+    // Usamos el mayor payment_number como saldo actual
+    const existingPayment = loanPayments
+      .filter((x: any) => x.loan_id === p.loan_id)
+      .reduce((max, cur) => (cur.payment_number > max.payment_number ? cur : max), p);
+    remainingByLoan.set(p.loan_id, Number(existingPayment.balance_after ?? 0));
+  });
+  const totalLoansDebt = Array.from(remainingByLoan.values()).reduce((s, v) => s + v, 0);
+
+  // 2) Tarjetas de crédito: sumamos balances de wallets tipo "credit"
+  const totalCreditCardsDebt = wallets
+    .filter((w: any) => w.type === "credit")
+    .reduce((s, w) => s + Math.max(0, Number(w.balance ?? 0)), 0);
+
+  // 3) Suscripciones del mes: suma de montos con vencimiento en el mes actual
+  const subscriptionsDueThisMonth = subscriptions.filter((s: any) => {
+    const d = String(s.next_due_date);
+    return d >= start && d <= end;
+  });
+  const subscriptionsDueAmount = subscriptionsDueThisMonth.reduce(
+    (s, sub) => s + Number(sub.amount ?? 0),
+    0,
+  );
 
   const byIncomeType = incomes.reduce(
     (acc: Record<IncomeType, number>, i: any) => {
@@ -607,6 +649,63 @@ export default async function DashboardPage({
                 </CardContent>
               </Card>
             )}
+          </section>
+        );
+      case "debts_section":
+        if (dashboardSettings.show_debts_section === false) return null;
+        return (
+          <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+            <Card className="card-hover overflow-hidden border-amber-500/20 bg-amber-500/5 shadow-sm">
+              <CardHeader className="space-y-1 pb-2 pt-4 sm:pb-3 sm:pt-6">
+                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+                  Préstamos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4 pt-0 sm:pb-6">
+                <p className="truncate text-lg font-bold text-amber-700 dark:text-amber-400 sm:text-2xl">
+                  {formatNumber(totalLoansDebt)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover overflow-hidden border-red-500/20 bg-red-500/5 shadow-sm">
+              <CardHeader className="space-y-1 pb-2 pt-4 sm:pb-3 sm:pt-6">
+                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+                  Tarjetas de crédito
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4 pt-0 sm:pb-6">
+                <p className="truncate text-lg font-bold text-red-700 dark:text-red-400 sm:text-2xl">
+                  {formatNumber(totalCreditCardsDebt)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover overflow-hidden border-purple-500/20 bg-purple-500/5 shadow-sm">
+              <CardHeader className="space-y-1 pb-2 pt-4 sm:pb-3 sm:pt-6">
+                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+                  Suscripciones del mes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4 pt-0 sm:pb-6">
+                <p className="truncate text-lg font-bold text-purple-700 dark:text-purple-400 sm:text-2xl">
+                  {formatNumber(subscriptionsDueAmount)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover overflow-hidden border-sky-500/20 bg-sky-500/5 shadow-sm">
+              <CardHeader className="space-y-1 pb-2 pt-4 sm:pb-3 sm:pt-6">
+                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+                  Impuestos pendientes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4 pt-0 sm:pb-6">
+                <p className="truncate text-lg font-bold text-sky-700 dark:text-sky-400 sm:text-2xl">
+                  {formatNumber(taxPending)}
+                </p>
+              </CardContent>
+            </Card>
           </section>
         );
       case "pie_charts":
