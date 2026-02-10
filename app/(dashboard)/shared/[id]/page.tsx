@@ -34,6 +34,10 @@ export default async function SharedAccountDashboardPage({ params }: { params: {
 
     const stats = statsRes.data || { totalIncome: 0, totalExpense: 0, balance: 0 };
     const goals = goalsRes.data || [];
+    const totalGroupSavings = goals.reduce(
+        (sum: number, g: { current_amount?: number }) => sum + Number(g.current_amount ?? 0),
+        0
+    );
 
     return (
         <div className="flex flex-col gap-8 p-4 md:p-8 max-w-7xl mx-auto w-full">
@@ -49,7 +53,7 @@ export default async function SharedAccountDashboardPage({ params }: { params: {
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-primary text-primary-foreground shadow-2xl">
                     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                         <CardTitle className="text-sm font-medium uppercase tracking-widest">Balance Total</CardTitle>
@@ -75,6 +79,17 @@ export default async function SharedAccountDashboardPage({ params }: { params: {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black">{formatCurrency(stats.totalExpense)}</div>
+                    </CardContent>
+                </Card>
+                <Card className="hover:shadow-lg transition-all border-l-4 border-l-sky-500">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
+                            Ahorro total
+                        </CardTitle>
+                        <Goal className="w-4 h-4 text-sky-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-black">{formatCurrency(totalGroupSavings)}</div>
                     </CardContent>
                 </Card>
             </div>
