@@ -172,7 +172,7 @@ export default async function DashboardPage({
       .lte("date", end),
     supabase
       .from("shared_savings_transactions")
-      .select("amount, wallet_id, date")
+      .select("amount, wallet_id, date, shared_savings_goal_id")
       .gte("date", start)
       .lte("date", end),
     supabase.from("loans").select("id, principal, currency"),
@@ -229,10 +229,25 @@ export default async function DashboardPage({
     (s, g) => s + Number(g.current_amount ?? 0),
     0
   );
+
+  // Filtrar metas y datos de ahorro compartido según el contexto actual
   const sharedAccountIds = new Set(sharedAccounts.map((a: any) => a.id));
-  const totalSharedSavings = sharedSavingsGoals
-    .filter((g: any) => !g.shared_account_id || sharedAccountIds.has(g.shared_account_id))
-    .reduce((s, g) => s + Number(g.current_amount ?? 0), 0);
+  const sharedSavingsGoalsInContext =
+    context === "personal"
+      ? []
+      : context === "global"
+        ? sharedSavingsGoals.filter((g: any) => !g.shared_account_id || sharedAccountIds.has(g.shared_account_id))
+        : sharedSavingsGoals.filter((g: any) => g.shared_account_id === context);
+
+  const totalSharedSavings = sharedSavingsGoalsInContext.reduce(
+    (s: number, g: any) => s + Number(g.current_amount ?? 0),
+    0
+  );
+
+  const sharedGoalIdsInContext = new Set(sharedSavingsGoalsInContext.map((g: any) => g.id));
+  const sharedSavingsTransactionsInContext = sharedSavingsTransactions.filter(
+    (tx: any) => tx.shared_savings_goal_id && sharedGoalIdsInContext.has(tx.shared_savings_goal_id)
+  );
 
   const subscriptionsMonthly = subscriptions.reduce((s, sub) => {
     const amt = Number(sub.amount);
@@ -332,11 +347,11 @@ export default async function DashboardPage({
     addToCategory(name, "expense", Number(e.amount ?? 0));
   });
 
-  // Contribuciones a ahorros: se consideran una categoría extra de gasto
+  // Contribuciones a ahorros: se consideran una categoría extra de gasto (solo las del contexto actual)
   savingsTransactions.forEach((tx: any) => {
     addToCategory("Ahorro personal", "expense", Number(tx.amount ?? 0));
   });
-  sharedSavingsTransactions.forEach((tx: any) => {
+  sharedSavingsTransactionsInContext.forEach((tx: any) => {
     addToCategory("Ahorro grupal", "expense", Number(tx.amount ?? 0));
   });
 
@@ -416,13 +431,13 @@ export default async function DashboardPage({
     entry.expense += Number(e.amount ?? 0);
   });
 
-  // Tratamos las contribuciones a ahorros como salidas adicionales por cuenta
+  // Tratamos las contribuciones a ahorros como salidas adicionales por cuenta (solo las del contexto actual)
   savingsTransactions.forEach((tx: any) => {
     const entry = getOrCreateAccount(tx.wallet_id ?? null);
     entry.expense += Number(tx.amount ?? 0);
   });
 
-  sharedSavingsTransactions.forEach((tx: any) => {
+  sharedSavingsTransactionsInContext.forEach((tx: any) => {
     const entry = getOrCreateAccount(tx.wallet_id ?? null);
     entry.expense += Number(tx.amount ?? 0);
   });
@@ -498,33 +513,37 @@ export default async function DashboardPage({
       case "savings_totals":
         return (
           <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-emerald-500/20 bg-emerald-500/5 shadow-sm sm:min-h-[110px]">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
-                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
-                  Ahorro personal
-                </CardTitle>
-                <PiggyBank className="h-4 w-4 shrink-0 text-emerald-600" />
-              </CardHeader>
-              <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
-                <p className="truncate text-lg font-bold text-emerald-600 dark:text-emerald-400 sm:text-2xl">
-                  {formatNumber(totalPersonalSavings)}
-                </p>
-              </CardContent>
-            </Card>
+            {(context === "personal" || context === "global") && (
+              <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-emerald-500/20 bg-emerald-500/5 shadow-sm sm:min-h-[110px]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
+                  <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+                    Ahorro personal
+                  </CardTitle>
+                  <PiggyBank className="h-4 w-4 shrink-0 text-emerald-600" />
+                </CardHeader>
+                <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
+                  <p className="truncate text-lg font-bold text-emerald-600 dark:text-emerald-400 sm:text-2xl">
+                    {formatNumber(totalPersonalSavings)}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
-            <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-sky-500/20 bg-sky-500/5 shadow-sm sm:min-h-[110px]">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
-                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
-                  Ahorro grupal
-                </CardTitle>
-                <Wallet className="h-4 w-4 shrink-0 text-sky-600" />
-              </CardHeader>
-              <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
-                <p className="truncate text-lg font-bold text-sky-600 dark:text-sky-400 sm:text-2xl">
-                  {formatNumber(totalSharedSavings)}
-                </p>
-              </CardContent>
-            </Card>
+            {context !== "personal" && (
+              <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-sky-500/20 bg-sky-500/5 shadow-sm sm:min-h-[110px]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
+                  <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+                    Ahorro grupal
+                  </CardTitle>
+                  <Wallet className="h-4 w-4 shrink-0 text-sky-600" />
+                </CardHeader>
+                <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
+                  <p className="truncate text-lg font-bold text-sky-600 dark:text-sky-400 sm:text-2xl">
+                    {formatNumber(totalSharedSavings)}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </section>
         );
       case "budgets_accounts_savings":
