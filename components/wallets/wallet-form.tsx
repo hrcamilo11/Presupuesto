@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusCircle, Loader2, HelpCircle } from "lucide-react";
@@ -99,6 +99,7 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
     const [showLimitHelp, setShowLimitHelp] = useState(false);
     const [showPurchaseRateHelp, setShowPurchaseRateHelp] = useState(false);
     const [showAdvanceRateHelp, setShowAdvanceRateHelp] = useState(false);
+    const colorPickerRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -417,61 +418,65 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                             control={form.control}
                             name="color"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Color personalizado (opcional)</FormLabel>
-                                    <div className="space-y-2">
-                                        <div className="flex gap-2 flex-wrap">
-                                            {PRESET_COLORS.map((color) => (
+                                    <FormItem>
+                                        <FormLabel>Color personalizado (opcional)</FormLabel>
+                                        <div className="space-y-2">
+                                            <input
+                                                ref={colorPickerRef}
+                                                type="color"
+                                                className="sr-only w-0 h-0 opacity-0 absolute pointer-events-none"
+                                                value={field.value && /^#[0-9A-Fa-f]{6}$/.test(field.value) ? field.value : "#3B82F6"}
+                                                onChange={(e) => field.onChange(e.target.value)}
+                                                aria-hidden
+                                            />
+                                            <div className="flex gap-2 flex-wrap">
+                                                {PRESET_COLORS.map((color) => (
+                                                    <button
+                                                        key={color}
+                                                        type="button"
+                                                        className={`w-8 h-8 rounded-full border-2 transition-all ${
+                                                            field.value === color
+                                                                ? "border-foreground scale-110"
+                                                                : "border-transparent hover:scale-105"
+                                                        }`}
+                                                        style={{ backgroundColor: color }}
+                                                        onClick={() => field.onChange(field.value === color ? null : color)}
+                                                        aria-label={`Seleccionar color ${color}`}
+                                                    />
+                                                ))}
                                                 <button
-                                                    key={color}
                                                     type="button"
-                                                    className={`w-8 h-8 rounded-full border-2 transition-all ${
-                                                        field.value === color
+                                                    className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center bg-muted hover:bg-muted/80 ${
+                                                        field.value && !PRESET_COLORS.includes(field.value)
                                                             ? "border-foreground scale-110"
                                                             : "border-transparent hover:scale-105"
                                                     }`}
-                                                    style={{ backgroundColor: color }}
-                                                    onClick={() => field.onChange(field.value === color ? null : color)}
-                                                    aria-label={`Seleccionar color ${color}`}
-                                                />
-                                            ))}
-                                            <button
-                                                type="button"
-                                                className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
-                                                    field.value && !PRESET_COLORS.includes(field.value)
-                                                        ? "border-foreground scale-110"
-                                                        : "border-transparent hover:scale-105"
-                                                }`}
-                                                onClick={() => {
-                                                    const customColor = prompt("Ingresa un color hexadecimal (ej: #FF5733):");
-                                                    if (customColor && /^#[0-9A-Fa-f]{6}$/.test(customColor)) {
-                                                        field.onChange(customColor);
-                                                    }
-                                                }}
-                                                aria-label="Color personalizado"
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                        {field.value && (
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <div
-                                                    className="w-4 h-4 rounded border"
-                                                    style={{ backgroundColor: field.value }}
-                                                />
-                                                <span>{field.value}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => field.onChange(null)}
-                                                    className="text-destructive hover:underline"
+                                                    onClick={() => colorPickerRef.current?.click()}
+                                                    aria-label="Abrir selector de color RGB"
+                                                    title="Elegir otro color"
                                                 >
-                                                    Quitar
+                                                    +
                                                 </button>
                                             </div>
-                                        )}
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
+                                            {field.value && (
+                                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                    <div
+                                                        className="w-4 h-4 rounded border"
+                                                        style={{ backgroundColor: field.value }}
+                                                    />
+                                                    <span>{field.value}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => field.onChange(null)}
+                                                        className="text-destructive hover:underline"
+                                                    >
+                                                        Quitar
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
                             )}
                         />
 
