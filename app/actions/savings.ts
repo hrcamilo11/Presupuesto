@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { contributionSchema } from "@/lib/validations/savings";
+import { contributionSchema, type SavingsGoalSchema } from "@/lib/validations/savings";
 
 export async function getSavingsGoals() {
     const supabase = await createClient();
@@ -22,7 +22,7 @@ export async function getSavingsGoals() {
     return { data: data ?? [], error: null };
 }
 
-export async function createSavingsGoal(formData: any) {
+export async function createSavingsGoal(formData: SavingsGoalSchema) {
     try {
         console.log("Creating savings goal with data:", formData);
         const supabase = await createClient();
@@ -73,9 +73,9 @@ export async function createSavingsGoal(formData: any) {
         revalidatePath("/savings");
         revalidatePath("/dashboard");
         return { error: null };
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error("Critical error in createSavingsGoal:", e);
-        return { error: e.message || "Error interno del servidor" };
+        return { error: e instanceof Error ? e.message : "Error interno del servidor" };
     }
 }
 

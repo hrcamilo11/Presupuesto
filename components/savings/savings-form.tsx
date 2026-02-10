@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -66,7 +66,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
 
     const isLoading = form.formState.isSubmitting;
 
-    async function onSubmit(data: any) {
+    async function onSubmit(data: SavingsGoalSchema) {
         console.log("Form submitted with data:", data);
         try {
             if (!isRecurring) {
@@ -110,12 +110,12 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                 setOpen(false);
                 router.refresh();
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Client-side error in onSubmit:", error);
             toast({
                 variant: "destructive",
                 title: "Error inesperado",
-                description: error.message || "Ocurrió un error al procesar el formulario",
+                description: error instanceof Error ? error.message : "Ocurrió un error al procesar el formulario",
             });
         }
     }
@@ -140,7 +140,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                         <FormField
                             control={form.control}
                             name="name"
-                            render={({ field }: { field: any }) => (
+                            render={({ field }: { field: ControllerRenderProps<SavingsGoalSchema, "name"> }) => (
                                 <FormItem>
                                     <FormLabel>Nombre de la meta</FormLabel>
                                     <FormControl>
@@ -154,7 +154,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                         <FormField
                             control={form.control}
                             name="target_amount"
-                            render={({ field }: { field: any }) => (
+                            render={({ field }: { field: ControllerRenderProps<SavingsGoalSchema, "target_amount"> }) => (
                                 <FormItem>
                                     <FormLabel>Monto objetivo</FormLabel>
                                     <FormControl>
@@ -186,7 +186,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                 <FormField
                                     control={form.control}
                                     name="plan.wallet_id"
-                                    render={({ field }: { field: any }) => (
+                                    render={({ field }: { field: ControllerRenderProps<SavingsGoalSchema, "plan.wallet_id"> }) => (
                                         <FormItem>
                                             <FormLabel>Cuenta de origen</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -212,7 +212,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                     <FormField
                                         control={form.control}
                                         name="plan.amount"
-                                        render={({ field }: { field: any }) => (
+                                        render={({ field }: { field: ControllerRenderProps<SavingsGoalSchema, "plan.amount"> }) => (
                                             <FormItem>
                                                 <FormLabel>Monto a ahorrar</FormLabel>
                                                 <FormControl>
@@ -228,7 +228,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                                     <FormField
                                         control={form.control}
                                         name="plan.frequency"
-                                        render={({ field }: { field: any }) => (
+                                        render={({ field }: { field: ControllerRenderProps<SavingsGoalSchema, "plan.frequency"> }) => (
                                             <FormItem>
                                                 <FormLabel>Frecuencia</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -254,7 +254,7 @@ export function SavingsGoalForm({ wallets = [] }: { wallets?: Wallet[] }) {
                             <FormField
                                 control={form.control}
                                 name="target_date"
-                                render={({ field }: { field: any }) => (
+                                render={({ field }: { field: ControllerRenderProps<SavingsGoalSchema, "target_date"> }) => (
                                     <FormItem>
                                         <FormLabel>Fecha objetivo (Opcional)</FormLabel>
                                         <FormControl>
