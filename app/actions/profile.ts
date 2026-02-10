@@ -39,6 +39,8 @@ const dashboardSettingsSchema = z.object({
       show_trend_chart: z.boolean().optional(),
       show_pie_charts: z.boolean().optional(),
       show_quick_access: z.boolean().optional(),
+      show_distribution_section: z.boolean().optional(),
+      sections_order: z.array(z.string()).optional(),
     })
     .optional(),
 });

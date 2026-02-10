@@ -37,7 +37,18 @@ const DEFAULT_DASHBOARD_SETTINGS = {
     show_trend_chart: true,
     show_pie_charts: true,
     show_quick_access: true,
+    show_distribution_section: true,
 };
+
+const DEFAULT_SECTIONS_ORDER = [
+    "summary_cards",
+    "savings_totals",
+    "budgets_accounts_savings",
+    "ring_trend",
+    "pie_charts",
+    "distribution_section",
+    "quick_access",
+] as const;
 
 export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, profile }: SettingsPageClientProps) {
     const [activeTab, setActiveTab] = useState("profile");
@@ -54,10 +65,35 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
     const [defaultContext, setDefaultContext] = useState(profile?.default_dashboard_context ?? "global");
     const [defaultWalletId, setDefaultWalletId] = useState(profile?.default_wallet_id ?? "all");
     const [dashSettings, setDashSettings] = useState(mergedDash);
+    const [sectionsOrder, setSectionsOrder] = useState<string[]>(
+        (profile?.dashboard_settings?.sections_order as string[] | undefined) ?? [...DEFAULT_SECTIONS_ORDER]
+    );
     const [dashMsg, setDashMsg] = useState<string | null>(null);
 
     function toggleDashSetting(key: keyof typeof DEFAULT_DASHBOARD_SETTINGS) {
         setDashSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+    }
+
+    const SECTION_LABELS: Record<string, string> = {
+        summary_cards: "Resumen (tarjetas)",
+        savings_totals: "Totales de ahorro",
+        budgets_accounts_savings: "Presupuesto, cuentas y metas",
+        ring_trend: "Ingresos vs gastos y tendencia",
+        pie_charts: "Gráficas circulares",
+        distribution_section: "Distribución por categoría y etiqueta",
+        quick_access: "Accesos rápidos",
+    };
+
+    function moveSection(index: number, direction: "up" | "down") {
+        setSectionsOrder((prev) => {
+            const next = [...prev];
+            const newIndex = direction === "up" ? index - 1 : index + 1;
+            if (newIndex < 0 || newIndex >= next.length) return prev;
+            const temp = next[index];
+            next[index] = next[newIndex];
+            next[newIndex] = temp;
+            return next;
+        });
     }
 
     function saveProfile() {
@@ -78,7 +114,10 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
             const res = await updateMyDashboardSettings({
                 default_dashboard_context: defaultContext,
                 default_wallet_id: defaultWalletId === "all" ? null : defaultWalletId,
-                dashboard_settings: dashSettings,
+                dashboard_settings: {
+                    ...dashSettings,
+                    sections_order: sectionsOrder,
+                },
             });
             setDashMsg(res.error ? res.error : "Preferencias del dashboard actualizadas.");
         });
@@ -287,6 +326,13 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                 </div>
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
+                                        <p className="text-sm font-medium">Distribución por categoría y etiqueta</p>
+                                        <p className="text-xs text-muted-foreground">Muestra cómo se reparten ingresos y gastos.</p>
+                                    </div>
+                                    <Switch checked={dashSettings.show_distribution_section} onCheckedChange={() => toggleDashSetting("show_distribution_section")} />
+                                </div>
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
                                         <p className="text-sm font-medium">Accesos rápidos</p>
                                         <p className="text-xs text-muted-foreground">Acciones principales.</p>
                                     </div>
@@ -296,6 +342,54 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                 <div className="flex justify-end pt-2">
                                     <Button onClick={saveDashboard} disabled={isPending} variant="outline">
                                         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar cambios"}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="shadow-sm">
+                            <CardHeader>
+                                <CardTitle>Orden de las secciones</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <p className="text-xs text-muted-foreground">
+                                    Arrastra visualmente con los botones para decidir qué secciones aparecen primero.
+                                </p>
+                                <div className="space-y-2">
+                                    {sectionsOrder.map((id, index) => (
+                                        <div
+                                            key={id}
+                                            className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-sm"
+                                        >
+                                            <span className="truncate">{SECTION_LABELS[id] ?? id}</span>
+                                            <div className="flex gap-1">
+                                                <Button
+                                                    type="button"
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={index === 0}
+                                                    onClick={() => moveSection(index, "up")}
+                                                    aria-label="Mover arriba"
+                                                >
+                                                    ↑
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    disabled={index === sectionsOrder.length - 1}
+                                                    onClick={() => moveSection(index, "down")}
+                                                    aria-label="Mover abajo"
+                                                >
+                                                    ↓
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex justify-end pt-2">
+                                    <Button onClick={saveDashboard} disabled={isPending} variant="outline">
+                                        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar orden"}
                                     </Button>
                                 </div>
                             </CardContent>
