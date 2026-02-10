@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 function formatBalance(n: number): string {
   const value = Math.abs(n);
   if (!Number.isFinite(value)) return "0.00";
-  return value.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return value.toLocaleString("es-CO", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 type Props = {

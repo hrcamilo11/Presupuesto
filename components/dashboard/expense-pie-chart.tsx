@@ -62,5 +62,5 @@ export function ExpensePieChart({ data }: Props) {
 
 function formatCurrency(n: number): string {
   if (!Number.isFinite(n)) return "0.00";
-  return n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n.toLocaleString("es-CO", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
