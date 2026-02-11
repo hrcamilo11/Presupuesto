@@ -296,7 +296,7 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className={`shrink-0 ${isDarkCard ? "border-white/30 text-white hover:bg-white/10" : ""}`}
+                                className={`shrink-0 ${isDarkCard ? "border-white/50 bg-transparent text-white hover:bg-white/15 hover:text-white" : ""}`}
                                 onClick={() => setAmortOpen(true)}
                             >
                                 <Table2 className="mr-1.5 h-4 w-4 shrink-0" />
