@@ -52,7 +52,7 @@ export default async function WalletsPage() {
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {wallets.map((wallet) => (
-                        <WalletCard key={wallet.id} wallet={wallet} />
+                        <WalletCard key={wallet.id} wallet={wallet} wallets={wallets} />
                     ))}
                 </div>
             )}

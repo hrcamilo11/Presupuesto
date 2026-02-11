@@ -17,6 +17,12 @@ const baseWalletSchema = z.object({
     .min(1, "La fecha de corte debe estar entre 1 y 31")
     .max(31, "La fecha de corte debe estar entre 1 y 31")
     .optional(),
+  payment_due_day: z
+    .number()
+    .int("El día de pago debe ser un número entero")
+    .min(1, "El día de pago debe estar entre 1 y 31")
+    .max(31, "El día de pago debe estar entre 1 y 31")
+    .optional(),
   credit_limit: z.number().min(0, "El cupo no puede ser negativo").optional(),
   cash_advance_limit: z.number().min(0, "El cupo de avances no puede ser negativo").optional(),
   purchase_interest_rate: z

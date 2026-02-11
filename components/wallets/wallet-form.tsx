@@ -121,6 +121,7 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                   credit_mode: wallet.credit_mode || undefined,
                   card_brand: wallet.card_brand || undefined,
                   cut_off_day: wallet.cut_off_day || undefined,
+                  payment_due_day: (wallet as { payment_due_day?: number }).payment_due_day || undefined,
                   credit_limit: wallet.credit_limit || undefined,
                   cash_advance_limit: wallet.cash_advance_limit || undefined,
                   purchase_interest_rate: wallet.purchase_interest_rate || undefined,
@@ -579,6 +580,36 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                                         )}
                                     />
 
+                                    <FormField
+                                        control={form.control}
+                                        name="payment_due_day"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Día de pago</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        min={1}
+                                                        max={31}
+                                                        placeholder="Ej. 10"
+                                                        value={field.value ?? ""}
+                                                        onChange={(e) =>
+                                                            field.onChange(
+                                                                e.target.value
+                                                                    ? Number(e.target.value)
+                                                                    : undefined,
+                                                            )
+                                                        }
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>Día límite para pagar (evitar intereses).</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
                                     <FormField
                                         control={form.control}
                                         name="credit_limit"

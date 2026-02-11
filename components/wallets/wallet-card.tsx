@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet, CreditCard, Banknote, PiggyBank, TrendingUp, MoreHorizontal, Trash, Pencil } from "lucide-react";
+import { Wallet, CreditCard, Banknote, PiggyBank, TrendingUp, MoreHorizontal, Trash, Pencil, Calendar, CalendarClock, BanknoteIcon, Table2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import {
     Card,
@@ -21,6 +21,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { WalletForm } from "./wallet-form";
+import { PayCreditCardDialog } from "./pay-credit-card-dialog";
+import { CreditCardAmortizationDialog } from "./credit-card-amortization-dialog";
+import { getNextCutDate, getNextPaymentDueDate, formatShortDate } from "@/lib/credit-card";
 import type { Wallet as WalletType } from "@/lib/database.types";
 import { COLOMBIAN_BANKS, getBankColor, getBankGradient } from "@/lib/banks";
 
@@ -36,6 +39,9 @@ interface WalletProps {
     debit_card_brand?: string | null;
     credit_mode?: "account" | "card" | null;
     card_brand?: string | null;
+    cut_off_day?: number | null;
+    payment_due_day?: number | null;
+    purchase_interest_rate?: number | null;
 }
 
 // Colores por franquicia de tarjeta
@@ -103,8 +109,15 @@ const typeLabels = {
     investment: "Inversión",
 };
 
-export function WalletCard({ wallet }: { wallet: WalletProps }) {
+interface WalletCardProps {
+    wallet: WalletProps;
+    wallets?: WalletType[];
+}
+
+export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
     const [editOpen, setEditOpen] = useState(false);
+    const [payOpen, setPayOpen] = useState(false);
+    const [amortOpen, setAmortOpen] = useState(false);
     const Icon = typeIcons[wallet.type as keyof typeof typeIcons] || Wallet;
     const label = typeLabels[wallet.type as keyof typeof typeLabels] || "Cuenta";
     const { toast } = useToast();
@@ -172,6 +185,13 @@ export function WalletCard({ wallet }: { wallet: WalletProps }) {
     }
     
     const isDarkCard = cardStyle.includes("bg-gradient-to-br");
+
+    const cutDay = wallet.cut_off_day ?? 15;
+    const nextCut = getNextCutDate(cutDay);
+    const nextPaymentDue = getNextPaymentDueDate(
+        cutDay,
+        wallet.payment_due_day ?? null
+    );
 
     return (
         <>
@@ -250,9 +270,61 @@ export function WalletCard({ wallet }: { wallet: WalletProps }) {
                         </p>
                     </div>
                 </div>
+
+                {isCreditCard && (
+                    <div className={`mt-4 space-y-2 border-t pt-4 ${isDarkCard ? "border-white/20" : "border-border"}`}>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                            <span className={`flex items-center gap-1 ${isDarkCard ? "text-white/90" : "text-muted-foreground"}`}>
+                                <Calendar className="h-3.5 w-3.5" />
+                                Corte: {formatShortDate(nextCut)}
+                            </span>
+                            <span className={`flex items-center gap-1 ${isDarkCard ? "text-white/90" : "text-muted-foreground"}`}>
+                                <CalendarClock className="h-3.5 w-3.5" />
+                                Pago hasta: {formatShortDate(nextPaymentDue)}
+                            </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                size="sm"
+                                variant={isDarkCard ? "secondary" : "default"}
+                                className={isDarkCard ? "bg-white/20 text-white hover:bg-white/30" : ""}
+                                onClick={() => setPayOpen(true)}
+                            >
+                                <BanknoteIcon className="mr-1.5 h-4 w-4" />
+                                Pagar
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className={isDarkCard ? "border-white/30 text-white hover:bg-white/10" : ""}
+                                onClick={() => setAmortOpen(true)}
+                            >
+                                <Table2 className="mr-1.5 h-4 w-4" />
+                                Tabla de amortización
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </CardContent>
             </Card>
             <WalletForm wallet={wallet as WalletType} open={editOpen} onOpenChange={setEditOpen} />
+            {isCreditCard && wallets.length > 0 && (
+                <PayCreditCardDialog
+                    open={payOpen}
+                    onOpenChange={setPayOpen}
+                    creditWallet={wallet as WalletType}
+                    wallets={wallets}
+                />
+            )}
+            {isCreditCard && (
+                <CreditCardAmortizationDialog
+                    open={amortOpen}
+                    onOpenChange={setAmortOpen}
+                    balance={wallet.balance}
+                    monthlyRatePercent={wallet.purchase_interest_rate ?? 0}
+                    currency={wallet.currency}
+                />
+            )}
         </>
     );
 }

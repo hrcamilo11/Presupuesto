@@ -265,6 +265,7 @@ export type Wallet = {
   credit_mode?: "account" | "card" | null;
   card_brand?: string | null;
   cut_off_day?: number | null;
+  payment_due_day?: number | null;
   credit_limit?: number | null;
   cash_advance_limit?: number | null;
   purchase_interest_rate?: number | null;
