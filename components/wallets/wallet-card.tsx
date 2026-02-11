@@ -194,9 +194,9 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
     );
 
     return (
-        <>
-            <Card className={cardStyle} style={cardBorderStyle}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="h-full min-h-0">
+            <Card className={`h-full flex flex-col ${cardStyle}`} style={cardBorderStyle}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 shrink-0">
                 <CardTitle className={`text-sm font-medium flex items-center gap-2 ${isDarkCard ? "text-white" : ""}`}>
                     {(isCreditCard && wallet.card_brand) && (
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border ${
@@ -241,7 +241,7 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex flex-col">
                 <div className="flex items-center space-x-4">
                     <div className={iconBgStyle} style={
                         wallet.color && !isCreditCard && !isDarkCard 
@@ -272,35 +272,35 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                 </div>
 
                 {isCreditCard && (
-                    <div className={`mt-4 space-y-2 border-t pt-4 ${isDarkCard ? "border-white/20" : "border-border"}`}>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                    <div className={`mt-4 shrink-0 space-y-2 border-t pt-3 ${isDarkCard ? "border-white/20" : "border-border"}`}>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
                             <span className={`flex items-center gap-1 ${isDarkCard ? "text-white/90" : "text-muted-foreground"}`}>
-                                <Calendar className="h-3.5 w-3.5" />
+                                <Calendar className="h-3.5 w-3.5 shrink-0" />
                                 Corte: {formatShortDate(nextCut)}
                             </span>
                             <span className={`flex items-center gap-1 ${isDarkCard ? "text-white/90" : "text-muted-foreground"}`}>
-                                <CalendarClock className="h-3.5 w-3.5" />
-                                Pago hasta: {formatShortDate(nextPaymentDue)}
+                                <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                                Pago: {formatShortDate(nextPaymentDue)}
                             </span>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <Button
                                 size="sm"
                                 variant={isDarkCard ? "secondary" : "default"}
-                                className={isDarkCard ? "bg-white/20 text-white hover:bg-white/30" : ""}
+                                className={`shrink-0 ${isDarkCard ? "bg-white/20 text-white hover:bg-white/30" : ""}`}
                                 onClick={() => setPayOpen(true)}
                             >
-                                <BanknoteIcon className="mr-1.5 h-4 w-4" />
+                                <BanknoteIcon className="mr-1.5 h-4 w-4 shrink-0" />
                                 Pagar
                             </Button>
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className={isDarkCard ? "border-white/30 text-white hover:bg-white/10" : ""}
+                                className={`shrink-0 ${isDarkCard ? "border-white/30 text-white hover:bg-white/10" : ""}`}
                                 onClick={() => setAmortOpen(true)}
                             >
-                                <Table2 className="mr-1.5 h-4 w-4" />
-                                Tabla de amortización
+                                <Table2 className="mr-1.5 h-4 w-4 shrink-0" />
+                                Amortización
                             </Button>
                         </div>
                     </div>
@@ -318,13 +318,13 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
             )}
             {isCreditCard && (
                 <CreditCardAmortizationDialog
-                    open={amortOpen}
-                    onOpenChange={setAmortOpen}
-                    balance={wallet.balance}
-                    monthlyRatePercent={wallet.purchase_interest_rate ?? 0}
-                    currency={wallet.currency}
+                open={amortOpen}
+                onOpenChange={setAmortOpen}
+                balance={wallet.balance}
+                monthlyRatePercent={wallet.purchase_interest_rate ?? 0}
+                currency={wallet.currency}
                 />
             )}
-        </>
+        </div>
     );
 }

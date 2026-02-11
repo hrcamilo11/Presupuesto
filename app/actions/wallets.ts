@@ -4,6 +4,26 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { walletSchema } from "@/lib/validations/wallet";
 
+/** Crea la cuenta de efectivo por defecto si el usuario no tiene ninguna cuenta. */
+async function ensureDefaultWallet(
+    supabase: Awaited<ReturnType<typeof createClient>>,
+    userId: string
+) {
+    const { data: existing } = await supabase
+        .from("wallets")
+        .select("id")
+        .eq("user_id", userId)
+        .limit(1);
+    if (existing && existing.length > 0) return;
+    await supabase.from("wallets").insert({
+        user_id: userId,
+        name: "Efectivo",
+        type: "cash",
+        currency: "COP",
+        balance: 0,
+    });
+}
+
 export async function getWallets() {
     const supabase = await createClient();
     const {
@@ -11,13 +31,22 @@ export async function getWallets() {
     } = await supabase.auth.getUser();
     if (!user) return { data: [], error: "No autenticado" };
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
         .from("wallets")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: true });
 
     if (error) return { data: [], error: error.message };
+    if (!data || data.length === 0) {
+        await ensureDefaultWallet(supabase, user.id);
+        const ret = await supabase
+            .from("wallets")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: true });
+        return { data: ret.data ?? [], error: ret.error?.message ?? null };
+    }
     return { data: data ?? [], error: null };
 }
 
