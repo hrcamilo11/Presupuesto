@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -10,7 +16,7 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { BarChart3 } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type MonthData = {
@@ -41,7 +47,7 @@ export function TrendChart({ data }: Props) {
   if (data.length === 0) {
     return (
       <div className="flex h-[220px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-muted-foreground/25 bg-muted/20 px-4 sm:h-[280px]">
-        <BarChart3 className="h-12 w-12 text-muted-foreground/50" />
+        <TrendingUp className="h-12 w-12 text-muted-foreground/50" />
         <p className="text-center text-sm font-medium text-muted-foreground">
           Sin datos de tendencia
         </p>
@@ -62,11 +68,21 @@ export function TrendChart({ data }: Props) {
 
   return (
     <ChartContainer config={trendChartConfig} className="min-h-[280px] w-full">
-      <BarChart
+      <AreaChart
         data={data}
         margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
         accessibilityLayer
       >
+        <defs>
+          <linearGradient id="fillIngresos" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-ingresos)" stopOpacity={0.4} />
+            <stop offset="100%" stopColor="var(--color-ingresos)" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="fillGastos" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-gastos)" stopOpacity={0.4} />
+            <stop offset="100%" stopColor="var(--color-gastos)" stopOpacity={0} />
+          </linearGradient>
+        </defs>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="month"
@@ -92,17 +108,21 @@ export function TrendChart({ data }: Props) {
           }
         />
         <ChartLegend content={<ChartLegendContent />} />
-        <Bar
+        <Area
+          type="monotone"
           dataKey="ingresos"
-          fill="var(--color-ingresos)"
-          radius={[4, 4, 0, 0]}
+          stroke="var(--color-ingresos)"
+          fill="url(#fillIngresos)"
+          strokeWidth={2}
         />
-        <Bar
+        <Area
+          type="monotone"
           dataKey="gastos"
-          fill="var(--color-gastos)"
-          radius={[4, 4, 0, 0]}
+          stroke="var(--color-gastos)"
+          fill="url(#fillGastos)"
+          strokeWidth={2}
         />
-      </BarChart>
+      </AreaChart>
     </ChartContainer>
   );
 }

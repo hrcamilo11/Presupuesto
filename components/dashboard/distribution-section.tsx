@@ -2,7 +2,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, Cell } from "recharts";
+import {
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+} from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -39,20 +45,20 @@ const CATEGORY_COLORS = ["#0ea5e9", "#8b5cf6", "#f97316", "#22c55e", "#e11d48", 
 const TAG_COLORS = ["#22c55e", "#f97316", "#a855f7", "#eab308", "#06b6d4", "#f43f5e"];
 const ACCOUNT_COLORS = ["#0f766e", "#2563eb", "#f97316", "#a855f7", "#22c55e", "#dc2626"];
 
-const chartHeight = 220;
+const chartSize = 260;
 
 const distributionChartConfig = {
   value: { label: "Monto", color: "hsl(var(--muted-foreground))" },
 } satisfies ChartConfig;
 
-function DistributionBarChart({
+function DistributionRadarChart({
   data,
-  colors,
+  color,
   title,
   emptyMessage,
 }: {
   data: { name: string; value: number }[];
-  colors: string[];
+  color: string;
   title: string;
   emptyMessage: string;
 }) {
@@ -67,11 +73,13 @@ function DistributionBarChart({
     );
   }
 
-  const dataWithFill = data.map((d, i) => ({
-    ...d,
-    fill: colors[i % colors.length],
+  const maxVal = Math.max(...data.map((d) => d.value), 1);
+  const radarData = data.map((d) => ({
+    subject: d.name.length > 10 ? d.name.slice(0, 10) + "…" : d.name,
+    fullName: d.name,
+    value: Math.round(d.value),
+    fullMark: maxVal * 1.2,
   }));
-  const marginLeft = Math.min(120, Math.max(60, ...data.map((d) => d.name.length * 7)));
 
   return (
     <div className="space-y-2">
@@ -81,49 +89,42 @@ function DistributionBarChart({
       <ChartContainer
         config={distributionChartConfig}
         className="w-full"
-        style={{ minHeight: chartHeight, height: chartHeight }}
+        style={{ minHeight: chartSize, height: chartSize }}
       >
-        <BarChart
-          layout="vertical"
-          data={dataWithFill}
-          margin={{ top: 4, right: 24, left: marginLeft, bottom: 4 }}
-          accessibilityLayer
-        >
-          <XAxis
-            type="number"
+        <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
+          <PolarGrid stroke="hsl(var(--border))" />
+          <PolarAngleAxis
+            dataKey="subject"
             tick={{ fontSize: 11 }}
             tickLine={false}
-            axisLine={false}
-            tickFormatter={(v) =>
-              v >= 1000000
-                ? `$${(v / 1000000).toFixed(1)}M`
-                : v >= 1000
-                  ? `$${(v / 1000).toFixed(0)}k`
-                  : `$${v}`
-            }
           />
-          <YAxis
-            type="category"
-            dataKey="name"
-            width={marginLeft - 8}
-            tick={{ fontSize: 12 }}
-            tickLine={false}
-            axisLine={false}
+          <PolarRadiusAxis
+            angle={90}
+            domain={[0, maxVal * 1.2]}
+            tick={{ fontSize: 10 }}
+            tickFormatter={(v) =>
+              v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`
+            }
           />
           <ChartTooltip
             content={
               <ChartTooltipContent
                 formatter={(value) => [`$${formatNumber(Number(value ?? 0))}`, ""]}
-                labelFormatter={(label) => label}
+                labelFormatter={(_, payload) =>
+                  (payload?.[0]?.payload?.fullName ?? "")
+                }
               />
             }
           />
-          <Bar dataKey="value" name="Monto" radius={[0, 4, 4, 0]} minPointSize={8}>
-            {dataWithFill.map((_, i) => (
-              <Cell key={i} fill={colors[i % colors.length]} />
-            ))}
-          </Bar>
-        </BarChart>
+          <Radar
+            name="Monto"
+            dataKey="value"
+            stroke={color}
+            fill={color}
+            fillOpacity={0.35}
+            strokeWidth={2}
+          />
+        </RadarChart>
       </ChartContainer>
     </div>
   );
@@ -186,15 +187,15 @@ export function DistributionSection({ categories, tags, accounts }: Distribution
 
             <TabsContent value="category" className="mt-2 space-y-4">
               <div className="grid gap-6 md:grid-cols-2">
-                <DistributionBarChart
+                <DistributionRadarChart
                   data={incomeByCategory}
-                  colors={CATEGORY_COLORS}
+                  color={CATEGORY_COLORS[0]}
                   title="Ingresos por categoría"
                   emptyMessage="No hay ingresos categorizados este mes."
                 />
-                <DistributionBarChart
+                <DistributionRadarChart
                   data={expenseByCategory}
-                  colors={CATEGORY_COLORS}
+                  color={CATEGORY_COLORS[1]}
                   title="Gastos por categoría"
                   emptyMessage="No hay gastos categorizados este mes."
                 />
@@ -203,15 +204,15 @@ export function DistributionSection({ categories, tags, accounts }: Distribution
 
             <TabsContent value="tag" className="mt-2 space-y-4">
               <div className="grid gap-6 md:grid-cols-2">
-                <DistributionBarChart
+                <DistributionRadarChart
                   data={incomeByTag}
-                  colors={TAG_COLORS}
+                  color={TAG_COLORS[0]}
                   title="Ingresos por etiqueta"
                   emptyMessage="No hay etiquetas asociadas a ingresos este mes."
                 />
-                <DistributionBarChart
+                <DistributionRadarChart
                   data={expenseByTag}
-                  colors={TAG_COLORS}
+                  color={TAG_COLORS[1]}
                   title="Gastos por etiqueta"
                   emptyMessage="No hay etiquetas asociadas a gastos este mes."
                 />
@@ -220,15 +221,15 @@ export function DistributionSection({ categories, tags, accounts }: Distribution
 
             <TabsContent value="account" className="mt-2 space-y-4">
               <div className="grid gap-6 md:grid-cols-2">
-                <DistributionBarChart
+                <DistributionRadarChart
                   data={incomeByAccount}
-                  colors={ACCOUNT_COLORS}
+                  color={ACCOUNT_COLORS[0]}
                   title="Ingresos por cuenta"
                   emptyMessage="No hay ingresos registrados por cuenta este mes."
                 />
-                <DistributionBarChart
+                <DistributionRadarChart
                   data={expenseByAccount}
-                  colors={ACCOUNT_COLORS}
+                  color={ACCOUNT_COLORS[1]}
                   title="Gastos por cuenta"
                   emptyMessage="No hay gastos registrados por cuenta este mes."
                 />
