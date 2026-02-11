@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ExpensePriority, Expense, Tag } from "@/lib/database.types";
 import { expenseSchema } from "@/lib/validations/expense";
+import { createNotification } from "@/app/actions/notifications";
 
 async function adjustWalletBalance(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -59,6 +60,56 @@ export async function createExpense(formData: {
 
   // Reflect expense in wallet balance (subtract)
   await adjustWalletBalance(supabase, formData.wallet_id, -formData.amount);
+
+  if (expense.category_id) {
+    const y = formData.date.slice(0, 4);
+    const m = formData.date.slice(5, 7);
+    const monthStart = `${y}-${m}-01`;
+    const lastDay = new Date(Number(y), Number(m), 0).getDate();
+    const monthEnd = `${y}-${m}-${String(lastDay).padStart(2, "0")}`;
+    const { data: budgets } = await supabase
+      .from("budgets")
+      .select("id, amount, categories(name)")
+      .eq("user_id", user.id)
+      .eq("category_id", expense.category_id)
+      .in("period", ["monthly", `${y}-${m}`]);
+    if (budgets?.length) {
+      const { data: monthExpenses } = await supabase
+        .from("expenses")
+        .select("amount")
+        .eq("user_id", user.id)
+        .eq("category_id", expense.category_id)
+        .gte("date", monthStart)
+        .lte("date", monthEnd)
+        .is("shared_account_id", null);
+      const total = (monthExpenses ?? []).reduce((s, r) => s + Number(r.amount), 0);
+      for (const b of budgets) {
+        const limit = Number(b.amount);
+        const categoryName = (b.categories as { name?: string } | null)?.name ?? "Categoría";
+        if (total > limit) {
+          await createNotification({
+            userId: user.id,
+            title: "Presupuesto superado",
+            body: `Has superado el presupuesto de ${categoryName} este periodo (${total.toLocaleString()} de ${limit.toLocaleString()}).`,
+            type: "budget",
+            link: "/budgets",
+          });
+          break;
+        }
+        if (total >= limit * 0.8) {
+          await createNotification({
+            userId: user.id,
+            title: "Presupuesto al 80%",
+            body: `Has usado el 80% del presupuesto de ${categoryName} (${total.toLocaleString()} de ${limit.toLocaleString()}).`,
+            type: "budget",
+            link: "/budgets",
+          });
+          break;
+        }
+      }
+    }
+  }
+
   revalidatePath("/expenses");
   revalidatePath("/dashboard");
   return { data: expense, error: null };

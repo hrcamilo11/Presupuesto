@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { contributionSchema, savingsGoalSchema, type SavingsGoalSchema } from "@/lib/validations/savings";
 import type { SharedSavingsGoal } from "@/lib/database.types";
+import { createNotification } from "@/app/actions/notifications";
 
 export async function getSavingsGoals() {
     const supabase = await createClient();
@@ -217,6 +218,21 @@ export async function contributeToSavings(formData: {
     });
 
     if (error) return { error: error.message };
+
+    const { data: goal } = await supabase
+        .from("savings_goals")
+        .select("name, current_amount, target_amount")
+        .eq("id", formData.savings_goal_id)
+        .single();
+    if (goal && Number(goal.current_amount) >= Number(goal.target_amount)) {
+        await createNotification({
+            userId: user.id,
+            title: "Meta de ahorro alcanzada",
+            body: `¡Felicidades! Completaste la meta "${goal.name}".`,
+            type: "info",
+            link: "/savings",
+        });
+    }
 
     revalidatePath("/savings");
     revalidatePath("/wallets");

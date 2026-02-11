@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle } from "lucide-react";
+import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell } from "lucide-react";
 import { CategoryList } from "@/components/categories/category-list";
 import { TagList } from "@/components/tags/tag-list";
 import { Category, Tag as TagType, type Profile, type SharedAccount, type Wallet } from "@/lib/database.types";
@@ -19,7 +19,10 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { updateMyDashboardSettings, updateMyProfileBasics, wipeMyPersonalData } from "@/app/actions/profile";
+import { updateNotificationPreferences, sendTestEmail } from "@/app/actions/notifications";
+import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
 import { useTransition } from "react";
+import type { NotificationPreferences } from "@/lib/database.types";
 
 interface SettingsPageClientProps {
     categories: Category[];
@@ -27,6 +30,7 @@ interface SettingsPageClientProps {
     wallets: Wallet[];
     sharedAccounts: SharedAccount[];
     profile: Profile | null;
+    notificationPreferences?: NotificationPreferences | null;
 }
 
 const DEFAULT_DASHBOARD_SETTINGS = {
@@ -52,7 +56,13 @@ const DEFAULT_SECTIONS_ORDER = [
     "quick_access",
 ] as const;
 
-export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, profile }: SettingsPageClientProps) {
+const DEFAULT_NOTIFICATION_PREFS = {
+    email_enabled: true,
+    sms_enabled: false,
+    push_enabled: true,
+};
+
+export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, profile, notificationPreferences }: SettingsPageClientProps) {
     const [activeTab, setActiveTab] = useState("profile");
     const [isPending, startTransition] = useTransition();
 
@@ -78,6 +88,12 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
     const [wipeConfirm2, setWipeConfirm2] = useState(false);
     const [wipeConfirm3, setWipeConfirm3] = useState(false);
     const [wipePassword, setWipePassword] = useState("");
+
+    const mergedNotifPrefs = { ...DEFAULT_NOTIFICATION_PREFS, ...notificationPreferences };
+    const [emailEnabled, setEmailEnabled] = useState(mergedNotifPrefs.email_enabled);
+    const [pushEnabled, setPushEnabled] = useState(mergedNotifPrefs.push_enabled);
+    const [notifMsg, setNotifMsg] = useState<string | null>(null);
+    const [testEmailMsg, setTestEmailMsg] = useState<string | null>(null);
 
     function toggleDashSetting(key: keyof typeof DEFAULT_DASHBOARD_SETTINGS) {
         setDashSettings((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -115,6 +131,26 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                 timezone,
             });
             setProfileMsg(res.error ? res.error : "Perfil actualizado.");
+        });
+    }
+
+    function saveNotificationPrefs() {
+        setNotifMsg(null);
+        setTestEmailMsg(null);
+        startTransition(async () => {
+            const res = await updateNotificationPreferences({
+                email_enabled: emailEnabled,
+                push_enabled: pushEnabled,
+            });
+            setNotifMsg(res.error ? res.error : "Preferencias de notificaciones guardadas.");
+        });
+    }
+
+    function handleSendTestEmail() {
+        setTestEmailMsg(null);
+        startTransition(async () => {
+            const res = await sendTestEmail();
+            setTestEmailMsg(res.error ? res.error : "Correo de prueba enviado. Revisa tu bandeja.");
         });
     }
 
@@ -178,6 +214,10 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                     <TabsTrigger value="personalization" className="gap-2 min-w-[170px]">
                         <Palette className="h-4 w-4" />
                         <span>Dashboard</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="notifications" className="gap-2 min-w-[140px]">
+                        <Bell className="h-4 w-4" />
+                        <span>Notificaciones</span>
                     </TabsTrigger>
                 </TabsList>
 
@@ -519,6 +559,68 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                             </CardContent>
                         </Card>
                     </div>
+                </TabsContent>
+
+                <TabsContent value="notifications" className="space-y-4">
+                    <Card className="shadow-sm">
+                        <CardHeader>
+                            <CardTitle>Canales de notificación</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                                Elige cómo quieres recibir avisos: en la app, por correo o notificaciones del sistema (navegador o dispositivo).
+                            </p>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {notifMsg && (
+                                <p className="text-sm text-muted-foreground">{notifMsg}</p>
+                            )}
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-sm font-medium">Dentro de la app</p>
+                                    <p className="text-xs text-muted-foreground">Siempre activo. Verás las notificaciones en la campana y en la página Notificaciones.</p>
+                                </div>
+                                <Switch checked={true} disabled aria-label="Notificaciones en la app (siempre activo)" />
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-sm font-medium">Correo electrónico</p>
+                                    <p className="text-xs text-muted-foreground">Recibir un correo cuando se genere una notificación (requiere RESEND_API_KEY en .env).</p>
+                                </div>
+                                <Switch checked={emailEnabled} onCheckedChange={setEmailEnabled} />
+                            </div>
+                            {emailEnabled && (
+                                <div className="rounded-md border bg-muted/40 p-3">
+                                    <p className="mb-2 text-xs font-medium text-muted-foreground">Probar envío</p>
+                                    <Button type="button" variant="outline" size="sm" onClick={handleSendTestEmail} disabled={isPending}>
+                                        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Enviar correo de prueba
+                                    </Button>
+                                    {testEmailMsg && (
+                                        <p className={`mt-2 text-xs ${testEmailMsg.startsWith("Correo") ? "text-muted-foreground" : "text-destructive"}`}>
+                                            {testEmailMsg}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-sm font-medium">Notificaciones del sistema</p>
+                                    <p className="text-xs text-muted-foreground">Push en navegador o dispositivo aunque no tengas la app abierta.</p>
+                                </div>
+                                <Switch checked={pushEnabled} onCheckedChange={setPushEnabled} />
+                            </div>
+                            {pushEnabled && (
+                                <div className="rounded-md border bg-muted/40 p-3">
+                                    <p className="mb-2 text-xs font-medium text-muted-foreground">En este dispositivo</p>
+                                    <PushSubscribeButton />
+                                </div>
+                            )}
+                            <div className="flex justify-end">
+                                <Button onClick={saveNotificationPrefs} disabled={isPending}>
+                                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar preferencias"}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
             </Tabs>
         </div>

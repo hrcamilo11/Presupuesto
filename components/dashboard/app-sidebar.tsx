@@ -15,6 +15,7 @@ import {
   PiggyBank,
   Settings,
   X,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ const navItems = [
   { href: "/wallets", label: "Cuentas", icon: Wallet },
   { href: "/savings", label: "Ahorros", icon: PiggyBank },
   { href: "/shared", label: "Cuentas compartidas", icon: UsersRound },
+  { href: "/notifications", label: "Notificaciones", icon: Bell },
   { href: "/settings", label: "Configuración", icon: Settings },
 ] as const;
 

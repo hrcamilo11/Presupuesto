@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { loanSchema, loanPaymentSchema } from "@/lib/validations/loan";
+import { createNotification } from "@/app/actions/notifications";
 
 export async function createLoan(formData: {
   name: string;
@@ -149,6 +150,16 @@ export async function recordLoanPayment(
   if (expenseError) return { error: expenseError.message };
 
   await adjustWalletBalance(supabase, parsed.data.wallet_id, -parsed.data.amount);
+
+  if (parsed.data.balance_after === 0) {
+    await createNotification({
+      userId: user.id,
+      title: "Préstamo saldado",
+      body: `Completaste el pago del préstamo "${loan.name}".`,
+      type: "loan",
+      link: "/loans",
+    });
+  }
 
   revalidatePath("/loans");
   revalidatePath("/expenses");
