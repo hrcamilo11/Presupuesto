@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { randomBytes } from "crypto";
 import type { SharedAccount } from "@/lib/database.types";
+import { createNotificationForUser } from "@/lib/notifications/dispatch";
 
 export async function getMySharedAccounts() {
   const supabase = await createClient();
@@ -147,8 +148,7 @@ export async function acceptInvite(token: string) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Inicia sesión para aceptar la invitación" };
 
-  // Use the secure RPC function to accept invite
-  const { error } = await supabase.rpc("accept_shared_account_invite", {
+  const { data: accountId, error } = await supabase.rpc("accept_shared_account_invite", {
     p_token: token,
   });
 
@@ -156,6 +156,31 @@ export async function acceptInvite(token: string) {
     if (error.message.includes("expired")) return { error: "Enlace inválido o expirado" };
     if (error.message.includes("max 5")) return { error: "Este grupo ya ha alcanzado el límite de 5 miembros" };
     return { error: error.message };
+  }
+
+  if (accountId) {
+    const { data: account } = await supabase
+      .from("shared_accounts")
+      .select("name, created_by")
+      .eq("id", accountId)
+      .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single();
+    const ownerId = account?.created_by;
+    const newMemberName = profile?.full_name?.trim() || user.email || "Alguien";
+    const accountName = account?.name || "la cuenta";
+    if (ownerId && ownerId !== user.id) {
+      await createNotificationForUser({
+        userId: ownerId,
+        title: "Nuevo miembro en la cuenta compartida",
+        body: `${newMemberName} se unió a ${accountName}.`,
+        type: "shared",
+        link: `/shared/${accountId}`,
+      });
+    }
   }
 
   revalidatePath("/shared");
