@@ -16,11 +16,45 @@ export interface Category {
   updated_at: string;
 }
 
+export type NotificationType = "info" | "reminder" | "loan" | "shared" | "budget" | "alert";
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  body: string | null;
+  type: NotificationType;
+  link: string | null;
+  read_at: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface NotificationPreferences {
+  user_id: string;
+  email_enabled: boolean;
+  sms_enabled: boolean;
+  push_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PushSubscriptionRow {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh_key: string;
+  auth_key: string;
+  user_agent: string | null;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   full_name: string | null;
   currency: string;
   timezone: string;
+  phone?: string | null;
   dashboard_settings?: {
     show_summary_cards?: boolean;
     show_budget_summary?: boolean;
