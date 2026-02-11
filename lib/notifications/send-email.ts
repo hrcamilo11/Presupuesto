@@ -1,7 +1,18 @@
 import { Resend } from "resend";
 
 const resendApiKey = process.env.RESEND_API_KEY;
-const defaultFrom = process.env.RESEND_FROM_EMAIL ?? "Presupuesto <onboarding@resend.dev>";
+const VALID_FROM = "Presupuesto <onboarding@resend.dev>";
+
+/** Acepta email@domain o Name <email@domain>. Devuelve valor válido o el por defecto. */
+function normalizeFrom(value: string | undefined): string {
+  const s = value?.trim();
+  if (!s) return VALID_FROM;
+  if (/^[^\s@]+@[^\s@]+$/.test(s)) return s;
+  if (/^[^<]+<[^\s@]+@[^\s@]+>$/.test(s)) return s;
+  return VALID_FROM;
+}
+
+const defaultFrom = normalizeFrom(process.env.RESEND_FROM_EMAIL);
 
 function getClient(): Resend | null {
   if (!resendApiKey) return null;
@@ -22,8 +33,10 @@ export async function sendEmail(params: {
     return { ok: false, error: "RESEND_API_KEY no configurado en .env" };
   }
 
+  const from = normalizeFrom(params.from ?? defaultFrom);
+
   const { error } = await resend.emails.send({
-    from: params.from ?? defaultFrom,
+    from,
     to: params.to,
     subject: params.subject,
     html: params.html,
