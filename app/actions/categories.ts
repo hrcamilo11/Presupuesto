@@ -39,7 +39,7 @@ export async function getCategories(type?: CategoryType) {
     let query = supabase.from("categories").select("*").eq("user_id", user.id).order("name");
     if (type) query = query.eq("type", type);
 
-    let { data, error } = await query;
+    const { data, error } = await query;
     if (error) return { data: [], error: error };
 
     if (!data || data.length === 0) {

@@ -1,12 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import { INCOME_TYPE_LABELS, type IncomeType } from "@/lib/database.types";
 import { TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const COLORS = ["#22c55e", "#84cc16", "#eab308"];
+
+const incomeChartConfig: ChartConfig = {
+  [INCOME_TYPE_LABELS.monthly]: { label: INCOME_TYPE_LABELS.monthly, color: COLORS[0] },
+  [INCOME_TYPE_LABELS.irregular]: { label: INCOME_TYPE_LABELS.irregular, color: COLORS[1] },
+  [INCOME_TYPE_LABELS.occasional]: { label: INCOME_TYPE_LABELS.occasional, color: COLORS[2] },
+};
+
+const formatCop = (value: number | undefined) =>
+  new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+  }).format(value ?? 0);
 
 type Props = {
   data: Record<IncomeType, number>;
@@ -17,6 +38,7 @@ export function IncomePieChart({ data }: Props) {
   const chartData = entries.map(([name, value]) => ({
     name: INCOME_TYPE_LABELS[name],
     value: Math.round(value * 100) / 100,
+    fill: COLORS[entries.findIndex(([k]) => k === name) % COLORS.length],
   }));
 
   if (chartData.length === 0) {
@@ -33,29 +55,32 @@ export function IncomePieChart({ data }: Props) {
     );
   }
 
-  const chartHeight = 240;
   return (
-    <div className="w-full" style={{ minWidth: 1, minHeight: chartHeight }}>
-      <ResponsiveContainer width="100%" height={chartHeight} minHeight={chartHeight} minWidth={1}>
-        <PieChart>
-          <Pie
-            data={chartData}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={90}
-            paddingAngle={2}
-            dataKey="value"
-            label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-          >
-            {chartData.map((_, i) => (
-              <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="transparent" />
-            ))}
-          </Pie>
-          <Tooltip formatter={(value: number | undefined) => [new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0), ""]} />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
+    <ChartContainer config={incomeChartConfig} className="min-h-[240px] w-full">
+      <PieChart accessibilityLayer>
+        <Pie
+          data={chartData}
+          cx="50%"
+          cy="50%"
+          innerRadius={60}
+          outerRadius={90}
+          paddingAngle={2}
+          dataKey="value"
+        >
+          {chartData.map((entry, i) => (
+            <Cell key={entry.name} fill={entry.fill ?? COLORS[i % COLORS.length]} stroke="transparent" />
+          ))}
+        </Pie>
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              nameKey="name"
+              formatter={(value) => [formatCop(Number(value)), ""]}
+            />
+          }
+        />
+        <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+      </PieChart>
+    </ChartContainer>
   );
 }

@@ -31,7 +31,7 @@ export async function getWallets() {
     } = await supabase.auth.getUser();
     if (!user) return { data: [], error: "No autenticado" };
 
-    let { data, error } = await supabase
+    const { data, error } = await supabase
         .from("wallets")
         .select("*")
         .eq("user_id", user.id)

@@ -33,7 +33,7 @@ export async function getTags() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { data: [], error: "No autenticado" };
 
-    let { data, error } = await supabase
+    const { data, error } = await supabase
         .from("tags")
         .select("*")
         .eq("user_id", user.id)
