@@ -19,7 +19,7 @@ Copia `.env.example` a `.env` y rellena cada variable. **Nunca subas `.env` a Gi
 
 | Variable | Qué poner | Obligatorio |
 |----------|-----------|-------------|
-| **NEXT_PUBLIC_APP_URL** | En local: `http://localhost:3000`. En producción: la URL de tu app (ej. `https://tu-proyecto.vercel.app`) | Recomendado (enlaces en correos e invitaciones) |
+| **NEXT_PUBLIC_APP_URL** | En local: `http://localhost:3000`. En producción: `https://presupuesto.cfd` | Recomendado (enlaces en correos e invitaciones) |
 
 ---
 
@@ -28,9 +28,9 @@ Copia `.env.example` a `.env` y rellena cada variable. **Nunca subas `.env` a Gi
 | Variable | Dónde obtenerla | Obligatorio |
 |----------|------------------|-------------|
 | **RESEND_API_KEY** | [resend.com](https://resend.com) → **API Keys** → crear clave → copiar (empieza por `re_`) | Solo si quieres enviar correos desde la app |
-| **RESEND_FROM_EMAIL** | Para pruebas: `Presupuesto <onboarding@resend.dev>`. Con dominio propio: verifica el dominio en Resend y usa ej. `Presupuesto <notificaciones@tudominio.com>` | Opcional (por defecto usa `onboarding@resend.dev`) |
+| **RESEND_FROM_EMAIL** | Con dominio presupuesto.cfd (verificado en Resend): `Presupuesto <notificaciones@presupuesto.cfd>`. Para pruebas: `Presupuesto <onboarding@resend.dev>` | Opcional |
 
-Si usas comillas: `RESEND_FROM_EMAIL="Presupuesto <onboarding@resend.dev>"`
+Si usas comillas: `RESEND_FROM_EMAIL="Presupuesto <notificaciones@presupuesto.cfd>"`
 
 ---
 
@@ -58,10 +58,10 @@ En Vercel: **Project** → **Settings** → **Environment Variables** → añadi
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=https://presupuesto.cfd   # en local: http://localhost:3000
 SUPABASE_SERVICE_ROLE_KEY=eyJ...   # para notificaciones a otros y cron
 RESEND_API_KEY=re_...              # para correo de prueba/notificaciones
-RESEND_FROM_EMAIL="Presupuesto <onboarding@resend.dev>"
+RESEND_FROM_EMAIL="Presupuesto <notificaciones@presupuesto.cfd>"   # verifica el dominio en Resend
 VAPID_PUBLIC_KEY=...
 VAPID_PRIVATE_KEY=...
 CRON_SECRET=...                    # solo si vas a probar el cron

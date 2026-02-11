@@ -16,7 +16,7 @@ Para que los correos de **Supabase Auth** (confirmación de registro, recuperar 
 
 | Campo | Valor |
 |-------|--------|
-| **Sender email** | `onboarding@resend.dev` (pruebas) o `notificaciones@tudominio.com` (tras verificar dominio en Resend) |
+| **Sender email** | `notificaciones@presupuesto.cfd` (tras verificar presupuesto.cfd en Resend) o `onboarding@resend.dev` (pruebas) |
 | **Sender name** | `Presupuesto` (opcional) |
 | **Host** | `smtp.resend.com` |
 | **Port** | `465` (recomendado) o `587` |
@@ -30,11 +30,11 @@ Para que los correos de **Supabase Auth** (confirmación de registro, recuperar 
 - **465** – SMTPS (SSL implícito). Recomendado.
 - **587** – STARTTLS. Alternativa si 465 falla.
 
-## Dominio propio
+## Dominio presupuesto.cfd
 
-Para que el “remitente” sea tu dominio (ej. `notificaciones@tudominio.com`):
+Para enviar como `notificaciones@presupuesto.cfd`:
 
-1. En Resend: **Domains** → añade y verifica tu dominio (registros DNS que te indique Resend).
-2. En Supabase, en **Sender email** usa ese correo verificado.
+1. En Resend: **Domains** → añade `presupuesto.cfd` y configura los registros DNS que indique Resend.
+2. En Supabase SMTP, **Sender email**: `notificaciones@presupuesto.cfd`.
 
 Referencia: [Resend – Send with SMTP](https://resend.com/docs/send-with-smtp).

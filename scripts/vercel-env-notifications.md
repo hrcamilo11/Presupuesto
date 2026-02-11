@@ -13,7 +13,7 @@ Añade estas variables en tu proyecto de Vercel para que funcionen el correo (Re
 | `RESEND_FROM_EMAIL` | No | `Presupuesto <onboarding@resend.dev>` o tu dominio |
 | `VAPID_PUBLIC_KEY` | No | Clave pública del generador VAPID |
 | `VAPID_PRIVATE_KEY` | Sí | Clave privada VAPID (nunca la subas a Git) |
-| `NEXT_PUBLIC_APP_URL` | No | `https://tu-app.vercel.app` (URL de la app en Vercel) |
+| `NEXT_PUBLIC_APP_URL` | No | `https://presupuesto.cfd` |
 
 Guarda y redeploya para que se apliquen.
 

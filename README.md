@@ -51,12 +51,12 @@ Aplicación para seguimiento de ingresos y gastos con Next.js, shadcn/ui y Supab
 Para que el registro y la confirmación por correo funcionen bien:
 
 1. En el **Dashboard de Supabase** → **Authentication** → **URL Configuration**:
-   - **Site URL** (producción): `https://budget-tracker-wheat-tau.vercel.app/auth/callback`
+   - **Site URL** (producción): `https://presupuesto.cfd/auth/callback`
    - **Redirect URLs** — añade estas (en local y producción):
      - `http://localhost:3000`
      - `http://localhost:3000/auth/callback`
-     - `https://budget-tracker-wheat-tau.vercel.app`
-     - `https://budget-tracker-wheat-tau.vercel.app/auth/callback`
+     - `https://presupuesto.cfd`
+     - `https://presupuesto.cfd/auth/callback`
    - Para probar en local, cambia **Site URL** temporalmente a `http://localhost:3000/auth/callback`.
 
 2. Opcional: en **Authentication** → **Providers** → **Email** puedes subir el tiempo de validez del enlace de confirmación.
@@ -77,7 +77,9 @@ Para que el registro y la confirmación por correo funcionen bien:
    - `NEXT_PUBLIC_SUPABASE_URL` — URL del proyecto Supabase.
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Anon / public key de Supabase.
 
-4. **Deploy.** La app está en **https://budget-tracker-wheat-tau.vercel.app**
+4. **Dominio:** En el proyecto Vercel → **Settings** → **Domains** añade `presupuesto.cfd` y apunta el DNS del dominio a Vercel.
+
+5. **Deploy.** La app queda en **https://presupuesto.cfd**
 
 **Alternativa con CLI:**
 

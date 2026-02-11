@@ -23,7 +23,7 @@ export async function sendPushNotification(
   }
 
   webpush.setVapidDetails(
-    "mailto:support@presupuesto.app",
+    "mailto:notificaciones@presupuesto.cfd",
     vapidPublic,
     vapidPrivate
   );
