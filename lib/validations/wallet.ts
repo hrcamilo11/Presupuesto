@@ -8,6 +8,13 @@ const baseWalletSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "El color debe ser un código hexadecimal válido (ej: #FF5733)").optional().nullable(),
   bank: z.string().max(100).optional().nullable(),
   debit_card_brand: z.string().max(50).optional().nullable(),
+  last_four_digits: z
+        .string()
+        .max(4, "Máximo 4 dígitos")
+        .regex(/^\d{0,4}$/, "Solo números")
+        .optional()
+        .nullable()
+        .transform((v) => (v === "" || v == null ? undefined : v)),
   // Campos opcionales para crédito; se validan condicionalmente más abajo
   credit_mode: z.enum(["account", "card"]).optional(),
   card_brand: z.string().max(50).optional(),

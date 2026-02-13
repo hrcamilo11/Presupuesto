@@ -4,7 +4,9 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import { Client, Account } from "appwrite";
 import { createClient } from "@/lib/supabase/client";
+import { setFailoverCookieFromAppwriteUserId } from "@/app/actions/auth-appwrite";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,14 +73,37 @@ function LoginForm() {
       email,
       password,
     });
-    setLoading(false);
-    if (signInError) {
-      setError(signInError.message);
+    if (!signInError) {
+      setLoading(false);
+      const redirectTo = searchParams.get("redirect");
+      router.push(redirectTo && redirectTo.startsWith("/") ? redirectTo : "/dashboard");
+      router.refresh();
       return;
     }
-    const redirectTo = searchParams.get("redirect");
-    router.push(redirectTo && redirectTo.startsWith("/") ? redirectTo : "/dashboard");
-    router.refresh();
+    const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
+    const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
+    if (endpoint && projectId) {
+      try {
+        const client = new Client().setEndpoint(endpoint).setProject(projectId);
+        const account = new Account(client);
+        await account.createEmailPasswordSession(email.trim(), password);
+        const user = await account.get();
+        const { error: cookieError } = await setFailoverCookieFromAppwriteUserId(user.$id);
+        setLoading(false);
+        if (cookieError) {
+          setError(cookieError);
+          return;
+        }
+        const redirectTo = searchParams.get("redirect");
+        router.push(redirectTo && redirectTo.startsWith("/") ? redirectTo : "/dashboard");
+        router.refresh();
+        return;
+      } catch {
+        // Login con Appwrite falló (ej. usuario no existe en Appwrite o contraseña incorrecta)
+      }
+    }
+    setLoading(false);
+    setError(signInError.message);
   }
 
   return (

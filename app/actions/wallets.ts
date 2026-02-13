@@ -3,6 +3,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { walletSchema } from "@/lib/validations/wallet";
+import { withFailover, isNetworkOrServerError } from "@/lib/backend/with-failover";
+import { getUserIdForFailover } from "@/lib/backend/auth-context";
+import {
+    getWalletsFromAppwrite,
+    syncWalletToAppwrite,
+    updateWalletInAppwrite,
+    updateWalletPartialInAppwrite,
+    deleteWalletFromAppwrite,
+    createWalletInAppwrite,
+} from "@/lib/backend/wallets-appwrite";
+import { isAppwriteConfigured } from "@/lib/appwrite/client";
+import type { Wallet } from "@/lib/database.types";
 
 /** Crea la cuenta de efectivo por defecto si el usuario no tiene ninguna cuenta. */
 async function ensureDefaultWallet(
@@ -25,29 +37,47 @@ async function ensureDefaultWallet(
 }
 
 export async function getWallets() {
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: "No autenticado" };
-
-    const { data, error } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true });
-
-    if (error) return { data: [], error: error.message };
-    if (!data || data.length === 0) {
-        await ensureDefaultWallet(supabase, user.id);
-        const ret = await supabase
+    async function primary(): Promise<Wallet[]> {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No autenticado");
+        const { data, error } = await supabase
             .from("wallets")
             .select("*")
             .eq("user_id", user.id)
             .order("created_at", { ascending: true });
-        return { data: ret.data ?? [], error: ret.error?.message ?? null };
+        if (error) throw new Error(error.message);
+        if (!data || data.length === 0) {
+            await ensureDefaultWallet(supabase, user.id);
+            const ret = await supabase
+                .from("wallets")
+                .select("*")
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: true });
+            if (ret.error) throw new Error(ret.error.message);
+            return ret.data ?? [];
+        }
+        return data as Wallet[];
     }
-    return { data: data ?? [], error: null };
+    async function fallback(): Promise<Wallet[]> {
+        const userId = await getUserIdForFailover();
+        if (!userId) throw new Error("No autenticado");
+        return await getWalletsFromAppwrite(userId);
+    }
+    if (isAppwriteConfigured()) {
+        try {
+            const data = await withFailover(primary, fallback);
+            return { data, error: null };
+        } catch (e) {
+            return { data: [], error: (e instanceof Error ? e.message : "Error al cargar cuentas") };
+        }
+    }
+    try {
+        const data = await primary();
+        return { data, error: null };
+    } catch (e) {
+        return { data: [], error: (e instanceof Error ? e.message : "Error al cargar cuentas") };
+    }
 }
 
 export async function createWallet(formData: {
@@ -58,6 +88,7 @@ export async function createWallet(formData: {
     color?: string | null;
     bank?: string | null;
     debit_card_brand?: string | null;
+    last_four_digits?: string | null;
     credit_mode?: "account" | "card";
     card_brand?: string;
     cut_off_day?: number;
@@ -72,45 +103,60 @@ export async function createWallet(formData: {
         return { error: parsed.error.issues[0].message };
     }
 
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return { error: "No autenticado" };
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { error: "No autenticado" };
 
-    const { error } = await supabase.from("wallets").insert({
-        user_id: user.id,
-        name: formData.name,
-        type: formData.type,
-        currency: formData.currency,
-        balance: formData.balance || 0,
-        color: formData.color || null,
-        bank: formData.type === "debit" || formData.type === "credit" ? formData.bank ?? null : null,
-        debit_card_brand: formData.type === "debit" ? formData.debit_card_brand ?? null : null,
-        credit_mode: formData.type === "credit" ? formData.credit_mode ?? null : null,
-        card_brand: formData.type === "credit" ? formData.card_brand ?? null : null,
-        cut_off_day: formData.type === "credit" ? formData.cut_off_day ?? null : null,
-        payment_due_day: formData.type === "credit" ? formData.payment_due_day ?? null : null,
-        credit_limit: formData.type === "credit" ? formData.credit_limit ?? null : null,
-        cash_advance_limit:
-            formData.type === "credit" ? formData.cash_advance_limit ?? null : null,
-        purchase_interest_rate:
-            formData.type === "credit" ? formData.purchase_interest_rate ?? null : null,
-        cash_advance_interest_rate:
-            formData.type === "credit" ? formData.cash_advance_interest_rate ?? null : null,
-    });
+        const insertPayload = {
+            user_id: user.id,
+            name: formData.name,
+            type: formData.type,
+            currency: formData.currency,
+            balance: formData.balance || 0,
+            color: formData.color || null,
+            bank: formData.type === "debit" || formData.type === "credit" ? formData.bank ?? null : null,
+            debit_card_brand: formData.type === "debit" ? formData.debit_card_brand ?? null : null,
+            last_four_digits: formData.last_four_digits && /^\d{1,4}$/.test(formData.last_four_digits) ? formData.last_four_digits : null,
+            credit_mode: formData.type === "credit" ? formData.credit_mode ?? null : null,
+            card_brand: formData.type === "credit" ? formData.card_brand ?? null : null,
+            cut_off_day: formData.type === "credit" ? formData.cut_off_day ?? null : null,
+            payment_due_day: formData.type === "credit" ? formData.payment_due_day ?? null : null,
+            credit_limit: formData.type === "credit" ? formData.credit_limit ?? null : null,
+            cash_advance_limit: formData.type === "credit" ? formData.cash_advance_limit ?? null : null,
+            purchase_interest_rate: formData.type === "credit" ? formData.purchase_interest_rate ?? null : null,
+            cash_advance_interest_rate: formData.type === "credit" ? formData.cash_advance_interest_rate ?? null : null,
+        };
+        const { data: created, error } = await supabase
+            .from("wallets")
+            .insert(insertPayload)
+            .select("*")
+            .single();
 
-    if (error) {
-        const msg = error.message || "Error al crear cuenta";
-        if (msg.includes("schema cache") && msg.includes("card_brand")) {
-            return {
-                error:
-                    "Tu Supabase aún no tiene aplicada la migración de tarjetas (columnas como card_brand, credit_limit, etc.) o el schema cache no se ha recargado. Aplica las migraciones y recarga el esquema, luego intenta de nuevo.",
-            };
+        if (error) {
+            const msg = error.message || "Error al crear cuenta";
+            if (msg.includes("schema cache") && msg.includes("card_brand")) {
+                return { error: "Tu Supabase aún no tiene aplicada la migración de tarjetas. Aplica las migraciones." };
+            }
+            throw new Error(msg);
         }
-        return { error: msg };
+        if (created && isAppwriteConfigured()) {
+            syncWalletToAppwrite(created as Wallet).catch(() => {});
+        }
+    } catch (err) {
+        if (isAppwriteConfigured() && isNetworkOrServerError(err)) {
+            const userId = await getUserIdForFailover();
+            if (!userId) return { error: "No autenticado. Inicia sesión de nuevo cuando Supabase esté disponible." };
+            try {
+                await createWalletInAppwrite(userId, formData);
+            } catch (appwriteErr) {
+                return { error: (appwriteErr instanceof Error ? appwriteErr.message : "Error al crear cuenta en respaldo") };
+            }
+        } else {
+            return { error: err instanceof Error ? err.message : "Error al crear cuenta" };
+        }
     }
-    revalidatePath("/wallets"); // adjust path if needed
+    revalidatePath("/wallets");
     revalidatePath("/dashboard");
     return { error: null };
 }
@@ -125,6 +171,7 @@ export async function updateWallet(
         color?: string | null;
         bank?: string | null;
         debit_card_brand?: string | null;
+        last_four_digits?: string | null;
         credit_mode?: "account" | "card";
         card_brand?: string;
         cut_off_day?: number;
@@ -140,23 +187,17 @@ export async function updateWallet(
         return { error: parsed.error.issues[0].message };
     }
 
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return { error: "No autenticado" };
-
     const updateData: Record<string, string | number | null> = {
         name: formData.name,
         type: formData.type,
         currency: formData.currency,
         color: formData.color || null,
     };
-
+    const lastFour = formData.last_four_digits && /^\d{1,4}$/.test(formData.last_four_digits) ? formData.last_four_digits : null;
     if (formData.type === "debit") {
         updateData.bank = formData.bank ?? null;
         updateData.debit_card_brand = formData.debit_card_brand ?? null;
-        // Limpiar campos de crédito
+        updateData.last_four_digits = lastFour;
         updateData.credit_mode = null;
         updateData.card_brand = null;
         updateData.cut_off_day = null;
@@ -167,6 +208,7 @@ export async function updateWallet(
         updateData.cash_advance_interest_rate = null;
     } else if (formData.type === "credit") {
         updateData.bank = formData.bank ?? null;
+        updateData.last_four_digits = lastFour;
         updateData.credit_mode = formData.credit_mode ?? null;
         updateData.card_brand = formData.card_brand ?? null;
         updateData.cut_off_day = formData.cut_off_day ?? null;
@@ -175,12 +217,11 @@ export async function updateWallet(
         updateData.cash_advance_limit = formData.cash_advance_limit ?? null;
         updateData.purchase_interest_rate = formData.purchase_interest_rate ?? null;
         updateData.cash_advance_interest_rate = formData.cash_advance_interest_rate ?? null;
-        // Limpiar campos de débito
         updateData.debit_card_brand = null;
     } else {
-        // Limpiar campos de crédito y débito si cambia el tipo
         updateData.bank = null;
         updateData.debit_card_brand = null;
+        updateData.last_four_digits = null;
         updateData.credit_mode = null;
         updateData.card_brand = null;
         updateData.cut_off_day = null;
@@ -191,32 +232,66 @@ export async function updateWallet(
         updateData.cash_advance_interest_rate = null;
     }
 
-    const { error } = await supabase
-        .from("wallets")
-        .update(updateData)
-        .eq("id", id)
-        .eq("user_id", user.id);
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { error: "No autenticado" };
 
-    if (error) return { error: error.message };
+        const { data: updated, error } = await supabase
+            .from("wallets")
+            .update(updateData)
+            .eq("id", id)
+            .eq("user_id", user.id)
+            .select("*")
+            .single();
+
+        if (error) throw new Error(error.message);
+        if (updated && isAppwriteConfigured()) {
+            updateWalletInAppwrite(updated as Wallet).catch(() => {});
+        }
+    } catch (err) {
+        if (isAppwriteConfigured() && isNetworkOrServerError(err)) {
+            try {
+                await updateWalletPartialInAppwrite(id, updateData);
+            } catch (appwriteErr) {
+                return { error: appwriteErr instanceof Error ? appwriteErr.message : "Error al actualizar en respaldo" };
+            }
+        } else {
+            return { error: err instanceof Error ? err.message : "Error al actualizar cuenta" };
+        }
+    }
     revalidatePath("/wallets");
     revalidatePath("/dashboard");
     return { error: null };
 }
 
 export async function deleteWallet(id: string) {
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return { error: "No autenticado" };
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { error: "No autenticado" };
 
-    const { error } = await supabase
-        .from("wallets")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
+        const { error } = await supabase
+            .from("wallets")
+            .delete()
+            .eq("id", id)
+            .eq("user_id", user.id);
 
-    if (error) return { error: error.message };
+        if (error) throw new Error(error.message);
+        if (isAppwriteConfigured()) {
+            deleteWalletFromAppwrite(id).catch(() => {});
+        }
+    } catch (err) {
+        if (isAppwriteConfigured() && isNetworkOrServerError(err)) {
+            try {
+                await deleteWalletFromAppwrite(id);
+            } catch (appwriteErr) {
+                return { error: appwriteErr instanceof Error ? appwriteErr.message : "Error al eliminar en respaldo" };
+            }
+        } else {
+            return { error: err instanceof Error ? err.message : "Error al eliminar cuenta" };
+        }
+    }
     revalidatePath("/wallets");
     revalidatePath("/dashboard");
     return { error: null };

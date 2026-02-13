@@ -1,0 +1,186 @@
+/**
+ * Definición del esquema Appwrite: colecciones y atributos equivalentes a las tablas de Supabase.
+ * No se ejecuta SQL; cada "tabla" es una colección con atributos (string, integer, float, datetime).
+ * Usado por: node scripts/appwrite-setup-schema.js
+ */
+
+const S = (key, size = 255, required = false) => ({ key, type: "string", size, required });
+const I = (key, required = false) => ({ key, type: "integer", required });
+const F = (key, required = false) => ({ key, type: "float", required });
+const D = (key, required = false) => ({ key, type: "datetime", required });
+
+const COLLECTIONS = [
+  {
+    id: "wallets",
+    name: "Wallets",
+    attributes: [
+      S("user_id", 64, true),
+      S("name", 255, true),
+      S("type", 32, true),
+      S("currency", 8, true),
+      F("balance", true),
+      S("color", 32),
+      S("bank", 128),
+      S("debit_card_brand", 64),
+      S("last_four_digits", 8),
+      S("credit_mode", 32),
+      S("card_brand", 64),
+      I("cut_off_day"),
+      I("payment_due_day"),
+      F("credit_limit"),
+      F("cash_advance_limit"),
+      F("purchase_interest_rate"),
+      F("cash_advance_interest_rate"),
+      D("created_at"),
+      D("updated_at"),
+    ],
+  },
+  {
+    id: "categories",
+    name: "Categories",
+    attributes: [
+      S("user_id", 64, true),
+      S("shared_account_id", 64),
+      S("name", 255, true),
+      S("icon", 64, true),
+      S("color", 32, true),
+      S("type", 32, true),
+      D("created_at"),
+      D("updated_at"),
+    ],
+  },
+  {
+    id: "tags",
+    name: "Tags",
+    attributes: [S("user_id", 64, true), S("name", 128, true), S("color", 32, true), D("created_at")],
+  },
+  {
+    id: "expenses",
+    name: "Expenses",
+    attributes: [
+      S("user_id", 64, true),
+      S("shared_account_id", 64),
+      S("wallet_id", 64),
+      F("amount", true),
+      S("currency", 8, true),
+      S("expense_priority", 32, true),
+      S("description", 1024),
+      S("date", 32, true),
+      S("category_id", 64),
+      S("subscription_id", 64),
+      S("loan_payment_id", 64),
+      D("created_at"),
+    ],
+  },
+  {
+    id: "incomes",
+    name: "Incomes",
+    attributes: [
+      S("user_id", 64, true),
+      S("shared_account_id", 64),
+      S("wallet_id", 64),
+      F("amount", true),
+      S("currency", 8, true),
+      S("income_type", 32, true),
+      S("description", 1024),
+      S("date", 32, true),
+      S("category_id", 64),
+      D("created_at"),
+    ],
+  },
+  {
+    id: "budgets",
+    name: "Budgets",
+    attributes: [
+      S("user_id", 64, true),
+      S("category_id", 64, true),
+      F("amount", true),
+      S("period", 32, true),
+      S("shared_account_id", 64),
+      D("created_at"),
+      D("updated_at"),
+    ],
+  },
+  {
+    id: "subscriptions",
+    name: "Subscriptions",
+    attributes: [
+      S("user_id", 64, true),
+      S("shared_account_id", 64),
+      S("name", 255, true),
+      F("amount", true),
+      S("currency", 8, true),
+      S("frequency", 32, true),
+      S("next_due_date", 32, true),
+      S("description", 1024),
+      D("created_at"),
+      D("updated_at"),
+    ],
+  },
+  {
+    id: "loans",
+    name: "Loans",
+    attributes: [
+      S("user_id", 64, true),
+      S("shared_account_id", 64),
+      S("name", 255, true),
+      F("principal", true),
+      F("annual_interest_rate", true),
+      I("term_months", true),
+      S("start_date", 32, true),
+      S("currency", 8, true),
+      S("description", 1024),
+      D("created_at"),
+    ],
+  },
+  {
+    id: "tax_obligations",
+    name: "Tax Obligations",
+    attributes: [
+      S("user_id", 64, true),
+      S("shared_account_id", 64),
+      S("name", 255, true),
+      F("amount", true),
+      S("currency", 8, true),
+      S("period_type", 32, true),
+      S("due_date", 32, true),
+      S("paid_at", 32),
+      S("notes", 1024),
+      D("created_at"),
+      D("updated_at"),
+    ],
+  },
+  {
+    id: "wallet_transfers",
+    name: "Wallet Transfers",
+    attributes: [
+      S("user_id", 64, true),
+      S("from_wallet_id", 64, true),
+      S("to_wallet_id", 64, true),
+      F("amount", true),
+      S("description", 512),
+      S("date", 32, true),
+      S("category_id", 64),
+      D("created_at"),
+    ],
+  },
+  {
+    id: "savings_goals",
+    name: "Savings Goals",
+    attributes: [
+      S("user_id", 64, true),
+      S("shared_account_id", 64),
+      S("name", 255, true),
+      F("target_amount", true),
+      F("current_amount", true),
+      S("target_date", 32),
+      S("type", 32, true),
+      S("color", 32, true),
+      S("icon", 64, true),
+      D("created_at"),
+      D("updated_at"),
+    ],
+  },
+];
+
+module.exports = { COLLECTIONS };

@@ -2,6 +2,12 @@
 /**
  * Ejecuta las migraciones de Supabase contra el proyecto remoto.
  * Requiere SUPABASE_DB_PASSWORD en .env (Supabase Dashboard > Settings > Database).
+ *
+ * Si tu red no puede conectar a db.xxx.supabase.co (timeout IPv6), usa la URL del
+ * pooler: Dashboard → Connect → "Session mode" → copia la URI tal cual y en .env
+ * pon SUPABASE_DB_URL= esa URI reemplazando solo [YOUR-PASSWORD] por tu contraseña.
+ * Si la contraseña tiene @ # : / etc., codifícala (ej. @ → %40). El host debe ser
+ * el que muestra el Dashboard (región correcta, ej. aws-0-sa-east-1 o aws-0-us-east-1).
  */
 const { readFileSync, existsSync } = require("fs");
 const { execSync } = require("child_process");
@@ -40,15 +46,24 @@ if (!projectRef) {
   process.exit(1);
 }
 
-if (!password) {
-  console.error(
-    "Falta SUPABASE_DB_PASSWORD en .env.\nObtén la contraseña en: Supabase Dashboard > Project Settings > Database > Database password"
-  );
-  process.exit(1);
+// Preferir URL explícita del pooler (Session mode) si existe; evita timeouts por IPv6
+const explicitDbUrl = env.SUPABASE_DB_URL || env.DATABASE_URL;
+let dbUrl;
+if (explicitDbUrl && explicitDbUrl.startsWith("postgres")) {
+  dbUrl = explicitDbUrl.replace(/^postgres:/, "postgresql:");
+  if (dbUrl.includes("[YOUR-PASSWORD]") && password) {
+    dbUrl = dbUrl.replace("[YOUR-PASSWORD]", encodeURIComponent(password));
+  }
+} else {
+  if (!password) {
+    console.error(
+      "Falta SUPABASE_DB_PASSWORD en .env.\nObtén la contraseña en: Supabase Dashboard > Project Settings > Database > Database password"
+    );
+    process.exit(1);
+  }
+  const encodedPassword = encodeURIComponent(password);
+  dbUrl = `postgresql://postgres:${encodedPassword}@db.${projectRef}.supabase.co:6543/postgres`;
 }
-
-const encodedPassword = encodeURIComponent(password);
-const dbUrl = `postgresql://postgres:${encodedPassword}@db.${projectRef}.supabase.co:5432/postgres`;
 
 const workdir = path.join(__dirname, "..");
 try {

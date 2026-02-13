@@ -10,7 +10,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:migrate": "node scripts/migrate.js"
+    "db:migrate": "node scripts/migrate.js",
+    "appwrite:create-wallets": "node scripts/appwrite-create-wallets-collection.js",
+    "appwrite:setup": "node scripts/appwrite-setup-schema.js",
+    "appwrite:migrate-to-supabase": "node scripts/migrate-appwrite-to-supabase.js",
+    "appwrite:sync-from-supabase": "node scripts/migrate-supabase-to-appwrite.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -25,11 +29,13 @@
     "@radix-ui/react-toast": "^1.2.15",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
+    "appwrite": "^22.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.563.0",
     "next": "14.2.35",
+    "node-appwrite": "^22.0.0",
     "postgres": "^3.4.8",
     "react": "^18",
     "react-dom": "^18",

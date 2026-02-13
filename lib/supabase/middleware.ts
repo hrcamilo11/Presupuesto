@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { FAILOVER_USER_ID_COOKIE } from "@/lib/backend/auth-context";
 
 export async function updateSession(request: NextRequest) {
   const response = NextResponse.next({
@@ -27,6 +28,16 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (user?.id) {
+    response.cookies.set(FAILOVER_USER_ID_COOKIE, user.id, {
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+  }
+
   const pathname = request.nextUrl.pathname;
   const isAuthRoute =
     pathname === "/login" ||
@@ -51,16 +62,19 @@ export async function updateSession(request: NextRequest) {
     pathname === "/update-password" ||
     pathname === "/";
 
+  const failoverUserId = request.cookies.get(FAILOVER_USER_ID_COOKIE)?.value;
+  const hasAuth = Boolean(user?.id) || Boolean(failoverUserId);
+
   if (isAuthCallback) {
     return response;
   }
-  if (pathname === "/" && user) {
+  if (pathname === "/" && hasAuth) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
-  if (isAuthRoute && user) {
+  if (isAuthRoute && hasAuth) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
-  if (isDashboardRoute && !user) {
+  if (isDashboardRoute && !hasAuth) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

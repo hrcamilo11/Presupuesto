@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { createAppwriteUser } from "@/app/actions/auth-appwrite";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +34,7 @@ export default function RegisterPage() {
     setError(null);
     setLoading(true);
     const supabase = createClient();
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName || undefined } },
@@ -42,6 +43,14 @@ export default function RegisterPage() {
     if (signUpError) {
       setError(signUpError.message);
       return;
+    }
+    if (data?.user) {
+      await createAppwriteUser(
+        data.user.id,
+        data.user.email ?? email,
+        password,
+        fullName || undefined
+      );
     }
     setSuccess(true);
     router.refresh();

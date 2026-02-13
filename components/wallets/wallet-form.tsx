@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusCircle, Loader2, HelpCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -61,19 +61,6 @@ const CARD_BRANDS = [
     { value: "other", label: "Otra" },
 ] as const;
 
-// Colores representativos por franquicia para asignación automática
-const CARD_BRAND_COLOR_MAP: Record<string, string> = {
-    visa: "#1A1F71",
-    mastercard: "#EB001B",
-    amex: "#006FCF",
-    diners: "#0079BE",
-    discover: "#FF6000",
-    jcb: "#0B4EA2",
-    unionpay: "#E21836",
-    maestro: "#0099DD",
-    other: "#1F2937",
-};
-
 const PRESET_COLORS = [
     "#3B82F6", // blue
     "#10B981", // green
@@ -108,24 +95,25 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
     const setOpen = controlledOnOpenChange || setInternalOpen;
 
     const form = useForm<WalletSchema>({
-        resolver: zodResolver(walletSchema),
+        resolver: zodResolver(walletSchema) as Resolver<WalletSchema>,
         defaultValues: wallet
             ? {
                   name: wallet.name,
                   type: wallet.type,
                   currency: wallet.currency,
                   balance: wallet.balance,
-                  color: wallet.color || undefined,
-                  bank: wallet.bank || undefined,
-                  debit_card_brand: wallet.debit_card_brand || undefined,
-                  credit_mode: wallet.credit_mode || undefined,
-                  card_brand: wallet.card_brand || undefined,
-                  cut_off_day: wallet.cut_off_day || undefined,
-                  payment_due_day: (wallet as { payment_due_day?: number }).payment_due_day || undefined,
-                  credit_limit: wallet.credit_limit || undefined,
-                  cash_advance_limit: wallet.cash_advance_limit || undefined,
-                  purchase_interest_rate: wallet.purchase_interest_rate || undefined,
-                  cash_advance_interest_rate: wallet.cash_advance_interest_rate || undefined,
+                  color: wallet.color ?? undefined,
+                  bank: wallet.bank ?? undefined,
+                  debit_card_brand: wallet.debit_card_brand ?? undefined,
+                  last_four_digits: (wallet as { last_four_digits?: string | null }).last_four_digits ?? undefined,
+                  credit_mode: wallet.credit_mode ?? undefined,
+                  card_brand: wallet.card_brand ?? undefined,
+                  cut_off_day: wallet.cut_off_day ?? undefined,
+                  payment_due_day: (wallet as { payment_due_day?: number }).payment_due_day ?? undefined,
+                  credit_limit: wallet.credit_limit ?? undefined,
+                  cash_advance_limit: wallet.cash_advance_limit ?? undefined,
+                  purchase_interest_rate: wallet.purchase_interest_rate ?? undefined,
+                  cash_advance_interest_rate: wallet.cash_advance_interest_rate ?? undefined,
               }
             : {
                   name: "",
@@ -415,6 +403,36 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                             )}
                         />
 
+                        {(isDebit || isCreditCard) && (
+                            <FormField
+                                control={form.control}
+                                name="last_four_digits"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Últimos 4 dígitos (opcional)</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="5543"
+                                                maxLength={4}
+                                                inputMode="numeric"
+                                                pattern="\d*"
+                                                {...field}
+                                                value={field.value ?? ""}
+                                                onChange={(e) => {
+                                                    const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                                                    field.onChange(v || undefined);
+                                                }}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Para identificar la tarjeta en la vista (ej: •••• 5543).
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
                         <FormField
                             control={form.control}
                             name="color"
@@ -517,16 +535,7 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                                                 <FormItem>
                                                     <FormLabel>Franquicia / marca</FormLabel>
                                                     <Select
-                                                        onValueChange={(value) => {
-                                                            field.onChange(value);
-                                                            // Auto-asignar color de la franquicia si no hay color personalizado
-                                                            if (!form.watch("color")) {
-                                                                const brandColor = CARD_BRAND_COLOR_MAP[value.toLowerCase()];
-                                                                if (brandColor) {
-                                                                    form.setValue("color", brandColor);
-                                                                }
-                                                            }
-                                                        }}
+                                                        onValueChange={field.onChange}
                                                         defaultValue={field.value}
                                                     >
                                                         <FormControl>
