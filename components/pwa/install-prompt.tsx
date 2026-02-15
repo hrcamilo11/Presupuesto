@@ -6,6 +6,20 @@ import { Share, Smartphone, X } from "lucide-react";
 
 const PWA_INSTALL_DISMISSED_KEY = "pwa-install-dismissed";
 
+/** Detecta el tipo de navegador para mostrar instrucciones de instalación adecuadas. */
+function getBrowserHint(): "ios" | "android-firefox" | "android-chromium" | "desktop" | null {
+  if (typeof navigator === "undefined") return null;
+  const ua = navigator.userAgent;
+  const ios = /iPad|iPhone|iPod/.test(ua) && !(typeof window !== "undefined" && (window as unknown as { MSStream?: boolean }).MSStream);
+  if (ios) return "ios";
+  const android = /Android/.test(ua);
+  if (android) {
+    if (/Firefox|FxiOS/.test(ua)) return "android-firefox";
+    return "android-chromium"; // Chrome, Edge, Samsung Internet, Opera, etc.
+  }
+  return "desktop";
+}
+
 /** Llamar desde Configuración para volver a mostrar el diálogo de instalación (Android) o instrucciones (iOS). */
 export function requestInstallPrompt(): void {
   if (typeof window === "undefined") return;
@@ -26,6 +40,7 @@ export function InstallPrompt() {
   const [showFallbackBanner, setShowFallbackBanner] = useState(false);
   const [requestedFromSettings, setRequestedFromSettings] = useState(false);
   const [installRequestCount, setInstallRequestCount] = useState(0);
+  const [browserHint, setBrowserHint] = useState<ReturnType<typeof getBrowserHint>>(null);
   const autoPromptDone = useRef(false);
 
   useEffect(() => {
@@ -40,6 +55,7 @@ export function InstallPrompt() {
 
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: boolean }).MSStream;
     setIsIOS(ios);
+    setBrowserHint(getBrowserHint());
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -116,11 +132,22 @@ export function InstallPrompt() {
           </p>
           {isIOS ? (
             <p className="text-xs text-muted-foreground">
-              En iPhone: <Share className="inline h-3 w-3" /> Compartir → &quot;Añadir a la pantalla de inicio&quot;.
+              En iPhone o iPad (Safari, Chrome, Firefox, Edge): <Share className="inline h-3 w-3" /> <strong>Compartir</strong> → &quot;Añadir a la pantalla de inicio&quot;.
             </p>
           ) : requestedFromSettings && !deferredPrompt ? (
-            <p className="text-xs text-muted-foreground">
-              Abre esta página en Chrome en tu teléfono para instalar. En iPhone usa Safari: Compartir → Añadir a la pantalla de inicio.
+            <p className="text-xs text-muted-foreground space-y-1">
+              {browserHint === "android-firefox" && (
+                <>En <strong>Firefox</strong>: menú (⋮) → &quot;Instalar&quot; o &quot;Añadir a la pantalla de inicio&quot;.</>
+              )}
+              {browserHint === "android-chromium" && (
+                <>En Chrome, Edge o Samsung Internet el diálogo puede aparecer al cargar. Si no: menú (⋮) → &quot;Instalar app&quot; o &quot;Añadir a la pantalla de inicio&quot;.</>
+              )}
+              {browserHint === "desktop" && (
+                <>Abre esta página en el <strong>navegador de tu móvil</strong> (Chrome, Firefox, Safari, Edge) y usa el menú del navegador para instalar o añadir a la pantalla de inicio.</>
+              )}
+              {!browserHint && (
+                <>Abre esta página en tu teléfono y usa el menú del navegador → Instalar / Añadir a la pantalla de inicio.</>
+              )}
             </p>
           ) : (
             <>

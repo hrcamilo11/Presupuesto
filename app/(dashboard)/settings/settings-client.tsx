@@ -318,7 +318,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                 App en tu teléfono
                             </CardTitle>
                             <p className="text-sm text-muted-foreground">
-                                Instala Presupuesto en tu móvil para acceder desde la pantalla de inicio.
+                                Instala Presupuesto en tu móvil para acceder desde la pantalla de inicio. Funciona en Chrome, Firefox, Safari, Edge y otros navegadores.
                             </p>
                         </CardHeader>
                         <CardContent className="space-y-3">
@@ -329,7 +329,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                             ) : (
                                 <>
                                     <p className="text-sm text-muted-foreground">
-                                        En Android: usa el botón &quot;Instalar&quot; cuando aparezca el aviso, o el menú del navegador. En iPhone: Compartir → Añadir a la pantalla de inicio.
+                                        Android (Chrome, Edge, Samsung Internet): el diálogo de instalación puede aparecer solo. En Firefox: menú (⋮) → Instalar. iPhone/iPad (cualquier navegador): Compartir → Añadir a la pantalla de inicio.
                                     </p>
                                     <Button variant="outline" onClick={requestInstallPrompt} className="gap-2">
                                         <Smartphone className="h-4 w-4" />
