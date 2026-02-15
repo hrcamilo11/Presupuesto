@@ -29,14 +29,12 @@ import { formatDateYMD, formatNumber } from "@/lib/utils";
 
 type ExpenseListProps = {
   expenses: Expense[];
-  year: number;
-  month: number;
   sharedAccounts: SharedAccount[];
   wallets: Wallet[];
   categories: Category[];
 };
 
-export function ExpenseList({ expenses, year, month, sharedAccounts, wallets, categories }: ExpenseListProps) {
+export function ExpenseList({ expenses, sharedAccounts, wallets, categories }: ExpenseListProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);

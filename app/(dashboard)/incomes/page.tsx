@@ -77,8 +77,6 @@ export default async function IncomesPage({
       </div>
       <IncomeList
         incomes={incomes ?? []}
-        year={year}
-        month={month}
         sharedAccounts={sharedAccounts ?? []}
         wallets={wallets ?? []}
         categories={categories ?? []}

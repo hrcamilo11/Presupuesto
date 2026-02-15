@@ -81,8 +81,6 @@ export default async function ExpensesPage({
         sharedAccounts={sharedAccounts || []}
         wallets={wallets || []}
         categories={categories || []}
-        year={year}
-        month={month}
       />
     </div>
   );

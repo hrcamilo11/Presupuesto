@@ -28,14 +28,12 @@ import { formatDateYMD, formatNumber } from "@/lib/utils";
 
 type IncomeListProps = {
   incomes: Income[];
-  year: number;
-  month: number;
   sharedAccounts: SharedAccount[];
   wallets: Wallet[];
   categories: Category[];
 };
 
-export function IncomeList({ incomes, year, month, sharedAccounts, wallets, categories }: IncomeListProps) {
+export function IncomeList({ incomes, sharedAccounts, wallets, categories }: IncomeListProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Income | null>(null);
