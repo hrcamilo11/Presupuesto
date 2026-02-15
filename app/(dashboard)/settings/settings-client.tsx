@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell, Settings, ChevronUp, ChevronDown, KeyRound } from "lucide-react";
+import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell, Settings, ChevronUp, ChevronDown, KeyRound, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { CategoryList } from "@/components/categories/category-list";
 import { TagList } from "@/components/tags/tag-list";
@@ -22,7 +21,8 @@ import {
 import { updateMyDashboardSettings, updateMyProfileBasics, wipeMyPersonalData } from "@/app/actions/profile";
 import { updateNotificationPreferences, sendTestEmail } from "@/app/actions/notifications";
 import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
-import { useTransition } from "react";
+import { requestInstallPrompt } from "@/components/pwa/install-prompt";
+import { useTransition, useEffect, useState } from "react";
 import type { NotificationPreferences } from "@/lib/database.types";
 
 interface SettingsPageClientProps {
@@ -95,6 +95,12 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
     const [pushEnabled, setPushEnabled] = useState(mergedNotifPrefs.push_enabled);
     const [notifMsg, setNotifMsg] = useState<string | null>(null);
     const [testEmailMsg, setTestEmailMsg] = useState<string | null>(null);
+
+    const [isStandalone, setIsStandalone] = useState(false);
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        setIsStandalone(window.matchMedia("(display-mode: standalone)").matches);
+    }, []);
 
     function toggleDashSetting(key: keyof typeof DEFAULT_DASHBOARD_SETTINGS) {
         setDashSettings((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -302,6 +308,35 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                     {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
                                 </Button>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="overflow-hidden rounded-xl border border-border/80 shadow-sm">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <Smartphone className="h-5 w-5" />
+                                App en tu teléfono
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                                Instala Presupuesto en tu móvil para acceder desde la pantalla de inicio.
+                            </p>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {isStandalone ? (
+                                <p className="text-sm text-muted-foreground">
+                                    La app está instalada en este dispositivo.
+                                </p>
+                            ) : (
+                                <>
+                                    <p className="text-sm text-muted-foreground">
+                                        En Android: usa el botón &quot;Instalar&quot; cuando aparezca el aviso, o el menú del navegador. En iPhone: Compartir → Añadir a la pantalla de inicio.
+                                    </p>
+                                    <Button variant="outline" onClick={requestInstallPrompt} className="gap-2">
+                                        <Smartphone className="h-4 w-4" />
+                                        Ver instrucciones de instalación
+                                    </Button>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
 

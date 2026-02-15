@@ -6,6 +6,13 @@ import { X, Share, Smartphone } from "lucide-react";
 
 const PWA_INSTALL_DISMISSED_KEY = "pwa-install-dismissed";
 
+/** Llamar desde Configuración para volver a mostrar el banner de instalación. */
+export function requestInstallPrompt(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(PWA_INSTALL_DISMISSED_KEY);
+  window.dispatchEvent(new CustomEvent("pwa-request-install-prompt"));
+}
+
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
@@ -17,6 +24,7 @@ export function InstallPrompt() {
   const [isIOS, setIsIOS] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(true);
+  const [requestedFromSettings, setRequestedFromSettings] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -45,7 +53,18 @@ export function InstallPrompt() {
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    const requestHandler = () => {
+      localStorage.removeItem(PWA_INSTALL_DISMISSED_KEY);
+      setDismissed(false);
+      setRequestedFromSettings(true);
+    };
+    window.addEventListener("pwa-request-install-prompt", requestHandler);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("pwa-request-install-prompt", requestHandler);
+    };
   }, [mounted]);
 
   const handleInstall = async () => {
@@ -61,10 +80,14 @@ export function InstallPrompt() {
   };
 
   if (!mounted || isStandalone || dismissed) return null;
-  if (!isIOS && !deferredPrompt) return null;
+  if (!isIOS && !deferredPrompt && !requestedFromSettings) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-sm sm:rounded-lg sm:border">
+    <div
+      className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-sm sm:rounded-lg sm:border pb-[env(safe-area-inset-bottom)] sm:pb-3"
+      role="dialog"
+      aria-label="Instalar aplicación"
+    >
       <div className="flex items-start gap-2">
         <div className="flex flex-1 flex-col gap-2">
           <p className="text-sm font-medium flex items-center gap-2">
@@ -74,6 +97,10 @@ export function InstallPrompt() {
           {isIOS ? (
             <p className="text-xs text-muted-foreground">
               Para instalar: usa el botón <Share className="inline h-3 w-3" /> Compartir y luego &quot;Añadir a la pantalla de inicio&quot;.
+            </p>
+          ) : requestedFromSettings && !deferredPrompt ? (
+            <p className="text-xs text-muted-foreground">
+              Abre esta página en el navegador de tu teléfono (Chrome en Android o Safari en iPhone) y usa el menú del navegador para instalar o añadir a la pantalla de inicio.
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">

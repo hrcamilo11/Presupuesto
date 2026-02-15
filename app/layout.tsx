@@ -28,6 +28,14 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Presupuesto",
   description: "Seguimiento de presupuesto personal: ingresos y gastos",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Presupuesto",
+  },
+  icons: {
+    apple: "/icon-192x192.png",
+  },
 };
 
 export default function RootLayout({
