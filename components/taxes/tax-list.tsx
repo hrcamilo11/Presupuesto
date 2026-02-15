@@ -66,36 +66,68 @@ export function TaxList({ taxes }: Props) {
         </p>
       ) : (
         <>
-          {/* Vista móvil: cards sin tabla */}
-          <div className="space-y-3 md:hidden">
+          {/* Vista en pantallas pequeñas/medianas: tarjetas para evitar scroll horizontal */}
+          <div className="space-y-3 lg:hidden">
             {taxes.map((t) => (
-              <button
+              <div
                 key={t.id}
-                type="button"
-                onClick={() => setSelectedTax(t)}
-                className="w-full rounded-lg border bg-card p-3 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border/80 bg-card p-4 shadow-sm"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium truncate">{t.name}</span>
-                  <span className="text-sm font-semibold text-primary">
-                    ${formatNumber(Number(t.amount))}
-                  </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedTax(t)}
+                  className="flex-1 min-w-0 text-left focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-inset rounded-lg"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium truncate">{t.name}</span>
+                    <span className="text-sm font-semibold text-primary shrink-0">
+                      ${formatNumber(Number(t.amount))}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span>{TAX_PERIOD_LABELS[t.period_type]}</span>
+                    <span>{formatDateYMD(t.due_date)}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t.paid_at
+                      ? `Pagado ${formatDateYMD(t.paid_at)}`
+                      : "Pendiente"}
+                  </p>
+                </button>
+                <div className="flex gap-1 shrink-0">
+                  {!t.paid_at && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleMarkPaid(t.id)}
+                      title="Marcar como pagado"
+                    >
+                      <Check className="h-4 w-4 text-green-600" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => { setEditing(t); setFormOpen(true); }}
+                    aria-label="Editar"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDeleteId(t.id)}
+                    aria-label="Eliminar"
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
-                <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                  <span>{TAX_PERIOD_LABELS[t.period_type]}</span>
-                  <span>{formatDateYMD(t.due_date)}</span>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t.paid_at
-                    ? `Pagado ${formatDateYMD(t.paid_at)}`
-                    : "Pendiente"}
-                </p>
-              </button>
+              </div>
             ))}
           </div>
 
-          {/* Vista de escritorio: tabla completa */}
-          <div className="hidden md:block">
+          {/* Vista de escritorio (cuando cabe la tabla): lista en tabla */}
+          <div className="hidden lg:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
