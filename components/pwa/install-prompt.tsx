@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Share, Smartphone } from "lucide-react";
+import { Share, Smartphone, X } from "lucide-react";
 
 const PWA_INSTALL_DISMISSED_KEY = "pwa-install-dismissed";
 
-/** Llamar desde Configuración para volver a mostrar el banner de instalación. */
+/** Llamar desde Configuración para volver a mostrar el diálogo de instalación (Android) o instrucciones (iOS). */
 export function requestInstallPrompt(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(PWA_INSTALL_DISMISSED_KEY);
@@ -23,8 +23,10 @@ export function InstallPrompt() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(true);
+  const [showFallbackBanner, setShowFallbackBanner] = useState(false);
   const [requestedFromSettings, setRequestedFromSettings] = useState(false);
+  const [installRequestCount, setInstallRequestCount] = useState(0);
+  const autoPromptDone = useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -39,25 +41,27 @@ export function InstallPrompt() {
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: boolean }).MSStream;
     setIsIOS(ios);
 
-    const stored = localStorage.getItem(PWA_INSTALL_DISMISSED_KEY);
-    if (stored) {
-      const parsed = Number(stored);
-      if (!Number.isNaN(parsed) && Date.now() - parsed < 7 * 24 * 60 * 60 * 1000) setDismissed(true);
-      else setDismissed(false);
-    } else {
-      setDismissed(false);
-    }
-
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      const ev = e as BeforeInstallPromptEvent;
+      setDeferredPrompt(ev);
+      // Instalación automática: mostrar el diálogo del sistema en cuanto el navegador lo permita (Android).
+      if (!autoPromptDone.current) {
+        autoPromptDone.current = true;
+        ev.prompt()
+          .then(() => ev.userChoice)
+          .then(({ outcome }) => {
+            if (outcome === "dismissed") setShowFallbackBanner(true);
+          })
+          .catch(() => setShowFallbackBanner(true));
+      }
     };
     window.addEventListener("beforeinstallprompt", handler);
 
     const requestHandler = () => {
       localStorage.removeItem(PWA_INSTALL_DISMISSED_KEY);
-      setDismissed(false);
       setRequestedFromSettings(true);
+      setInstallRequestCount((c) => c + 1);
     };
     window.addEventListener("pwa-request-install-prompt", requestHandler);
 
@@ -67,21 +71,37 @@ export function InstallPrompt() {
     };
   }, [mounted]);
 
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") setDeferredPrompt(null);
+  // Cuando piden desde Configuración y ya tenemos el evento (Android), mostrar el diálogo del sistema
+  useEffect(() => {
+    if (installRequestCount === 0 || !deferredPrompt || isIOS) return;
+    deferredPrompt.prompt().catch(() => {});
+  }, [installRequestCount, deferredPrompt, isIOS]);
+
+  const handleInstallAgain = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt().catch(() => {});
+      setShowFallbackBanner(false);
+    }
   };
 
-  const handleDismiss = () => {
-    setDismissed(true);
+  const handleDismissBanner = () => {
+    setShowFallbackBanner(false);
     localStorage.setItem(PWA_INSTALL_DISMISSED_KEY, String(Date.now()));
   };
 
-  if (!mounted || isStandalone || dismissed) return null;
-  if (!isIOS && !deferredPrompt && !requestedFromSettings) return null;
+  // No mostrar nada si ya está instalado
+  if (!mounted || isStandalone) return null;
 
+  // Android: solo mostrar banner de respaldo si el usuario cerró el diálogo del sistema y no lo ha descartado
+  const stored = typeof window !== "undefined" ? localStorage.getItem(PWA_INSTALL_DISMISSED_KEY) : null;
+  const dismissed = stored ? (Date.now() - Number(stored) < 7 * 24 * 60 * 60 * 1000) : false;
+  if (!isIOS && !showFallbackBanner && !requestedFromSettings) return null;
+  if (!isIOS && dismissed && !requestedFromSettings) return null;
+
+  // iOS: solo mostrar si pidieron instrucciones desde Configuración
+  if (isIOS && !requestedFromSettings) return null;
+
+  // Banner mínimo: solo cuando (1) Android y cerraron el diálogo, o (2) pidieron desde Configuración (iOS o escritorio)
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-sm sm:rounded-lg sm:border pb-[env(safe-area-inset-bottom)] sm:pb-3"
@@ -96,24 +116,24 @@ export function InstallPrompt() {
           </p>
           {isIOS ? (
             <p className="text-xs text-muted-foreground">
-              Para instalar: usa el botón <Share className="inline h-3 w-3" /> Compartir y luego &quot;Añadir a la pantalla de inicio&quot;.
+              En iPhone: <Share className="inline h-3 w-3" /> Compartir → &quot;Añadir a la pantalla de inicio&quot;.
             </p>
           ) : requestedFromSettings && !deferredPrompt ? (
             <p className="text-xs text-muted-foreground">
-              Abre esta página en el navegador de tu teléfono (Chrome en Android o Safari en iPhone) y usa el menú del navegador para instalar o añadir a la pantalla de inicio.
+              Abre esta página en Chrome en tu teléfono para instalar. En iPhone usa Safari: Compartir → Añadir a la pantalla de inicio.
             </p>
           ) : (
-            <p className="text-xs text-muted-foreground">
-              Instala Presupuesto en tu dispositivo para acceder más rápido.
-            </p>
-          )}
-          {!isIOS && deferredPrompt && (
-            <Button size="sm" onClick={handleInstall} className="w-fit">
-              Instalar
-            </Button>
+            <>
+              <p className="text-xs text-muted-foreground">
+                ¿Instalar Presupuesto en la pantalla de inicio?
+              </p>
+              <Button size="sm" onClick={handleInstallAgain} className="w-fit">
+                Instalar
+              </Button>
+            </>
           )}
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleDismiss} aria-label="Cerrar">
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleDismissBanner} aria-label="Cerrar">
           <X className="h-4 w-4" />
         </Button>
       </div>
