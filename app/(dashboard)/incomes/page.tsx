@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { IncomeList } from "@/components/incomes/income-list";
 import { MonthPicker } from "@/components/month-picker";
 import { DashboardContextSelector } from "@/components/dashboard/dashboard-context-selector";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { getCategories } from "@/app/actions/categories";
 import { getMySharedAccounts } from "@/app/actions/shared-accounts";
 import { getWallets } from "@/app/actions/wallets";
@@ -56,10 +57,15 @@ export default async function IncomesPage({
           <h1 className="text-3xl font-bold tracking-tight">Ingresos</h1>
           <p className="text-muted-foreground">Gestiona tus entradas de dinero.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <FilterBar
+          label="Filtrar listado"
+          description="Elige el mes y si ver todos los ingresos, solo los tuyos o los de un grupo."
+        >
           <MonthPicker year={year} month={month} />
-          <DashboardContextSelector sharedAccounts={sharedAccounts ?? []} />
-        </div>
+          <FilterField label="Ver datos de">
+            <DashboardContextSelector sharedAccounts={sharedAccounts ?? []} />
+          </FilterField>
+        </FilterBar>
       </div>
       <IncomeList
         incomes={incomes ?? []}

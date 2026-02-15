@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { LoanCard } from "@/components/loans/loan-card";
 import { LoansAddButton } from "@/components/loans/loans-add-button";
 import { DashboardContextSelector } from "@/components/dashboard/dashboard-context-selector";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { getWallets } from "@/app/actions/wallets";
 import { getMySharedAccounts } from "@/app/actions/shared-accounts";
 
@@ -58,15 +59,22 @@ export default async function LoansPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Préstamos</h1>
-          <p className="text-muted-foreground">Préstamos personales, auto, hipoteca: tabla de amortización y registro de pagos</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <DashboardContextSelector sharedAccounts={sharedAccounts ?? []} />
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Préstamos</h1>
+            <p className="text-muted-foreground">Préstamos personales, auto, hipoteca: tabla de amortización y registro de pagos</p>
+          </div>
           <LoansAddButton />
         </div>
+        <FilterBar
+          label="Filtrar préstamos"
+          description="Ver todos, solo los tuyos (personal) o los de una cuenta compartida."
+        >
+          <FilterField label="Ver datos de">
+            <DashboardContextSelector sharedAccounts={sharedAccounts ?? []} />
+          </FilterField>
+        </FilterBar>
       </div>
       {!loans?.length ? (
         <p className="text-muted-foreground py-8 text-center">No hay préstamos. Agrega uno para ver la tabla de amortización y registrar pagos.</p>

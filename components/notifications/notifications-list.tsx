@@ -14,9 +14,10 @@ import {
   Wallet,
   CheckCheck,
   Trash2,
-  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FilterBar } from "@/components/ui/filter-bar";
+import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -83,32 +84,49 @@ export function NotificationsList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Ver:</span>
+      <FilterBar
+        label="Mostrar notificaciones"
+        description="Todas o solo las que aún no has leído."
+      >
+        <div
+          className="inline-flex rounded-lg border border-input bg-muted/50 p-1 shadow-sm"
+          role="group"
+          aria-label="Filtro de notificaciones"
+        >
           <Button
-            variant={initialFilter === "all" ? "secondary" : "ghost"}
+            variant="ghost"
             size="sm"
             onClick={() => setFilter("all")}
+            className={cn(
+              "rounded-md text-sm font-medium transition-colors",
+              initialFilter === "all"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
           >
             Todas
           </Button>
           <Button
-            variant={initialFilter === "unread" ? "secondary" : "ghost"}
+            variant="ghost"
             size="sm"
             onClick={() => setFilter("unread")}
+            className={cn(
+              "rounded-md text-sm font-medium transition-colors",
+              initialFilter === "unread"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
           >
             No leídas
           </Button>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
+          <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} className="ml-auto">
             <CheckCheck className="mr-2 h-4 w-4" />
             Marcar todas como leídas
           </Button>
         )}
-      </div>
+      </FilterBar>
       <ul className="space-y-1">
         {list.map((n) => {
           const Icon = typeIcons[n.type] ?? Info;

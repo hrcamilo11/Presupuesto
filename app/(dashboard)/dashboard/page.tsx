@@ -22,6 +22,7 @@ import { WalletFilter } from "@/components/dashboard/wallet-filter";
 import { BudgetSummary } from "@/components/dashboard/budget-summary";
 import { ExportReportButton } from "@/components/dashboard/export-report-button";
 import { DashboardContextSelector } from "@/components/dashboard/dashboard-context-selector";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { getBudgets } from "@/app/actions/budgets";
 import { getMySharedAccounts } from "@/app/actions/shared-accounts";
 import { formatNumber } from "@/lib/utils";
@@ -868,10 +869,19 @@ export default async function DashboardPage({
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
           <p className="text-sm text-muted-foreground capitalize sm:text-base">{monthName}</p>
         </div>
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
+          <FilterBar
+            label="Filtros del resumen"
+            description="Elige si ver todos los datos (global), solo los tuyos (personal) o de un grupo. Opcionalmente filtra por una cuenta."
+          >
+            <FilterField label="Ver datos de">
+              <DashboardContextSelector sharedAccounts={sharedAccounts} />
+            </FilterField>
+            <FilterField label="Cuenta">
+              <WalletFilter wallets={wallets} />
+            </FilterField>
+          </FilterBar>
           <ExportReportButton context={context} wallet={selectedWalletId} />
-          <DashboardContextSelector sharedAccounts={sharedAccounts} />
-          <WalletFilter wallets={wallets} />
         </div>
       </header>
 

@@ -34,15 +34,15 @@ export function BudgetContextSelector({ sharedAccounts }: { sharedAccounts: Shar
     return (
         <div className="flex items-center gap-2">
             <Select value={context} onValueChange={handleChange} disabled={isPending}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[220px] rounded-lg border-input shadow-sm" aria-label="Presupuestos de">
                     {isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        <Loader2 className="h-4 w-4 animate-spin mr-2 shrink-0" />
                     ) : context === "personal" ? (
-                        <User className="h-4 w-4 mr-2" />
+                        <User className="h-4 w-4 mr-2 shrink-0 text-muted-foreground" />
                     ) : (
-                        <Users className="h-4 w-4 mr-2" />
+                        <Users className="h-4 w-4 mr-2 shrink-0 text-muted-foreground" />
                     )}
-                    <SelectValue placeholder="Contexto" />
+                    <SelectValue placeholder="Seleccionar" />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="personal">

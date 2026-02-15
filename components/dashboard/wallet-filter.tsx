@@ -27,21 +27,19 @@ export function WalletFilter({ wallets }: { wallets: Wallet[] }) {
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <WalletIcon className="h-4 w-4 text-muted-foreground" />
-            <Select value={currentWalletId} onValueChange={handleValueChange}>
-                <SelectTrigger className="w-[180px] h-8 text-xs">
-                    <SelectValue placeholder="Todas las cuentas" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">Todas las cuentas</SelectItem>
-                    {wallets.map((wallet) => (
-                        <SelectItem key={wallet.id} value={wallet.id}>
-                            {wallet.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
+        <Select value={currentWalletId} onValueChange={handleValueChange}>
+            <SelectTrigger className="w-[200px] rounded-lg border-input shadow-sm text-sm" aria-label="Filtrar por cuenta">
+                <WalletIcon className="h-4 w-4 mr-2 shrink-0 text-muted-foreground" />
+                <SelectValue placeholder="Todas las cuentas" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all">Todas las cuentas</SelectItem>
+                {wallets.map((wallet) => (
+                    <SelectItem key={wallet.id} value={wallet.id}>
+                        {wallet.name}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
     );
 }

@@ -35,15 +35,15 @@ export function DashboardContextSelector({ sharedAccounts }: { sharedAccounts: S
     return (
         <div className="flex items-center gap-2">
             <Select value={currentContext} onValueChange={handleContextChange} disabled={isPending}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[200px] rounded-lg border-input shadow-sm" aria-label="Ver datos de (contexto)">
                     {isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        <Loader2 className="h-4 w-4 animate-spin mr-2 shrink-0" />
                     ) : (
-                        currentContext === "global" ? <Globe className="h-4 w-4 mr-2" /> :
-                            currentContext === "personal" ? <User className="h-4 w-4 mr-2" /> :
-                                <Users className="h-4 w-4 mr-2" />
+                        currentContext === "global" ? <Globe className="h-4 w-4 mr-2 shrink-0 text-muted-foreground" /> :
+                            currentContext === "personal" ? <User className="h-4 w-4 mr-2 shrink-0 text-muted-foreground" /> :
+                                <Users className="h-4 w-4 mr-2 shrink-0 text-muted-foreground" />
                     )}
-                    <SelectValue placeholder="Contexto" />
+                    <SelectValue placeholder="Seleccionar" />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="global">
