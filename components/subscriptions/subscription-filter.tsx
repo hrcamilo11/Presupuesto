@@ -24,7 +24,7 @@ export function SubscriptionFilter({ currentFilter }: { currentFilter: string })
 
   return (
     <FilterBar
-      label="Mostrar suscripciones"
+      label="Filtrar suscripciones"
       description="Elige qué suscripciones ver según su fecha de próximo pago."
     >
       <div

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { TaxList } from "@/components/taxes/tax-list";
+import { TaxesAddButton } from "@/components/taxes/taxes-add-button";
 import { TaxFilter } from "@/components/taxes/tax-filter";
 
 export default async function TaxesPage({
@@ -31,10 +32,13 @@ export default async function TaxesPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Impuestos</h1>
-          <p className="text-muted-foreground">Obligaciones fiscales: ISR, IVA, predial, declaraciones. Fechas de vencimiento y estado de pago.</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Impuestos</h1>
+            <p className="text-muted-foreground">Obligaciones fiscales: ISR, IVA, predial, declaraciones. Fechas de vencimiento y estado de pago.</p>
+          </div>
+          <TaxesAddButton />
         </div>
         <TaxFilter currentFilter={filter} />
       </div>

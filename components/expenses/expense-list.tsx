@@ -57,22 +57,10 @@ export function ExpenseList({ expenses, year, month, sharedAccounts, wallets, ca
     setFormOpen(true);
   }
 
-  function openCreate() {
-    setEditingExpense(null);
-    setFormOpen(true);
-  }
-
   const totalAmount = expenses.reduce((s, e) => s + Number(e.amount), 0);
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">
-          Gastos — {month}/{year}
-        </h2>
-        <Button onClick={openCreate}>Agregar gasto</Button>
-      </div>
-
       {expenses.length === 0 ? (
         <p className="py-8 text-center text-muted-foreground">
           No hay gastos este mes. Agrega uno para comenzar.
