@@ -33,7 +33,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
             <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             <main
-                className="min-h-screen min-w-0 overflow-x-hidden pt-14 md:pt-0 md:pl-64"
+                className="min-h-screen min-w-0 overflow-x-hidden pt-14 md:pt-14 md:pl-64"
                 role="main"
             >
                 <div className="mx-auto min-w-0 w-full max-w-6xl overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
