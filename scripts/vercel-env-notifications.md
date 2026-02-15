@@ -1,6 +1,6 @@
 # Variables de Vercel para notificaciones
 
-Añade estas variables en tu proyecto de Vercel para que funcionen el correo (Resend) y las notificaciones push.
+Añade estas variables en tu proyecto de Vercel para que funcionen el correo (Resend) y las notificaciones push. La app en producción se sirve en **https://presupuesto.cfd** (dominio propio; no uses la URL \*.vercel.app).
 
 ## Desde el Dashboard
 
@@ -10,10 +10,10 @@ Añade estas variables en tu proyecto de Vercel para que funcionen el correo (Re
 | Variable | Sensitive | Ejemplo / descripción |
 |----------|-----------|------------------------|
 | `RESEND_API_KEY` | Sí | `re_xxxx` (desde Resend) |
-| `RESEND_FROM_EMAIL` | No | `Presupuesto <onboarding@resend.dev>` o tu dominio |
+| `RESEND_FROM_EMAIL` | No | `Presupuesto <notificaciones@presupuesto.cfd>` (verifica el dominio en Resend) |
 | `VAPID_PUBLIC_KEY` | No | Clave pública del generador VAPID |
 | `VAPID_PRIVATE_KEY` | Sí | Clave privada VAPID (nunca la subas a Git) |
-| `NEXT_PUBLIC_APP_URL` | No | `https://presupuesto.cfd` |
+| `NEXT_PUBLIC_APP_URL` | No | `https://presupuesto.cfd` (dominio de producción) |
 
 Guarda y redeploya para que se apliquen.
 

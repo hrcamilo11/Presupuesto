@@ -1,6 +1,6 @@
 # Dominio presupuesto.cfd — checklist
 
-Con el dominio **presupuesto.cfd** configurado, todos los enlaces (invitaciones, notificaciones, correos) usarán esta URL.
+La app en producción se sirve en **https://presupuesto.cfd**. Con este dominio configurado, todos los enlaces (invitaciones, notificaciones, correos) usarán esta URL. No uses la URL por defecto de Vercel (\*.vercel.app) para producción.
 
 ## 1. Vercel (donde se sirve la app)
 

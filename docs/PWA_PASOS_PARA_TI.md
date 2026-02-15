@@ -41,7 +41,7 @@ Abre la URL que muestre Next (ej. `https://localhost:3000`) en el móvil (misma 
 
 ## 3. Desplegar con HTTPS
 
-En producción la app **debe** estar en HTTPS para que la PWA sea instalable. Si usas Vercel, Netlify o similar, normalmente ya tendrás HTTPS. Solo asegúrate de que el dominio final use `https://`.
+En producción la app **debe** estar en HTTPS para que la PWA sea instalable. La app se sirve en **https://presupuesto.cfd**. Si usas Vercel, Netlify o similar, normalmente ya tendrás HTTPS; asegúrate de usar el dominio presupuesto.cfd (no la URL \*.vercel.app).
 
 ---
 
@@ -69,7 +69,7 @@ El InstallPrompt está en el layout y se muestra en todas las páginas (salvo si
 |-----|--------|
 | Iconos | Sustituir `public/icon-192x192.png` y `public/icon-512x512.png` por los definitivos (o generarlos con las herramientas indicadas). |
 | Probar en local | `npm run dev -- --experimental-https` y abrir en HTTPS. |
-| Producción | Desplegar con HTTPS (Vercel/Netlify/etc. ya lo dan). |
-| Validar | Probar “Instalar” en Android (Chrome) e iOS (Safari) con la URL en producción. |
+| Producción | Desplegar con HTTPS en **https://presupuesto.cfd** (Vercel/Netlify ya lo dan al usar el dominio). |
+| Validar | Probar “Instalar” en Android (Chrome) e iOS (Safari) con https://presupuesto.cfd. |
 
 No hace falta tocar el plan ni el código de la PWA para esto; solo iconos, entorno HTTPS y pruebas en dispositivo.

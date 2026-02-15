@@ -2,6 +2,8 @@
 
 Aplicación para seguimiento de ingresos y gastos con Next.js, shadcn/ui y Supabase.
 
+**URL de producción:** [https://presupuesto.cfd](https://presupuesto.cfd)
+
 ## Características
 
 - **Autenticación:** registro, login, recuperar contraseña y reenviar correo de confirmación
@@ -76,8 +78,9 @@ Para que el registro y la confirmación por correo funcionen bien:
 3. **Variables de entorno** (Settings → Environment Variables del proyecto):
    - `NEXT_PUBLIC_SUPABASE_URL` — URL del proyecto Supabase.
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Anon / public key de Supabase.
+   - `NEXT_PUBLIC_APP_URL` — `https://presupuesto.cfd` (enlaces en correos, invitaciones y notificaciones).
 
-4. **Dominio:** En el proyecto Vercel → **Settings** → **Domains** añade `presupuesto.cfd` y apunta el DNS del dominio a Vercel.
+4. **Dominio:** En el proyecto Vercel → **Settings** → **Domains** añade **presupuesto.cfd** y apunta el DNS del dominio a Vercel. La app se sirve en **https://presupuesto.cfd** (no uses la URL \*.vercel.app para producción).
 
 5. **Deploy.** La app queda en **https://presupuesto.cfd**
 
@@ -89,7 +92,7 @@ vercel login
 vercel --prod
 ```
 
-Cuando la CLI pida las variables de entorno, añade las dos de Supabase o configúralas después en el dashboard del proyecto en Vercel.
+Cuando la CLI pida las variables de entorno, añade las de Supabase y `NEXT_PUBLIC_APP_URL=https://presupuesto.cfd`, o configúralas después en el dashboard del proyecto en Vercel.
 
 ## Scripts
 
