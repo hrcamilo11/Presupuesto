@@ -884,27 +884,30 @@ export default async function DashboardPage({
 
   return (
     <div className="min-w-0 space-y-6 md:space-y-8">
-      {/* Encabezado */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-0.5">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
-          <p className="text-sm text-muted-foreground capitalize sm:text-base">{monthName}</p>
-        </div>
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
-          <FilterBar
-            label="Filtros del resumen"
-            description="Elige si ver todos los datos (global), solo los tuyos (personal) o de un grupo. Opcionalmente filtra por una cuenta."
-          >
-            <FilterField label="Ver datos de">
-              <DashboardContextSelector sharedAccounts={sharedAccounts} />
-            </FilterField>
-            <FilterField label="Cuenta">
-              <WalletFilter wallets={wallets} />
-            </FilterField>
-          </FilterBar>
+      {/* Título */}
+      <header className="space-y-0.5">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
+        <p className="text-sm text-muted-foreground capitalize sm:text-base">{monthName}</p>
+      </header>
+
+      {/* Barra de filtros bajo el título (ancho completo) */}
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+        <FilterBar
+          label="Filtros del resumen"
+          description="Elige si ver todos los datos (global), solo los tuyos (personal) o de un grupo. Opcionalmente filtra por una cuenta."
+          className="min-w-0 flex-1"
+        >
+          <FilterField label="Ver datos de">
+            <DashboardContextSelector sharedAccounts={sharedAccounts} />
+          </FilterField>
+          <FilterField label="Cuenta">
+            <WalletFilter wallets={wallets} />
+          </FilterField>
+        </FilterBar>
+        <div className="shrink-0">
           <ExportReportButton context={context} wallet={selectedWalletId} />
         </div>
-      </header>
+      </div>
 
       <DashboardSummaryBanner
         balance={balance}
