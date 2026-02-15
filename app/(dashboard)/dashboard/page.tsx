@@ -20,7 +20,7 @@ import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight } from "lucide-
 import { DashboardSummaryBanner } from "@/components/dashboard/dashboard-summary-banner";
 import { WalletFilter } from "@/components/dashboard/wallet-filter";
 import { BudgetSummary } from "@/components/dashboard/budget-summary";
-import { ExportReportButton } from "@/components/dashboard/export-report-button";
+import { ExportReportDialog } from "@/components/dashboard/export-report-dialog";
 import { DashboardContextSelector } from "@/components/dashboard/dashboard-context-selector";
 import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { getBudgets } from "@/app/actions/budgets";
@@ -905,7 +905,7 @@ export default async function DashboardPage({
           </FilterField>
         </FilterBar>
         <div className="shrink-0">
-          <ExportReportButton context={context} wallet={selectedWalletId} />
+          <ExportReportDialog context={context} wallet={selectedWalletId} />
         </div>
       </div>
 
