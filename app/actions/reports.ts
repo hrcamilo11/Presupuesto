@@ -76,8 +76,8 @@ export async function exportMonthlyReport(
   const incomes = (incomesRes.data ?? []) as unknown[];
   const expenses = (expensesRes.data ?? []) as unknown[];
 
-  const totalIncome = incomes.reduce((s, i) => s + Number((i as { amount: number }).amount), 0);
-  const totalExpense = expenses.reduce((s, e) => s + Number((e as { amount: number }).amount), 0);
+  const totalIncome = incomes.reduce((s: number, i) => s + Number((i as { amount: number }).amount), 0);
+  const totalExpense = expenses.reduce((s: number, e) => s + Number((e as { amount: number }).amount), 0);
   const balance = totalIncome - totalExpense;
   const periodLabel = `${year}-${String(month).padStart(2, "0")}`;
 
