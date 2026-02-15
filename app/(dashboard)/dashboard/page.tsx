@@ -142,6 +142,25 @@ export default async function DashboardPage({
     expenseQuery = expenseQuery.eq("shared_account_id", context);
   }
 
+  let subscriptionsQuery = supabase.from("subscriptions").select("amount, frequency, next_due_date");
+  let taxQuery = supabase.from("tax_obligations").select("amount, paid_at");
+  let loansQuery = supabase.from("loans").select("id, principal, currency");
+  if (context === "personal") {
+    subscriptionsQuery = subscriptionsQuery.is("shared_account_id", null);
+    taxQuery = taxQuery.is("shared_account_id", null);
+    loansQuery = loansQuery.is("shared_account_id", null);
+  } else if (context !== "global") {
+    subscriptionsQuery = subscriptionsQuery.eq("shared_account_id", context);
+    taxQuery = taxQuery.eq("shared_account_id", context);
+    loansQuery = loansQuery.eq("shared_account_id", context);
+  }
+
+  const budgetsSharedId = context === "global" || context === "personal" ? undefined : context;
+  const [{ data: budgetsData }, { data: sharedAccountsData }] = await Promise.all([
+    getBudgets(budgetsSharedId),
+    getMySharedAccounts(),
+  ]);
+
   const [
     incomesRes,
     expensesRes,
@@ -150,8 +169,6 @@ export default async function DashboardPage({
     walletsRes,
     savingsRes,
     sharedSavingsRes,
-    budgetsRes,
-    sharedAccountsRes,
     categoriesRes,
     savingsTxRes,
     sharedSavingsTxRes,
@@ -162,13 +179,11 @@ export default async function DashboardPage({
   ] = await Promise.all([
     incomeQuery,
     expenseQuery,
-    supabase.from("subscriptions").select("amount, frequency"),
-    supabase.from("tax_obligations").select("amount, paid_at"),
+    subscriptionsQuery,
+    taxQuery,
     supabase.from("wallets").select("*").order("balance", { ascending: false }),
     supabase.from("savings_goals").select("*").order("target_date", { ascending: true }),
     supabase.from("shared_savings_goals").select("*").order("created_at", { ascending: false }),
-    getBudgets(),
-    getMySharedAccounts(),
     getCategories(),
     supabase
       .from("savings_transactions")
@@ -180,7 +195,7 @@ export default async function DashboardPage({
       .select("amount, wallet_id, date, shared_savings_goal_id")
       .gte("date", start)
       .lte("date", end),
-    supabase.from("loans").select("id, principal, currency"),
+    loansQuery,
     supabase
       .from("loan_payments")
       .select("loan_id, payment_number, balance_after"),
@@ -217,8 +232,8 @@ export default async function DashboardPage({
   const wallets = (walletsRes.data ?? []) as any[];
   const savingsGoals = (savingsRes.data ?? []) as any[];
   const sharedSavingsGoals = (sharedSavingsRes.data ?? []) as any[];
-  const budgets = (budgetsRes.data ?? []) as any[];
-  const sharedAccounts = (sharedAccountsRes.data ?? []) as any[];
+  const budgets = (budgetsData ?? []) as any[];
+  const sharedAccounts = (sharedAccountsData ?? []) as any[];
   const categories = (categoriesRes.data ?? []) as Category[];
   const savingsTransactions = (savingsTxRes.data ?? []) as any[];
   const sharedSavingsTransactions = (sharedSavingsTxRes.data ?? []) as any[];
@@ -558,7 +573,7 @@ export default async function DashboardPage({
               <BudgetSummary budgets={budgets} expenses={expenses} />
             )}
 
-            {dashboardSettings.show_accounts_preview !== false && (
+            {dashboardSettings.show_accounts_preview !== false && !selectedWalletId && (
               <Card className="card-hover shadow-sm lg:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2">
                   <CardTitle className="text-base sm:text-lg">Mis Cuentas</CardTitle>
@@ -675,8 +690,9 @@ export default async function DashboardPage({
             )}
           </section>
         );
-      case "debts_section":
+      case "debts_section": {
         if (dashboardSettings.show_debts_section === false) return null;
+        const isSharedContext = context !== "global" && context !== "personal";
         return (
           <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
             <Card className="card-hover overflow-hidden border-amber-500/20 bg-amber-500/5 shadow-sm">
@@ -692,18 +708,20 @@ export default async function DashboardPage({
               </CardContent>
             </Card>
 
-            <Card className="card-hover overflow-hidden border-red-500/20 bg-red-500/5 shadow-sm">
-              <CardHeader className="space-y-1 pb-2 pt-4 sm:pb-3 sm:pt-6">
-                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
-                  Tarjetas de crédito
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4 pt-0 sm:pb-6">
-                <p className="truncate text-lg font-bold text-red-700 dark:text-red-400 sm:text-2xl">
-                  {formatNumber(totalCreditCardsDebt)}
-                </p>
-              </CardContent>
-            </Card>
+            {!isSharedContext && (
+              <Card className="card-hover overflow-hidden border-red-500/20 bg-red-500/5 shadow-sm">
+                <CardHeader className="space-y-1 pb-2 pt-4 sm:pb-3 sm:pt-6">
+                  <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+                    Tarjetas de crédito
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4 pt-0 sm:pb-6">
+                  <p className="truncate text-lg font-bold text-red-700 dark:text-red-400 sm:text-2xl">
+                    {formatNumber(totalCreditCardsDebt)}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="card-hover overflow-hidden border-purple-500/20 bg-purple-500/5 shadow-sm">
               <CardHeader className="space-y-1 pb-2 pt-4 sm:pb-3 sm:pt-6">
@@ -732,6 +750,7 @@ export default async function DashboardPage({
             </Card>
           </section>
         );
+      }
       case "pie_charts":
         if (dashboardSettings.show_pie_charts === false) return null;
         return (
