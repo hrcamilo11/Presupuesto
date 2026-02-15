@@ -662,9 +662,9 @@ export default async function DashboardPage({
         );
       case "ring_trend":
         return (
-          <section className="grid gap-4 md:gap-6 lg:grid-cols-3">
-            <Card className="card-hover flex flex-col items-center justify-center shadow-sm p-4 sm:p-6">
-              <CardHeader className="w-full p-0 pb-2">
+          <section className="grid min-w-0 gap-4 md:gap-6 lg:grid-cols-3">
+            <Card className="card-hover flex min-w-0 flex-col items-center justify-center shadow-sm p-4 sm:p-6">
+              <CardHeader className="w-full min-w-0 p-0 pb-2">
                 <CardTitle className="text-center text-sm font-medium">
                   Ingresos vs gastos
                 </CardTitle>
@@ -676,14 +676,14 @@ export default async function DashboardPage({
               />
             </Card>
             {dashboardSettings.show_trend_chart !== false && (
-              <Card className="card-hover shadow-sm lg:col-span-2">
+              <Card className="card-hover min-w-0 overflow-hidden shadow-sm lg:col-span-2">
                 <CardHeader className="p-4 pb-0 sm:p-6 sm:pb-0">
                   <CardTitle className="text-base sm:text-lg">Tendencia (6 meses)</CardTitle>
                   <p className="text-xs text-muted-foreground sm:text-sm">
                     Ingresos y gastos por mes
                   </p>
                 </CardHeader>
-                <CardContent className="p-4 pt-2 sm:p-6 sm:pt-2">
+                <CardContent className="min-w-0 overflow-hidden p-4 pt-2 sm:p-6 sm:pt-2">
                   <TrendChart data={trendData} />
                 </CardContent>
               </Card>
