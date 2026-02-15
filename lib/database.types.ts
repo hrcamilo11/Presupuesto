@@ -125,6 +125,7 @@ export interface Budget {
   category_id: string;
   amount: number;
   period: string;
+  shared_account_id?: string | null;
   created_at: string;
   updated_at: string;
 }

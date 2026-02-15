@@ -74,6 +74,7 @@ export async function updateIncome(
     date: string;
     category_id?: string | null;
     wallet_id?: string | null;
+    shared_account_id?: string | null;
   }
 ) {
   const parsed = incomeSchema.safeParse(formData);
@@ -89,10 +90,10 @@ export async function updateIncome(
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  // Fetch previous income to adjust wallet balances correctly
+  // Fetch previous income to adjust wallet balances and preserve shared_account_id
   const { data: previous, error: prevError } = await supabase
     .from("incomes")
-    .select("amount, wallet_id")
+    .select("amount, wallet_id, shared_account_id")
     .eq("id", id)
     .single();
 
@@ -108,6 +109,7 @@ export async function updateIncome(
       date: formData.date,
       category_id: formData.category_id || null,
       wallet_id: formData.wallet_id || null,
+      shared_account_id: formData.shared_account_id ?? previous?.shared_account_id ?? null,
     })
     .eq("id", id)
     .select()

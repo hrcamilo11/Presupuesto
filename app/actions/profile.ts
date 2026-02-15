@@ -221,8 +221,8 @@ export async function wipeMyPersonalData(input: z.infer<typeof wipePersonalDataS
       .eq("user_id", userId)
       .is("shared_account_id", null);
 
-    // 5. Presupuestos y transferencias de billeteras
-    await supabase.from("budgets").delete().eq("user_id", userId);
+    // 5. Presupuestos personales (solo donde shared_account_id es null) y transferencias
+    await supabase.from("budgets").delete().eq("user_id", userId).is("shared_account_id", null);
     await supabase.from("wallet_transfers").delete().eq("user_id", userId);
 
     // 6. Poner en cero el balance de las billeteras personales (no tocar compartidas)
@@ -243,6 +243,7 @@ export async function wipeMyPersonalData(input: z.infer<typeof wipePersonalDataS
   revalidatePath("/loans");
   revalidatePath("/savings");
   revalidatePath("/wallets");
+  revalidatePath("/budgets");
   return { error: null };
 }
 

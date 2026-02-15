@@ -55,6 +55,8 @@ export async function updateSession(request: NextRequest) {
     pathname === "/categories" ||
     pathname === "/savings" ||
     pathname === "/tags" ||
+    pathname === "/budgets" ||
+    pathname === "/notifications" ||
     pathname === "/settings" ||
     pathname.startsWith("/settings/") ||
     pathname === "/shared" ||

@@ -72,8 +72,7 @@ export async function transferOwnership(sharedAccountId: string, newOwnerId: str
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) return { error: "Not authenticated" };
 
-    // Start transaction (RPC) for safety?
-    // For now, two updates
+    // 1. Current user deja de ser owner
     const { error: error1 } = await supabase
         .from("shared_account_members")
         .update({ role: "member" })
@@ -82,6 +81,7 @@ export async function transferOwnership(sharedAccountId: string, newOwnerId: str
 
     if (error1) return { error: error1.message };
 
+    // 2. Nuevo usuario pasa a ser owner
     const { error: error2 } = await supabase
         .from("shared_account_members")
         .update({ role: "owner" })
@@ -89,6 +89,14 @@ export async function transferOwnership(sharedAccountId: string, newOwnerId: str
         .eq("user_id", newOwnerId);
 
     if (error2) return { error: error2.message };
+
+    // 3. Actualizar created_by en shared_accounts para que is_shared_account_owner() refleje al nuevo owner
+    const { error: error3 } = await supabase
+        .from("shared_accounts")
+        .update({ created_by: newOwnerId })
+        .eq("id", sharedAccountId);
+
+    if (error3) return { error: error3.message };
 
     revalidatePath("/shared");
     return { error: null };

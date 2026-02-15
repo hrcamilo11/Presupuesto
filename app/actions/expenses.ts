@@ -141,10 +141,10 @@ export async function updateExpense(
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
 
-  // Fetch previous expense
+  // Fetch previous expense (preservar shared_account_id al editar)
   const { data: previous, error: prevError } = await supabase
     .from("expenses")
-    .select("amount, wallet_id")
+    .select("amount, wallet_id, shared_account_id")
     .eq("id", id)
     .single();
 
@@ -160,6 +160,7 @@ export async function updateExpense(
       date: formData.date,
       category_id: formData.category_id || null,
       wallet_id: formData.wallet_id || null,
+      shared_account_id: formData.shared_account_id ?? previous?.shared_account_id ?? null,
     })
     .eq("id", id)
     .select()
