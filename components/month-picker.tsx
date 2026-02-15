@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type MonthPickerProps = {
   year: number;
@@ -9,6 +9,7 @@ type MonthPickerProps = {
 
 export function MonthPicker({ year, month }: MonthPickerProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const value = `${year}-${String(month).padStart(2, "0")}`;
 
@@ -16,7 +17,10 @@ export function MonthPicker({ year, month }: MonthPickerProps) {
     const v = e.target.value;
     if (!v) return;
     const [y, m] = v.split("-").map(Number);
-    router.push(`${window.location.pathname}?year=${y}&month=${m}`);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("year", String(y));
+    params.set("month", String(m));
+    router.push(`${window.location.pathname}?${params.toString()}`);
   }
 
   return (

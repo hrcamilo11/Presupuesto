@@ -1,11 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ExpenseList } from "@/components/expenses/expense-list";
+import { MonthPicker } from "@/components/month-picker";
+import { DashboardContextSelector } from "@/components/dashboard/dashboard-context-selector";
 import { getCategories } from "@/app/actions/categories";
 import { getMySharedAccounts } from "@/app/actions/shared-accounts";
 import { getWallets } from "@/app/actions/wallets";
 
-type SearchParams = { year?: string; month?: string };
+type SearchParams = { year?: string; month?: string; context?: string };
 
 export default async function ExpensesPage({
   searchParams,
@@ -25,15 +27,23 @@ export default async function ExpensesPage({
 
   const start = new Date(year, month - 1, 1).toISOString().slice(0, 10);
   const end = new Date(year, month, 0).toISOString().slice(0, 10);
+  const context = params.context;
+
+  let expensesQuery = supabase
+    .from("expenses")
+    .select("*")
+    .gte("date", start)
+    .lte("date", end)
+    .order("date", { ascending: false });
+  if (context === "personal") {
+    expensesQuery = expensesQuery.is("shared_account_id", null);
+  } else if (context && context !== "global") {
+    expensesQuery = expensesQuery.eq("shared_account_id", context);
+  }
 
   const [{ data: expenses }, { data: sharedAccounts }, { data: wallets }, { data: categories }] =
     await Promise.all([
-      supabase
-        .from("expenses")
-        .select("*")
-        .gte("date", start)
-        .lte("date", end)
-        .order("date", { ascending: false }),
+      expensesQuery,
       getMySharedAccounts(),
       getWallets(),
       getCategories("expense"),
@@ -41,13 +51,14 @@ export default async function ExpensesPage({
 
   return (
     <div className="flex flex-col gap-8 p-4 md:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Gastos</h1>
           <p className="text-muted-foreground">Gestiona tus salidas de dinero.</p>
         </div>
-        <div className="flex gap-2">
-          {/* No wrapper needed, button is inside list */}
+        <div className="flex flex-wrap items-center gap-2">
+          <MonthPicker year={year} month={month} />
+          <DashboardContextSelector sharedAccounts={sharedAccounts ?? []} />
         </div>
       </div>
 

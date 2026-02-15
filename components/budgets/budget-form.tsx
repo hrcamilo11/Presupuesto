@@ -28,9 +28,10 @@ interface BudgetFormProps {
     onOpenChange: (open: boolean) => void;
     categories: Category[];
     editBudget?: Budget | null;
+    sharedAccountId?: string | null;
 }
 
-export function BudgetForm({ open, onOpenChange, categories, editBudget }: BudgetFormProps) {
+export function BudgetForm({ open, onOpenChange, categories, editBudget, sharedAccountId }: BudgetFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [categoryId, setCategoryId] = useState(editBudget?.category_id || "");
@@ -50,9 +51,11 @@ export function BudgetForm({ open, onOpenChange, categories, editBudget }: Budge
         setLoading(true);
 
         const result = await upsertBudget({
+            id: editBudget?.id,
             category_id: categoryId,
             amount: Number(amount),
             period,
+            shared_account_id: editBudget?.shared_account_id ?? sharedAccountId ?? null,
         });
 
         setLoading(false);

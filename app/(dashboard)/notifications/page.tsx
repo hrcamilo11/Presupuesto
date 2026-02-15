@@ -3,8 +3,19 @@ import { NotificationsList } from "@/components/notifications/notifications-list
 
 export const dynamic = "force-dynamic";
 
-export default async function NotificationsPage() {
-  const { data: notifications } = await getNotifications({ limit: 100 });
+type SearchParams = { filter?: string };
+
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const unreadOnly = params.filter === "unread";
+  const { data: notifications } = await getNotifications({
+    limit: 100,
+    unreadOnly,
+  });
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8">
@@ -14,7 +25,10 @@ export default async function NotificationsPage() {
           Aquí aparecen recordatorios, avisos de préstamos, cuentas compartidas y más.
         </p>
       </div>
-      <NotificationsList initialNotifications={notifications ?? []} />
+      <NotificationsList
+        initialNotifications={notifications ?? []}
+        filter={unreadOnly ? "unread" : "all"}
+      />
     </div>
   );
 }

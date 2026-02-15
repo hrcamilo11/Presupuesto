@@ -865,7 +865,7 @@ export default async function DashboardPage({
           <p className="text-sm text-muted-foreground capitalize sm:text-base">{monthName}</p>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-          <ExportReportButton />
+          <ExportReportButton context={context} wallet={selectedWalletId} />
           <DashboardContextSelector sharedAccounts={sharedAccounts} />
           <WalletFilter wallets={wallets} />
         </div>

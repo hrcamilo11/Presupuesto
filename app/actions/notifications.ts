@@ -90,6 +90,25 @@ export async function markAllAsRead() {
   return { error: null };
 }
 
+export async function deleteNotification(id: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const { error } = await supabase
+    .from("notifications")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath(NOTIFICATIONS_PAGE);
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
 export async function getNotificationPreferences() {
   const supabase = await createClient();
   const {

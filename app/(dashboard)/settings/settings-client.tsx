@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell, Settings, ChevronUp, ChevronDown } from "lucide-react";
+import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell, Settings, ChevronUp, ChevronDown, KeyRound } from "lucide-react";
+import Link from "next/link";
 import { CategoryList } from "@/components/categories/category-list";
 import { TagList } from "@/components/tags/tag-list";
 import { Category, Tag as TagType, type Profile, type SharedAccount, type Wallet } from "@/lib/database.types";
@@ -304,7 +305,38 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                         </CardContent>
                     </Card>
 
-                    <Card className="overflow-hidden rounded-xl border-2 border-destructive/30 bg-destructive/5 shadow-sm dark:bg-destructive/10">
+                    <Card className="overflow-hidden rounded-xl border border-border/80 shadow-sm">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <KeyRound className="h-5 w-5" />
+                                Seguridad y cuenta
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                                Cambiar contraseña o eliminar tu cuenta y datos.
+                            </p>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button variant="outline" asChild className="gap-2">
+                                    <Link href="/update-password">
+                                        <KeyRound className="h-4 w-4" />
+                                        Cambiar contraseña
+                                    </Link>
+                                </Button>
+                                <Button variant="outline" asChild className="gap-2" id="link-eliminar-cuenta">
+                                    <Link href="#zona-peligrosa">
+                                        <Trash2 className="h-4 w-4" />
+                                        Ir a eliminar / limpiar cuenta
+                                    </Link>
+                                </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                En la sección inferior puedes limpiar todos tus datos personales (irreversible). Para cerrar sesión usa el menú de usuario.
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    <Card id="zona-peligrosa" className="overflow-hidden rounded-xl border-2 border-destructive/30 bg-destructive/5 shadow-sm dark:bg-destructive/10 scroll-mt-4">
                         <CardHeader className="pb-4">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/20">

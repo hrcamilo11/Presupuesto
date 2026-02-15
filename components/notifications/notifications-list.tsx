@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { markAsRead, markAllAsRead } from "@/app/actions/notifications";
+import { useRouter } from "next/navigation";
+import { markAsRead, markAllAsRead, deleteNotification } from "@/app/actions/notifications";
 import type { Notification } from "@/lib/database.types";
 import {
   AlertCircle,
@@ -12,6 +13,8 @@ import {
   UsersRound,
   Wallet,
   CheckCheck,
+  Trash2,
+  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
@@ -28,10 +31,14 @@ const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 
 export function NotificationsList({
   initialNotifications,
+  filter: initialFilter = "all",
 }: {
   initialNotifications: Notification[];
+  filter?: "all" | "unread";
 }) {
+  const router = useRouter();
   const [list, setList] = useState(initialNotifications);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleMarkAsRead(id: string) {
     await markAsRead(id);
@@ -49,6 +56,21 @@ export function NotificationsList({
     );
   }
 
+  async function handleDelete(id: string) {
+    if (!confirm("¿Eliminar esta notificación?")) return;
+    setDeletingId(id);
+    await deleteNotification(id);
+    setList((prev) => prev.filter((n) => n.id !== id));
+    setDeletingId(null);
+    router.refresh();
+  }
+
+  function setFilter(value: "all" | "unread") {
+    const params = new URLSearchParams();
+    if (value === "unread") params.set("filter", "unread");
+    router.push(`/notifications${params.toString() ? `?${params.toString()}` : ""}`);
+  }
+
   if (list.length === 0) {
     return (
       <div className="rounded-lg border bg-card p-8 text-center text-muted-foreground">
@@ -61,14 +83,32 @@ export function NotificationsList({
 
   return (
     <div className="space-y-4">
-      {unreadCount > 0 && (
-        <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Ver:</span>
+          <Button
+            variant={initialFilter === "all" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setFilter("all")}
+          >
+            Todas
+          </Button>
+          <Button
+            variant={initialFilter === "unread" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setFilter("unread")}
+          >
+            No leídas
+          </Button>
+        </div>
+        {unreadCount > 0 && (
           <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
             <CheckCheck className="mr-2 h-4 w-4" />
             Marcar todas como leídas
           </Button>
-        </div>
-      )}
+        )}
+      </div>
       <ul className="space-y-1">
         {list.map((n) => {
           const Icon = typeIcons[n.type] ?? Info;
@@ -99,18 +139,20 @@ export function NotificationsList({
                 !n.read_at ? "border-primary/20 bg-primary/5" : ""
               }`}
             >
-              {href !== "#" ? (
-                <Link
-                  href={href}
-                  onClick={() => handleMarkAsRead(n.id)}
-                  className="flex gap-4 p-4 hover:bg-accent/50"
-                >
-                  {content}
-                </Link>
-              ) : (
-                <div className="flex gap-4 p-4">
-                  {content}
-                  {!n.read_at && (
+              <div className="flex gap-4 p-4 items-start">
+                {href !== "#" ? (
+                  <Link
+                    href={href}
+                    onClick={() => handleMarkAsRead(n.id)}
+                    className="flex gap-4 flex-1 min-w-0 hover:bg-accent/50 -m-4 p-4 rounded-lg"
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <div className="flex gap-4 flex-1 min-w-0">{content}</div>
+                )}
+                <div className="flex items-center gap-1 shrink-0">
+                  {!n.read_at && href === "#" && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -120,8 +162,18 @@ export function NotificationsList({
                       Marcar leída
                     </Button>
                   )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDelete(n.id)}
+                    disabled={deletingId === n.id}
+                    aria-label="Eliminar notificación"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-              )}
+              </div>
             </li>
           );
         })}

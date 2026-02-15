@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { exportMonthlyReport } from "@/app/actions/reports";
 
-export function ExportReportButton() {
+type ExportReportButtonProps = {
+    context?: string | null;
+    wallet?: string | null;
+};
+
+export function ExportReportButton({ context = null, wallet = null }: ExportReportButtonProps) {
     const [loading, setLoading] = useState(false);
 
     async function handleExport() {
@@ -14,7 +19,7 @@ export function ExportReportButton() {
         const year = now.getFullYear();
         const month = now.getMonth() + 1;
 
-        const result = await exportMonthlyReport(year, month);
+        const result = await exportMonthlyReport(year, month, { context, wallet });
         setLoading(false);
 
         if (result.error) {
