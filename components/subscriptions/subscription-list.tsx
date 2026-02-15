@@ -56,10 +56,6 @@ export function SubscriptionList({ subscriptions }: Props) {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Suscripciones</h2>
-        <Button onClick={() => { setEditing(null); setFormOpen(true); }}>Agregar suscripción</Button>
-      </div>
       {subscriptions.length === 0 ? (
         <p className="py-8 text-center text-muted-foreground">
           No hay suscripciones. Agrega una para llevar el control.

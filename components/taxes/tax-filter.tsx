@@ -24,7 +24,7 @@ export function TaxFilter({ currentFilter }: { currentFilter: string }) {
 
   return (
     <FilterBar
-      label="Mostrar obligaciones"
+      label="Filtrar obligaciones"
       description="Filtra por estado de pago: todas, solo pendientes o solo vencidas."
     >
       <div

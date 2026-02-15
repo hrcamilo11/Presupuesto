@@ -49,10 +49,10 @@ export function BalanceRing({ balance, totalIncome, totalExpense }: Props) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex min-w-0 max-w-full flex-col items-center gap-3">
       <ChartContainer
         config={balanceRadialConfig}
-        className="mx-auto h-[180px] w-full max-w-[200px]"
+        className="mx-auto h-[180px] w-full max-w-[200px] min-w-0"
       >
         <RadialBarChart
           innerRadius="60%"

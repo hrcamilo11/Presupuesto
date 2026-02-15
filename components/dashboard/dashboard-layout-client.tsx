@@ -25,18 +25,18 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
                 <NotificationBell />
             </header>
 
-            {/* Desktop top bar with notifications */}
-            <div className="fixed top-0 right-0 z-20 hidden h-14 items-center justify-end pr-4 md:flex md:pl-64">
+            {/* Desktop top bar with notifications (alineada al sidebar, no flotante) */}
+            <div className="fixed top-0 right-0 left-0 z-20 hidden h-14 items-center justify-end border-b bg-card px-4 md:flex md:left-64">
                 <NotificationBell />
             </div>
 
             <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             <main
-                className="min-h-screen pt-14 md:pt-0 md:pl-64"
+                className="min-h-screen min-w-0 overflow-x-hidden pt-14 md:pt-14 md:pl-64"
                 role="main"
             >
-                <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                <div className="mx-auto min-w-0 w-full max-w-6xl overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
                     {children}
                 </div>
             </main>

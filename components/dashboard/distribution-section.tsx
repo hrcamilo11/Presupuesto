@@ -88,7 +88,7 @@ function DistributionRadarChart({
       </p>
       <ChartContainer
         config={distributionChartConfig}
-        className="w-full"
+        className="w-full max-w-full min-w-0"
         style={{ minHeight: chartSize, height: chartSize }}
       >
         <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
@@ -161,8 +161,8 @@ export function DistributionSection({ categories, tags, accounts }: Distribution
     expenseByAccount.length;
 
   return (
-    <Card className="card-hover shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between gap-2 p-4 sm:p-6 pb-2">
+    <Card className="card-hover min-w-0 overflow-hidden shadow-sm">
+      <CardHeader className="flex min-w-0 flex-row items-center justify-between gap-2 p-4 sm:p-6 pb-2">
         <div>
           <CardTitle className="text-base sm:text-lg">
             Distribución por categoría, etiqueta y cuenta
@@ -172,21 +172,21 @@ export function DistributionSection({ categories, tags, accounts }: Distribution
           </p>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-2 space-y-4 sm:p-6 sm:pt-2">
+      <CardContent className="min-w-0 overflow-hidden p-4 pt-2 space-y-4 sm:p-6 sm:pt-2">
         {!hasAnyData ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
             Aún no hay movimientos este mes para mostrar una distribución.
           </p>
         ) : (
-          <Tabs defaultValue="category" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3 rounded-full bg-muted">
+          <Tabs defaultValue="category" className="min-w-0 space-y-4">
+            <TabsList className="grid min-w-0 w-full grid-cols-3 rounded-full bg-muted">
               <TabsTrigger value="category">Por categoría</TabsTrigger>
               <TabsTrigger value="tag">Por etiqueta</TabsTrigger>
               <TabsTrigger value="account">Por cuenta</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="category" className="mt-2 space-y-4">
-              <div className="grid gap-6 md:grid-cols-2">
+            <TabsContent value="category" className="mt-2 min-w-0 space-y-4">
+              <div className="grid min-w-0 gap-6 md:grid-cols-2">
                 <DistributionRadarChart
                   data={incomeByCategory}
                   color={CATEGORY_COLORS[0]}
@@ -202,8 +202,8 @@ export function DistributionSection({ categories, tags, accounts }: Distribution
               </div>
             </TabsContent>
 
-            <TabsContent value="tag" className="mt-2 space-y-4">
-              <div className="grid gap-6 md:grid-cols-2">
+            <TabsContent value="tag" className="mt-2 min-w-0 space-y-4">
+              <div className="grid min-w-0 gap-6 md:grid-cols-2">
                 <DistributionRadarChart
                   data={incomeByTag}
                   color={TAG_COLORS[0]}
@@ -219,8 +219,8 @@ export function DistributionSection({ categories, tags, accounts }: Distribution
               </div>
             </TabsContent>
 
-            <TabsContent value="account" className="mt-2 space-y-4">
-              <div className="grid gap-6 md:grid-cols-2">
+            <TabsContent value="account" className="mt-2 min-w-0 space-y-4">
+              <div className="grid min-w-0 gap-6 md:grid-cols-2">
                 <DistributionRadarChart
                   data={incomeByAccount}
                   color={ACCOUNT_COLORS[0]}

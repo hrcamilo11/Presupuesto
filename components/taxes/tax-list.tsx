@@ -51,10 +51,6 @@ export function TaxList({ taxes }: Props) {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Obligaciones fiscales</h2>
-        <Button onClick={() => { setEditing(null); setFormOpen(true); }}>Agregar obligación</Button>
-      </div>
       {totalPending > 0 && (
         <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-2">
           Total pendiente por pagar: ${formatNumber(totalPending)}

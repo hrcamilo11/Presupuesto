@@ -67,7 +67,8 @@ export function TrendChart({ data }: Props) {
   }
 
   return (
-    <ChartContainer config={trendChartConfig} className="min-h-[280px] w-full">
+    <div className="min-w-0 max-w-full overflow-hidden">
+      <ChartContainer config={trendChartConfig} className="min-h-[280px] w-full max-w-full">
       <AreaChart
         data={data}
         margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
@@ -124,5 +125,6 @@ export function TrendChart({ data }: Props) {
         />
       </AreaChart>
     </ChartContainer>
+    </div>
   );
 }

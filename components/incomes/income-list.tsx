@@ -28,14 +28,12 @@ import { formatDateYMD, formatNumber } from "@/lib/utils";
 
 type IncomeListProps = {
   incomes: Income[];
-  year: number;
-  month: number;
   sharedAccounts: SharedAccount[];
   wallets: Wallet[];
   categories: Category[];
 };
 
-export function IncomeList({ incomes, year, month, sharedAccounts, wallets, categories }: IncomeListProps) {
+export function IncomeList({ incomes, sharedAccounts, wallets, categories }: IncomeListProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Income | null>(null);
@@ -56,22 +54,10 @@ export function IncomeList({ incomes, year, month, sharedAccounts, wallets, cate
     setFormOpen(true);
   }
 
-  function openCreate() {
-    setEditing(null);
-    setFormOpen(true);
-  }
-
   const total = incomes.reduce((s, i) => s + Number(i.amount), 0);
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">
-          Ingresos — {month}/{year}
-        </h2>
-        <Button onClick={openCreate}>Agregar ingreso</Button>
-      </div>
-
       {incomes.length === 0 ? (
         <p className="py-8 text-center text-muted-foreground">
           No hay ingresos este mes. Agrega uno para comenzar.

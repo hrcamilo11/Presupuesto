@@ -20,7 +20,7 @@ import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight } from "lucide-
 import { DashboardSummaryBanner } from "@/components/dashboard/dashboard-summary-banner";
 import { WalletFilter } from "@/components/dashboard/wallet-filter";
 import { BudgetSummary } from "@/components/dashboard/budget-summary";
-import { ExportReportButton } from "@/components/dashboard/export-report-button";
+import { ExportReportDialog } from "@/components/dashboard/export-report-dialog";
 import { DashboardContextSelector } from "@/components/dashboard/dashboard-context-selector";
 import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { getBudgets } from "@/app/actions/budgets";
@@ -471,7 +471,7 @@ export default async function DashboardPage({
       case "summary_cards":
         if (dashboardSettings.show_summary_cards === false) return null;
         return (
-          <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <section className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-green-500/20 bg-green-500/5 shadow-sm sm:min-h-[110px]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
                 <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
@@ -532,7 +532,7 @@ export default async function DashboardPage({
         );
       case "savings_totals":
         return (
-          <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <section className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {(context === "personal" || context === "global") && (
               <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-emerald-500/20 bg-emerald-500/5 shadow-sm sm:min-h-[110px]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
@@ -568,7 +568,7 @@ export default async function DashboardPage({
         );
       case "budgets_accounts_savings":
         return (
-          <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <section className="grid min-w-0 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {dashboardSettings.show_budget_summary !== false && (
               <BudgetSummary budgets={budgets} expenses={expenses} />
             )}
@@ -662,9 +662,9 @@ export default async function DashboardPage({
         );
       case "ring_trend":
         return (
-          <section className="grid gap-4 md:gap-6 lg:grid-cols-3">
-            <Card className="card-hover flex flex-col items-center justify-center shadow-sm p-4 sm:p-6">
-              <CardHeader className="w-full p-0 pb-2">
+          <section className="grid min-w-0 gap-4 md:gap-6 lg:grid-cols-3">
+            <Card className="card-hover flex min-w-0 flex-col items-center justify-center shadow-sm p-4 sm:p-6">
+              <CardHeader className="w-full min-w-0 p-0 pb-2">
                 <CardTitle className="text-center text-sm font-medium">
                   Ingresos vs gastos
                 </CardTitle>
@@ -676,14 +676,14 @@ export default async function DashboardPage({
               />
             </Card>
             {dashboardSettings.show_trend_chart !== false && (
-              <Card className="card-hover shadow-sm lg:col-span-2">
+              <Card className="card-hover min-w-0 overflow-hidden shadow-sm lg:col-span-2">
                 <CardHeader className="p-4 pb-0 sm:p-6 sm:pb-0">
                   <CardTitle className="text-base sm:text-lg">Tendencia (6 meses)</CardTitle>
                   <p className="text-xs text-muted-foreground sm:text-sm">
                     Ingresos y gastos por mes
                   </p>
                 </CardHeader>
-                <CardContent className="p-4 pt-2 sm:p-6 sm:pt-2">
+                <CardContent className="min-w-0 overflow-hidden p-4 pt-2 sm:p-6 sm:pt-2">
                   <TrendChart data={trendData} />
                 </CardContent>
               </Card>
@@ -694,8 +694,8 @@ export default async function DashboardPage({
         if (dashboardSettings.show_debts_section === false) return null;
         const isSharedContext = context !== "global" && context !== "personal";
         return (
-          <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
-            <Card className="card-hover overflow-hidden border-amber-500/20 bg-amber-500/5 shadow-sm">
+          <section className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+            <Card className="card-hover min-w-0 overflow-hidden border-amber-500/20 bg-amber-500/5 shadow-sm">
               <CardHeader className="space-y-1 pb-2 pt-4 sm:pb-3 sm:pt-6">
                 <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
                   Préstamos
@@ -754,9 +754,9 @@ export default async function DashboardPage({
       case "pie_charts":
         if (dashboardSettings.show_pie_charts === false) return null;
         return (
-          <section className="grid gap-4 md:grid-cols-2 md:gap-6">
-            <Card className="card-hover shadow-sm">
-              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
+          <section className="grid min-w-0 gap-4 md:grid-cols-2 md:gap-6">
+            <Card className="card-hover min-w-0 overflow-hidden shadow-sm">
+              <CardHeader className="flex min-w-0 flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
                 <CardTitle className="text-base sm:text-lg">Ingresos por tipo</CardTitle>
                 <Button asChild variant="ghost" size="sm" className="shrink-0">
                   <Link href="/incomes" className="gap-1">
@@ -764,7 +764,7 @@ export default async function DashboardPage({
                   </Link>
                 </Button>
               </CardHeader>
-              <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <CardContent className="min-w-0 overflow-hidden p-4 pt-0 sm:p-6 sm:pt-0">
                 <IncomePieChart data={byIncomeType} />
                 <ul className="mt-3 space-y-1 text-xs text-muted-foreground sm:text-sm">
                   {(Object.entries(byIncomeType) as [IncomeType, number][]).map(
@@ -778,8 +778,8 @@ export default async function DashboardPage({
                 </ul>
               </CardContent>
             </Card>
-            <Card className="card-hover shadow-sm">
-              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
+            <Card className="card-hover min-w-0 overflow-hidden shadow-sm">
+              <CardHeader className="flex min-w-0 flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
                 <CardTitle className="text-base sm:text-lg">Gastos por prioridad</CardTitle>
                 <Button asChild variant="ghost" size="sm" className="shrink-0">
                   <Link href="/expenses" className="gap-1">
@@ -787,7 +787,7 @@ export default async function DashboardPage({
                   </Link>
                 </Button>
               </CardHeader>
-              <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <CardContent className="min-w-0 overflow-hidden p-4 pt-0 sm:p-6 sm:pt-0">
                 <ExpensePieChart data={byExpensePriority} />
                 <ul className="mt-3 space-y-1 text-xs text-muted-foreground sm:text-sm">
                   {(Object.entries(byExpensePriority) as [ExpensePriority, number][]).map(
@@ -808,18 +808,20 @@ export default async function DashboardPage({
       case "distribution_section":
         if (dashboardSettings.show_distribution_section === false) return null;
         return (
-          <DistributionSection
-            categories={categoryDistribution}
-            tags={tagDistribution}
-            accounts={accountsDistribution}
-          />
+          <div className="min-w-0">
+            <DistributionSection
+              categories={categoryDistribution}
+              tags={tagDistribution}
+              accounts={accountsDistribution}
+            />
+          </div>
         );
       case "quick_access":
         if (dashboardSettings.show_quick_access === false) return null;
         return (
-          <section>
+          <section className="min-w-0">
             <h2 className="mb-3 text-base font-semibold sm:text-lg">Accesos rápidos</h2>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               <Button
                 asChild
                 variant="outline"
@@ -881,28 +883,31 @@ export default async function DashboardPage({
   }
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      {/* Encabezado */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-0.5">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
-          <p className="text-sm text-muted-foreground capitalize sm:text-base">{monthName}</p>
-        </div>
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
-          <FilterBar
-            label="Filtros del resumen"
-            description="Elige si ver todos los datos (global), solo los tuyos (personal) o de un grupo. Opcionalmente filtra por una cuenta."
-          >
-            <FilterField label="Ver datos de">
-              <DashboardContextSelector sharedAccounts={sharedAccounts} />
-            </FilterField>
-            <FilterField label="Cuenta">
-              <WalletFilter wallets={wallets} />
-            </FilterField>
-          </FilterBar>
-          <ExportReportButton context={context} wallet={selectedWalletId} />
-        </div>
+    <div className="min-w-0 space-y-6 md:space-y-8">
+      {/* Título */}
+      <header className="space-y-0.5">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
+        <p className="text-sm text-muted-foreground capitalize sm:text-base">{monthName}</p>
       </header>
+
+      {/* Barra de filtros bajo el título (ancho completo) */}
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+        <FilterBar
+          label="Filtros del resumen"
+          description="Elige si ver todos los datos (global), solo los tuyos (personal) o de un grupo. Opcionalmente filtra por una cuenta."
+          className="min-w-0 flex-1"
+        >
+          <FilterField label="Ver datos de">
+            <DashboardContextSelector sharedAccounts={sharedAccounts} />
+          </FilterField>
+          <FilterField label="Cuenta">
+            <WalletFilter wallets={wallets} />
+          </FilterField>
+        </FilterBar>
+        <div className="shrink-0">
+          <ExportReportDialog context={context} wallet={selectedWalletId} />
+        </div>
+      </div>
 
       <DashboardSummaryBanner
         balance={balance}
@@ -912,7 +917,7 @@ export default async function DashboardPage({
       />
 
       {sectionsOrder.map((sectionId) => (
-        <div key={sectionId}>{renderSection(sectionId)}</div>
+        <div key={sectionId} className="min-w-0">{renderSection(sectionId)}</div>
       ))}
     </div>
   );

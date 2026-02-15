@@ -65,7 +65,8 @@ export function ExpensePieChart({ data }: Props) {
   }
 
   return (
-    <ChartContainer config={expenseChartConfig} className="min-h-[240px] w-full">
+    <div className="min-w-0 max-w-full overflow-hidden">
+      <ChartContainer config={expenseChartConfig} className="min-h-[240px] w-full max-w-full">
       <PieChart accessibilityLayer>
         <Pie
           data={chartData}
@@ -91,5 +92,6 @@ export function ExpensePieChart({ data }: Props) {
         <ChartLegend content={<ChartLegendContent nameKey="name" />} />
       </PieChart>
     </ChartContainer>
+    </div>
   );
 }

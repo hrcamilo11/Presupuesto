@@ -56,7 +56,8 @@ export function IncomePieChart({ data }: Props) {
   }
 
   return (
-    <ChartContainer config={incomeChartConfig} className="min-h-[240px] w-full">
+    <div className="min-w-0 max-w-full overflow-hidden">
+      <ChartContainer config={incomeChartConfig} className="min-h-[240px] w-full max-w-full">
       <PieChart accessibilityLayer>
         <Pie
           data={chartData}
@@ -82,5 +83,6 @@ export function IncomePieChart({ data }: Props) {
         <ChartLegend content={<ChartLegendContent nameKey="name" />} />
       </PieChart>
     </ChartContainer>
+    </div>
   );
 }
