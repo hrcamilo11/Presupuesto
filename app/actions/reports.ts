@@ -60,38 +60,24 @@ export async function exportMonthlyReport(
 
   const [incomesRes, expensesRes] = await Promise.all([incomeQuery, expenseQuery]);
 
-  type IncomeRow = {
-    id: string;
-    date: string;
-    amount: number;
-    currency: string;
-    income_type: string;
-    description: string | null;
-    created_at: string;
-    category: { name: string } | null;
-    wallet: { name: string } | null;
-    shared_account: { name: string } | null;
-    income_tags?: Array<{ tags: { name: string } | null }>;
-  };
-  type ExpenseRow = {
-    id: string;
-    date: string;
-    amount: number;
-    currency: string;
-    expense_priority: string;
-    description: string | null;
-    created_at: string;
-    category: { name: string } | null;
-    wallet: { name: string } | null;
-    shared_account: { name: string } | null;
-    expense_tags?: Array<{ tags: { name: string } | null }>;
-  };
+  // Supabase puede devolver relaciones como objeto o como array según la versión
+  const nameOf = (v: unknown): string =>
+    Array.isArray(v) ? (v[0] as { name?: string } | undefined)?.name ?? "" : (v as { name?: string } | null)?.name ?? "";
+  const tagsNames = (arr: unknown[]): string =>
+    (arr ?? [])
+      .map((x) => {
+        const t = (x as { tags?: unknown }).tags;
+        const n = Array.isArray(t) ? (t[0] as { name?: string })?.name : (t as { name?: string })?.name;
+        return n ?? "";
+      })
+      .filter(Boolean)
+      .join("; ");
 
-  const incomes = (incomesRes.data ?? []) as IncomeRow[];
-  const expenses = (expensesRes.data ?? []) as ExpenseRow[];
+  const incomes = (incomesRes.data ?? []) as unknown[];
+  const expenses = (expensesRes.data ?? []) as unknown[];
 
-  const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
-  const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const totalIncome = incomes.reduce((s, i) => s + Number((i as { amount: number }).amount), 0);
+  const totalExpense = expenses.reduce((s, e) => s + Number((e as { amount: number }).amount), 0);
   const balance = totalIncome - totalExpense;
   const periodLabel = `${year}-${String(month).padStart(2, "0")}`;
 
@@ -124,23 +110,34 @@ export async function exportMonthlyReport(
     ])
   );
   for (const i of incomes) {
-    const tagsStr = (i.income_tags ?? [])
-      .map((x) => x.tags?.name)
-      .filter(Boolean)
-      .join("; ");
+    const row = i as {
+      id: string;
+      date: string;
+      amount: number;
+      currency: string;
+      income_type: string;
+      description?: string | null;
+      created_at: string;
+      category?: unknown;
+      wallet?: unknown;
+      shared_account?: unknown;
+      income_tags?: unknown[];
+    };
+    const catName = nameOf(row.category) || "Sin categoría";
+    const tagsStr = tagsNames(row.income_tags ?? []);
     lines.push(
       csvRow([
-        i.id,
-        i.date,
-        i.amount,
-        i.currency,
-        INCOME_TYPE_LABELS[i.income_type as keyof typeof INCOME_TYPE_LABELS] ?? i.income_type,
-        i.category?.name ?? "Sin categoría",
-        i.wallet?.name ?? "",
-        i.shared_account?.name ?? "",
-        i.description ?? "",
+        row.id,
+        row.date,
+        row.amount,
+        row.currency,
+        INCOME_TYPE_LABELS[row.income_type as keyof typeof INCOME_TYPE_LABELS] ?? row.income_type,
+        catName,
+        nameOf(row.wallet),
+        nameOf(row.shared_account),
+        row.description ?? "",
         tagsStr,
-        i.created_at,
+        row.created_at,
       ])
     );
   }
@@ -164,23 +161,34 @@ export async function exportMonthlyReport(
     ])
   );
   for (const e of expenses) {
-    const tagsStr = (e.expense_tags ?? [])
-      .map((x) => x.tags?.name)
-      .filter(Boolean)
-      .join("; ");
+    const row = e as {
+      id: string;
+      date: string;
+      amount: number;
+      currency: string;
+      expense_priority: string;
+      description?: string | null;
+      created_at: string;
+      category?: unknown;
+      wallet?: unknown;
+      shared_account?: unknown;
+      expense_tags?: unknown[];
+    };
+    const catName = nameOf(row.category) || "Sin categoría";
+    const tagsStr = tagsNames(row.expense_tags ?? []);
     lines.push(
       csvRow([
-        e.id,
-        e.date,
-        e.amount,
-        e.currency,
-        EXPENSE_PRIORITY_LABELS[e.expense_priority as keyof typeof EXPENSE_PRIORITY_LABELS] ?? e.expense_priority,
-        e.category?.name ?? "Sin categoría",
-        e.wallet?.name ?? "",
-        e.shared_account?.name ?? "",
-        e.description ?? "",
+        row.id,
+        row.date,
+        row.amount,
+        row.currency,
+        EXPENSE_PRIORITY_LABELS[row.expense_priority as keyof typeof EXPENSE_PRIORITY_LABELS] ?? row.expense_priority,
+        catName,
+        nameOf(row.wallet),
+        nameOf(row.shared_account),
+        row.description ?? "",
         tagsStr,
-        e.created_at,
+        row.created_at,
       ])
     );
   }
