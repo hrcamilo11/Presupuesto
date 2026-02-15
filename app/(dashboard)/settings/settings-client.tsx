@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell } from "lucide-react";
+import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell, Settings, ChevronUp, ChevronDown } from "lucide-react";
 import { CategoryList } from "@/components/categories/category-list";
 import { TagList } from "@/components/tags/tag-list";
 import { Category, Tag as TagType, type Profile, type SharedAccount, type Wallet } from "@/lib/database.types";
@@ -189,42 +189,66 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
     }
 
     return (
-        <div className="mx-auto w-full max-w-5xl space-y-6 px-4 pb-10 md:px-8">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
-                <p className="text-muted-foreground">
-                    Administra tu perfil, categorías, etiquetas y preferencias.
-                </p>
-            </div>
+        <div className="mx-auto w-full max-w-5xl space-y-8 px-4 pb-12 md:px-8">
+            {/* Cabecera */}
+            <header className="space-y-1 border-b border-border/80 pb-6">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <Settings className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Configuración</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Perfil, categorías, etiquetas y preferencias del dashboard.
+                        </p>
+                    </div>
+                </div>
+            </header>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="w-full justify-start gap-1 overflow-x-auto rounded-xl">
-                    <TabsTrigger value="profile" className="gap-2 min-w-[120px]">
-                        <User className="h-4 w-4" />
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+                <TabsList className="inline-flex w-full justify-start gap-0.5 overflow-x-auto rounded-xl bg-muted/60 p-1.5 text-muted-foreground md:flex-wrap">
+                    <TabsTrigger
+                        value="profile"
+                        className="gap-2 min-w-[120px] rounded-lg px-4 py-2 transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                    >
+                        <User className="h-4 w-4 shrink-0" />
                         <span>Perfil</span>
                     </TabsTrigger>
-                    <TabsTrigger value="categories" className="gap-2 min-w-[140px]">
-                        <LayoutGrid className="h-4 w-4" />
+                    <TabsTrigger
+                        value="categories"
+                        className="gap-2 min-w-[140px] rounded-lg px-4 py-2 transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                    >
+                        <LayoutGrid className="h-4 w-4 shrink-0" />
                         <span>Categorías</span>
                     </TabsTrigger>
-                    <TabsTrigger value="tags" className="gap-2 min-w-[130px]">
-                        <Tag className="h-4 w-4" />
+                    <TabsTrigger
+                        value="tags"
+                        className="gap-2 min-w-[130px] rounded-lg px-4 py-2 transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                    >
+                        <Tag className="h-4 w-4 shrink-0" />
                         <span>Etiquetas</span>
                     </TabsTrigger>
-                    <TabsTrigger value="personalization" className="gap-2 min-w-[170px]">
-                        <Palette className="h-4 w-4" />
+                    <TabsTrigger
+                        value="personalization"
+                        className="gap-2 min-w-[170px] rounded-lg px-4 py-2 transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                    >
+                        <Palette className="h-4 w-4 shrink-0" />
                         <span>Dashboard</span>
                     </TabsTrigger>
-                    <TabsTrigger value="notifications" className="gap-2 min-w-[140px]">
-                        <Bell className="h-4 w-4" />
+                    <TabsTrigger
+                        value="notifications"
+                        className="gap-2 min-w-[140px] rounded-lg px-4 py-2 transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                    >
+                        <Bell className="h-4 w-4 shrink-0" />
                         <span>Notificaciones</span>
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="profile" className="space-y-4">
-                    <Card className="shadow-sm">
-                        <CardHeader>
-                            <CardTitle>Información del perfil</CardTitle>
+                <TabsContent value="profile" className="space-y-6">
+                    <Card className="overflow-hidden rounded-xl border border-border/80 shadow-sm">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-lg">Información del perfil</CardTitle>
+                            <p className="text-sm text-muted-foreground">Nombre, moneda y zona horaria para tu cuenta.</p>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {profileMsg && (
@@ -280,13 +304,18 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                         </CardContent>
                     </Card>
 
-                    <Card className="shadow-sm border-destructive/40">
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <AlertTriangle className="h-4 w-4 text-destructive" />
-                                <CardTitle className="text-destructive">
-                                    Zona peligrosa: limpiar cuenta personal
-                                </CardTitle>
+                    <Card className="overflow-hidden rounded-xl border-2 border-destructive/30 bg-destructive/5 shadow-sm dark:bg-destructive/10">
+                        <CardHeader className="pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/20">
+                                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-lg text-destructive">
+                                        Zona peligrosa: limpiar cuenta personal
+                                    </CardTitle>
+                                    <p className="text-sm text-muted-foreground mt-0.5">Esta acción es irreversible.</p>
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -300,7 +329,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                 compartida.
                             </p>
 
-                            <div className="space-y-3 rounded-md bg-muted/60 p-3">
+                            <div className="space-y-3 rounded-lg border border-border/80 bg-muted/40 p-4">
                                 <div className="flex items-center justify-between gap-3">
                                     <p className="text-xs text-muted-foreground">
                                         1. Entiendo que se borrarán todos mis datos financieros personales.
@@ -369,19 +398,30 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="categories" className="space-y-4">
+                <TabsContent value="categories" className="space-y-6">
+                    <div className="rounded-xl border border-border/80 bg-muted/30 px-4 py-3">
+                        <p className="text-sm text-muted-foreground">
+                            Crea y edita categorías para clasificar ingresos y gastos. Cada categoría puede tener icono y color.
+                        </p>
+                    </div>
                     <CategoryList categories={categories} />
                 </TabsContent>
 
-                <TabsContent value="tags" className="space-y-4">
+                <TabsContent value="tags" className="space-y-6">
+                    <div className="rounded-xl border border-border/80 bg-muted/30 px-4 py-3">
+                        <p className="text-sm text-muted-foreground">
+                            Gestiona etiquetas para filtrar y organizar tus movimientos con más detalle.
+                        </p>
+                    </div>
                     <TagList tags={tags} />
                 </TabsContent>
 
-                <TabsContent value="personalization" className="space-y-4">
-                    <div className="grid gap-4 lg:grid-cols-2">
-                        <Card className="shadow-sm">
-                            <CardHeader>
-                                <CardTitle>Preferencias por defecto</CardTitle>
+                <TabsContent value="personalization" className="space-y-6">
+                    <div className="grid gap-6 lg:grid-cols-2">
+                        <Card className="overflow-hidden rounded-xl border border-border/80 shadow-sm">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg">Preferencias por defecto</CardTitle>
+                                <p className="text-sm text-muted-foreground">Contexto y cuenta al abrir el dashboard.</p>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {dashMsg && (
@@ -434,68 +474,69 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                             </CardContent>
                         </Card>
 
-                        <Card className="shadow-sm">
-                            <CardHeader>
-                                <CardTitle>Secciones visibles del dashboard</CardTitle>
+                        <Card className="overflow-hidden rounded-xl border border-border/80 shadow-sm">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg">Secciones visibles del dashboard</CardTitle>
+                                <p className="text-sm text-muted-foreground">Activa o desactiva bloques en la página principal.</p>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between gap-4">
+                            <CardContent className="divide-y divide-border/60">
+                                <div className="flex items-center justify-between gap-4 py-4 first:pt-0">
                                     <div>
                                         <p className="text-sm font-medium">Resumen (tarjetas)</p>
                                         <p className="text-xs text-muted-foreground">Ingresos, gastos, balance y tasa ahorro.</p>
                                     </div>
                                     <Switch checked={dashSettings.show_summary_cards} onCheckedChange={() => toggleDashSetting("show_summary_cards")} />
                                 </div>
-                                <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center justify-between gap-4 py-4">
                                     <div>
                                         <p className="text-sm font-medium">Presupuesto</p>
                                         <p className="text-xs text-muted-foreground">Resumen de presupuestos.</p>
                                     </div>
                                     <Switch checked={dashSettings.show_budget_summary} onCheckedChange={() => toggleDashSetting("show_budget_summary")} />
                                 </div>
-                                <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center justify-between gap-4 py-4">
                                     <div>
                                         <p className="text-sm font-medium">Mis cuentas</p>
                                         <p className="text-xs text-muted-foreground">Vista rápida de cuentas.</p>
                                     </div>
                                     <Switch checked={dashSettings.show_accounts_preview} onCheckedChange={() => toggleDashSetting("show_accounts_preview")} />
                                 </div>
-                                <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center justify-between gap-4 py-4">
                                     <div>
                                         <p className="text-sm font-medium">Metas de ahorro</p>
                                         <p className="text-xs text-muted-foreground">Vista rápida de metas.</p>
                                     </div>
                                     <Switch checked={dashSettings.show_savings_goals} onCheckedChange={() => toggleDashSetting("show_savings_goals")} />
                                 </div>
-                                <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center justify-between gap-4 py-4">
                                     <div>
                                         <p className="text-sm font-medium">Tendencia</p>
                                         <p className="text-xs text-muted-foreground">Gráfico de 6 meses.</p>
                                     </div>
                                     <Switch checked={dashSettings.show_trend_chart} onCheckedChange={() => toggleDashSetting("show_trend_chart")} />
                                 </div>
-                                <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center justify-between gap-4 py-4">
                                     <div>
                                         <p className="text-sm font-medium">Gráficas circulares</p>
                                         <p className="text-xs text-muted-foreground">Ingresos por tipo y gastos por prioridad.</p>
                                     </div>
                                     <Switch checked={dashSettings.show_pie_charts} onCheckedChange={() => toggleDashSetting("show_pie_charts")} />
                                 </div>
-                                <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center justify-between gap-4 py-4">
                                     <div>
                                         <p className="text-sm font-medium">Distribución por categoría y etiqueta</p>
                                         <p className="text-xs text-muted-foreground">Muestra cómo se reparten ingresos y gastos.</p>
                                     </div>
                                     <Switch checked={dashSettings.show_distribution_section} onCheckedChange={() => toggleDashSetting("show_distribution_section")} />
                                 </div>
-                                <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center justify-between gap-4 py-4">
                                     <div>
                                         <p className="text-sm font-medium">Deudas y obligaciones</p>
                                         <p className="text-xs text-muted-foreground">Resumen de préstamos, tarjetas y pendientes.</p>
                                     </div>
                                     <Switch checked={dashSettings.show_debts_section} onCheckedChange={() => toggleDashSetting("show_debts_section")} />
                                 </div>
-                                <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center justify-between gap-4 py-4">
                                     <div>
                                         <p className="text-sm font-medium">Accesos rápidos</p>
                                         <p className="text-xs text-muted-foreground">Acciones principales.</p>
@@ -511,47 +552,52 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                             </CardContent>
                         </Card>
 
-                        <Card className="shadow-sm">
-                            <CardHeader>
-                                <CardTitle>Orden de las secciones</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <p className="text-xs text-muted-foreground">
-                                    Arrastra visualmente con los botones para decidir qué secciones aparecen primero.
+                        <Card className="overflow-hidden rounded-xl border border-border/80 shadow-sm lg:col-span-2">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg">Orden de las secciones</CardTitle>
+                                <p className="text-sm text-muted-foreground">
+                                    Usa las flechas para cambiar el orden en que aparecen las secciones en el dashboard.
                                 </p>
-                                <div className="space-y-2">
-                                    {sectionsOrder.map((id, index) => (
-                                        <div
-                                            key={id}
-                                            className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-sm"
-                                        >
-                                            <span className="truncate">{SECTION_LABELS[id] ?? id}</span>
-                                            <div className="flex gap-1">
-                                                <Button
-                                                    type="button"
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    disabled={index === 0}
-                                                    onClick={() => moveSection(index, "up")}
-                                                    aria-label="Mover arriba"
-                                                >
-                                                    ↑
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    disabled={index === sectionsOrder.length - 1}
-                                                    onClick={() => moveSection(index, "down")}
-                                                    aria-label="Mover abajo"
-                                                >
-                                                    ↓
-                                                </Button>
-                                            </div>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                {sectionsOrder.map((id, index) => (
+                                    <div
+                                        key={id}
+                                        className="flex items-center justify-between gap-3 rounded-lg border border-border/80 bg-muted/30 px-4 py-3 text-sm transition-colors hover:bg-muted/50"
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-medium text-primary">
+                                                {index + 1}
+                                            </span>
+                                            <span className="truncate font-medium">{SECTION_LABELS[id] ?? id}</span>
                                         </div>
-                                    ))}
-                                </div>
-                                <div className="flex justify-end pt-2">
+                                        <div className="flex gap-0.5 shrink-0">
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-8 w-8"
+                                                disabled={index === 0}
+                                                onClick={() => moveSection(index, "up")}
+                                                aria-label="Mover arriba"
+                                            >
+                                                <ChevronUp className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-8 w-8"
+                                                disabled={index === sectionsOrder.length - 1}
+                                                onClick={() => moveSection(index, "down")}
+                                                aria-label="Mover abajo"
+                                            >
+                                                <ChevronDown className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div className="flex justify-end pt-4">
                                     <Button onClick={saveDashboard} disabled={isPending} variant="outline">
                                         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar orden"}
                                     </Button>
@@ -561,26 +607,26 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                     </div>
                 </TabsContent>
 
-                <TabsContent value="notifications" className="space-y-4">
-                    <Card className="shadow-sm">
-                        <CardHeader>
-                            <CardTitle>Canales de notificación</CardTitle>
+                <TabsContent value="notifications" className="space-y-6">
+                    <Card className="overflow-hidden rounded-xl border border-border/80 shadow-sm">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-lg">Canales de notificación</CardTitle>
                             <p className="text-sm text-muted-foreground">
                                 Elige cómo quieres recibir avisos: en la app, por correo o notificaciones del sistema (navegador o dispositivo).
                             </p>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-1">
                             {notifMsg && (
                                 <p className="text-sm text-muted-foreground">{notifMsg}</p>
                             )}
-                            <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center justify-between gap-4 py-4 first:pt-0">
                                 <div>
                                     <p className="text-sm font-medium">Dentro de la app</p>
                                     <p className="text-xs text-muted-foreground">Siempre activo. Verás las notificaciones en la campana y en la página Notificaciones.</p>
                                 </div>
                                 <Switch checked={true} disabled aria-label="Notificaciones en la app (siempre activo)" />
                             </div>
-                            <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center justify-between gap-4 border-t border-border/60 py-4">
                                 <div>
                                     <p className="text-sm font-medium">Correo electrónico</p>
                                     <p className="text-xs text-muted-foreground">Recibir un correo cuando se genere una notificación (requiere RESEND_API_KEY en .env).</p>
@@ -588,7 +634,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                 <Switch checked={emailEnabled} onCheckedChange={setEmailEnabled} />
                             </div>
                             {emailEnabled && (
-                                <div className="rounded-md border bg-muted/40 p-3">
+                                <div className="rounded-lg border border-border/80 bg-muted/40 p-4">
                                     <p className="mb-2 text-xs font-medium text-muted-foreground">Probar envío</p>
                                     <Button type="button" variant="outline" size="sm" onClick={handleSendTestEmail} disabled={isPending}>
                                         {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -601,7 +647,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                     )}
                                 </div>
                             )}
-                            <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center justify-between gap-4 border-t border-border/60 py-4">
                                 <div>
                                     <p className="text-sm font-medium">Notificaciones del sistema</p>
                                     <p className="text-xs text-muted-foreground">Push en navegador o dispositivo aunque no tengas la app abierta.</p>
@@ -609,7 +655,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                 <Switch checked={pushEnabled} onCheckedChange={setPushEnabled} />
                             </div>
                             {pushEnabled && (
-                                <div className="rounded-md border bg-muted/40 p-3">
+                                <div className="rounded-lg border border-border/80 bg-muted/40 p-4">
                                     <p className="mb-2 text-xs font-medium text-muted-foreground">En este dispositivo</p>
                                     <PushSubscribeButton />
                                 </div>
