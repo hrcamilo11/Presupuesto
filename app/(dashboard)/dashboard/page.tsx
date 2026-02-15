@@ -754,9 +754,9 @@ export default async function DashboardPage({
       case "pie_charts":
         if (dashboardSettings.show_pie_charts === false) return null;
         return (
-          <section className="grid gap-4 md:grid-cols-2 md:gap-6">
-            <Card className="card-hover shadow-sm">
-              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
+          <section className="grid min-w-0 gap-4 md:grid-cols-2 md:gap-6">
+            <Card className="card-hover min-w-0 overflow-hidden shadow-sm">
+              <CardHeader className="flex min-w-0 flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
                 <CardTitle className="text-base sm:text-lg">Ingresos por tipo</CardTitle>
                 <Button asChild variant="ghost" size="sm" className="shrink-0">
                   <Link href="/incomes" className="gap-1">
@@ -764,7 +764,7 @@ export default async function DashboardPage({
                   </Link>
                 </Button>
               </CardHeader>
-              <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <CardContent className="min-w-0 overflow-hidden p-4 pt-0 sm:p-6 sm:pt-0">
                 <IncomePieChart data={byIncomeType} />
                 <ul className="mt-3 space-y-1 text-xs text-muted-foreground sm:text-sm">
                   {(Object.entries(byIncomeType) as [IncomeType, number][]).map(
@@ -778,8 +778,8 @@ export default async function DashboardPage({
                 </ul>
               </CardContent>
             </Card>
-            <Card className="card-hover shadow-sm">
-              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
+            <Card className="card-hover min-w-0 overflow-hidden shadow-sm">
+              <CardHeader className="flex min-w-0 flex-row flex-wrap items-center justify-between gap-2 p-4 sm:p-6">
                 <CardTitle className="text-base sm:text-lg">Gastos por prioridad</CardTitle>
                 <Button asChild variant="ghost" size="sm" className="shrink-0">
                   <Link href="/expenses" className="gap-1">
@@ -787,7 +787,7 @@ export default async function DashboardPage({
                   </Link>
                 </Button>
               </CardHeader>
-              <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <CardContent className="min-w-0 overflow-hidden p-4 pt-0 sm:p-6 sm:pt-0">
                 <ExpensePieChart data={byExpensePriority} />
                 <ul className="mt-3 space-y-1 text-xs text-muted-foreground sm:text-sm">
                   {(Object.entries(byExpensePriority) as [ExpensePriority, number][]).map(
