@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet, CreditCard, Banknote, PiggyBank, TrendingUp, MoreHorizontal, Trash, Pencil, Calendar, CalendarClock, BanknoteIcon, Table2 } from "lucide-react";
+import { Wallet, CreditCard, Banknote, PiggyBank, TrendingUp, MoreHorizontal, Trash, Pencil, Calendar, CalendarClock, BanknoteIcon, Table2, History } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import {
     Card,
@@ -20,6 +20,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 import { WalletForm } from "./wallet-form";
 import { PayCreditCardDialog } from "./pay-credit-card-dialog";
 import { CreditCardAmortizationDialog } from "./credit-card-amortization-dialog";
@@ -184,6 +185,12 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/wallets/${wallet.id}/history`}>
+                                <History className="mr-2 h-4 w-4" />
+                                Ver historial
+                            </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setEditOpen(true)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Editar

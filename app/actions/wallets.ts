@@ -344,3 +344,118 @@ export async function getWalletTransfers() {
     if (error) return { data: [], error: error.message };
     return { data: data ?? [], error: null };
 }
+
+export type WalletMovement =
+    | { kind: "income"; id: string; date: string; amount: number; description?: string | null; category?: string }
+    | { kind: "expense"; id: string; date: string; amount: number; description?: string | null; category?: string }
+    | { kind: "transfer_out"; id: string; date: string; amount: number; description?: string | null; toWalletName?: string }
+    | { kind: "transfer_in"; id: string; date: string; amount: number; description?: string | null; fromWalletName?: string };
+
+export async function getWalletMovementHistory(
+    walletId: string,
+    options?: { limit?: number; fromDate?: string; toDate?: string }
+) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], wallet: null, error: "No autenticado" };
+
+    const { data: walletRow } = await supabase
+        .from("wallets")
+        .select("id, name, currency")
+        .eq("id", walletId)
+        .eq("user_id", user.id)
+        .single();
+    if (!walletRow) return { data: [], wallet: null, error: "Cuenta no encontrada" };
+
+    const toDate = options?.toDate ?? new Date().toISOString().slice(0, 10);
+    const from = options?.fromDate ?? new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const limit = options?.limit ?? 200;
+
+    const [incomesRes, expensesRes, transfersRes] = await Promise.all([
+        supabase
+            .from("incomes")
+            .select("id, date, amount, description, category:categories(name)")
+            .eq("wallet_id", walletId)
+            .gte("date", from)
+            .lte("date", toDate)
+            .order("date", { ascending: false })
+            .limit(limit),
+        supabase
+            .from("expenses")
+            .select("id, date, amount, description, category:categories(name)")
+            .eq("wallet_id", walletId)
+            .gte("date", from)
+            .lte("date", toDate)
+            .order("date", { ascending: false })
+            .limit(limit),
+        supabase
+            .from("wallet_transfers")
+            .select(`
+                id, date, amount, description,
+                from_wallet_id, to_wallet_id,
+                from_wallet:wallets!from_wallet_id(name),
+                to_wallet:wallets!to_wallet_id(name)
+            `)
+            .or(`from_wallet_id.eq.${walletId},to_wallet_id.eq.${walletId}`)
+            .gte("date", from)
+            .lte("date", toDate)
+            .order("date", { ascending: false })
+            .limit(limit),
+    ]);
+
+    const movements: WalletMovement[] = [];
+
+    (incomesRes.data ?? []).forEach((i: { id: string; date: string; amount: number; description?: string | null; category?: { name: string } | null }) => {
+        movements.push({
+            kind: "income",
+            id: i.id,
+            date: i.date,
+            amount: Number(i.amount),
+            description: i.description ?? undefined,
+            category: (i.category as { name: string } | null)?.name,
+        });
+    });
+    (expensesRes.data ?? []).forEach((e: { id: string; date: string; amount: number; description?: string | null; category?: { name: string } | null }) => {
+        movements.push({
+            kind: "expense",
+            id: e.id,
+            date: e.date,
+            amount: Number(e.amount),
+            description: e.description ?? undefined,
+            category: (e.category as { name: string } | null)?.name,
+        });
+    });
+    (transfersRes.data ?? []).forEach((t: {
+        id: string; date: string; amount: number; description?: string | null;
+        from_wallet_id: string; to_wallet_id: string;
+        from_wallet?: { name: string } | null; to_wallet?: { name: string } | null;
+    }) => {
+        if (t.from_wallet_id === walletId) {
+            movements.push({
+                kind: "transfer_out",
+                id: t.id,
+                date: t.date,
+                amount: Number(t.amount),
+                description: t.description ?? undefined,
+                toWalletName: (t.to_wallet as { name: string } | null)?.name,
+            });
+        } else {
+            movements.push({
+                kind: "transfer_in",
+                id: t.id,
+                date: t.date,
+                amount: Number(t.amount),
+                description: t.description ?? undefined,
+                fromWalletName: (t.from_wallet as { name: string } | null)?.name,
+            });
+        }
+    });
+
+    movements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return {
+        data: movements.slice(0, limit),
+        wallet: { id: walletRow.id, name: walletRow.name, currency: (walletRow as { currency?: string }).currency ?? "COP" },
+        error: null,
+    };
+}

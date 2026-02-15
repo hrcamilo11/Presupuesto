@@ -288,3 +288,109 @@ export async function createNotification(input: CreateNotificationInput) {
   revalidatePath("/dashboard");
   return { id: inserted?.id ?? null, error: null };
 }
+
+const REMINDER_DAYS = 7;
+const REMINDER_DEDUPE_HOURS = 24;
+
+/** Crea recordatorios para suscripciones, impuestos y préstamos con vencimiento en los próximos días. */
+export async function createDueReminders() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { created: 0, error: "No autenticado" };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  d.setDate(d.getDate() + REMINDER_DAYS);
+  const inDays = d.toISOString().slice(0, 10);
+  const since = new Date(Date.now() - REMINDER_DEDUPE_HOURS * 60 * 60 * 1000).toISOString();
+
+  let created = 0;
+
+  const { data: recent } = await supabase
+    .from("notifications")
+    .select("id, metadata")
+    .eq("user_id", user.id)
+    .gte("created_at", since);
+
+  const recentKeys = new Set((recent ?? []).map((n) => (n.metadata as { key?: string })?.key).filter(Boolean));
+
+  const addReminder = async (key: string, title: string, body: string, link: string) => {
+    if (recentKeys.has(key)) return;
+    const res = await createNotification({
+      userId: user.id,
+      title,
+      body,
+      type: "reminder",
+      link,
+      metadata: { key },
+    });
+    if (res.id) {
+      created++;
+      recentKeys.add(key);
+    }
+  };
+
+  const { data: subscriptions } = await supabase
+    .from("subscriptions")
+    .select("id, name, next_due_date")
+    .gte("next_due_date", today)
+    .lte("next_due_date", inDays);
+
+  for (const sub of subscriptions ?? []) {
+    const due = sub.next_due_date as string;
+    const daysLeft = Math.ceil((new Date(due).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+    const msg = daysLeft <= 0 ? "vence hoy" : daysLeft === 1 ? "vence mañana" : `vence en ${daysLeft} días`;
+    await addReminder(
+      `sub-${sub.id}-${due}`,
+      `Suscripción: ${(sub.name as string) ?? "Sin nombre"} ${msg}`,
+      `Próximo pago: ${due}`,
+      "/subscriptions"
+    );
+  }
+
+  const { data: taxes } = await supabase
+    .from("tax_obligations")
+    .select("id, name, due_date")
+    .is("paid_at", null)
+    .gte("due_date", today)
+    .lte("due_date", inDays);
+
+  for (const tax of taxes ?? []) {
+    const due = tax.due_date as string;
+    const daysLeft = Math.ceil((new Date(due).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+    const msg = daysLeft <= 0 ? "vence hoy" : daysLeft === 1 ? "vence mañana" : `vence en ${daysLeft} días`;
+    await addReminder(
+      `tax-${tax.id}-${due}`,
+      `Impuesto: ${(tax.name as string) ?? "Sin nombre"} ${msg}`,
+      `Fecha de vencimiento: ${due}`,
+      "/taxes"
+    );
+  }
+
+  const { data: loans } = await supabase.from("loans").select("id, name, start_date");
+  for (const loan of loans ?? []) {
+    const { data: payments } = await supabase
+      .from("loan_payments")
+      .select("payment_number")
+      .eq("loan_id", loan.id)
+      .order("payment_number", { ascending: false })
+      .limit(1);
+    const nextNum = payments?.length ? (payments[0].payment_number as number) + 1 : 1;
+    const start = new Date((loan.start_date as string) ?? 0);
+    const nextDue = new Date(start);
+    nextDue.setMonth(nextDue.getMonth() + nextNum);
+    const nextDueStr = nextDue.toISOString().slice(0, 10);
+    if (nextDueStr >= today && nextDueStr <= inDays) {
+      const daysLeft = Math.ceil((nextDue.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+      const msg = daysLeft <= 0 ? "pago hoy" : daysLeft === 1 ? "pago mañana" : `próximo pago en ${daysLeft} días`;
+      await addReminder(
+        `loan-${loan.id}-${nextDueStr}`,
+        `Préstamo: ${(loan.name as string) ?? "Sin nombre"} — ${msg}`,
+        `Cuota #${nextNum}. Fecha: ${nextDueStr}`,
+        "/loans"
+      );
+    }
+  }
+
+  return { created, error: null };
+}

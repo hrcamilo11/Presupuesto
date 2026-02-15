@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { contributionSchema, savingsGoalSchema, type SavingsGoalSchema } from "@/lib/validations/savings";
 import type { SharedSavingsGoal } from "@/lib/database.types";
 import { createNotification } from "@/app/actions/notifications";
+import { formatNumber } from "@/lib/utils";
 
 export async function getSavingsGoals() {
     const supabase = await createClient();
@@ -233,6 +234,48 @@ export async function contributeToSavings(formData: {
             link: "/savings",
         });
     }
+
+    revalidatePath("/savings");
+    revalidatePath("/wallets");
+    revalidatePath("/dashboard");
+    return { error: null };
+}
+
+export async function withdrawFromSavings(formData: {
+    savings_goal_id: string;
+    wallet_id: string;
+    amount: number;
+    date: string;
+    notes?: string;
+}) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "No autenticado" };
+
+    if (!formData.savings_goal_id || !formData.wallet_id || !formData.amount || formData.amount <= 0) {
+        return { error: "Monto debe ser mayor a 0 y debes elegir una cuenta de destino." };
+    }
+
+    const { data: goal } = await supabase
+        .from("savings_goals")
+        .select("current_amount")
+        .eq("id", formData.savings_goal_id)
+        .single();
+
+    if (!goal) return { error: "Meta de ahorro no encontrada." };
+    if (Number(goal.current_amount) < formData.amount) {
+        return { error: `Saldo insuficiente en la meta (tienes ${formatNumber(Number(goal.current_amount))}).` };
+    }
+
+    const { error } = await supabase.rpc("withdraw_from_savings", {
+        p_savings_goal_id: formData.savings_goal_id,
+        p_wallet_id: formData.wallet_id,
+        p_amount: formData.amount,
+        p_date: formData.date,
+        p_notes: formData.notes || "",
+    });
+
+    if (error) return { error: error.message };
 
     revalidatePath("/savings");
     revalidatePath("/wallets");

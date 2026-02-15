@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { ContributionForm } from "./contribution-form";
+import { WithdrawForm } from "./withdraw-form";
 
 // SavingsGoalProps is compatible with SavingsGoal from DB but cleaner for UI if needed
 // For now, we can just use the DB type or a subset
@@ -104,8 +105,14 @@ export function SavingsCard({ goal, wallets }: SavingsCardProps) {
                     </div>
                 </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex flex-wrap gap-2">
                 <ContributionForm goalId={goal.id} wallets={wallets} />
+                <WithdrawForm
+                    goalId={goal.id}
+                    goalName={goal.name}
+                    currentAmount={Number(goal.current_amount ?? 0)}
+                    wallets={wallets}
+                />
             </CardFooter>
         </Card>
     );

@@ -93,6 +93,10 @@ export default async function DashboardPage({
   const { processRecurringSavings } = await import("@/app/actions/savings");
   await processRecurringSavings();
 
+  // Recordatorios de vencimiento (suscripciones, impuestos, préstamos)
+  const { createDueReminders } = await import("@/app/actions/notifications");
+  createDueReminders().catch(() => {});
+
   // Apply defaults (only when user didn't choose a filter yet)
   const hasWalletParam = typeof searchParams.wallet === "string" && searchParams.wallet.length > 0;
   const hasContextParam = typeof searchParams.context === "string" && searchParams.context.length > 0;
