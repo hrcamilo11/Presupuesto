@@ -405,31 +405,39 @@ export async function getWalletMovementHistory(
 
     const movements: WalletMovement[] = [];
 
-    (incomesRes.data ?? []).forEach((i: { id: string; date: string; amount: number; description?: string | null; category?: { name: string } | null }) => {
+    type CategoryRow = { id?: string; date?: string; amount?: number; description?: string | null; category?: { name: string } | { name: string }[] | null };
+    const categoryName = (c: CategoryRow["category"]) =>
+        c == null ? undefined : Array.isArray(c) ? c[0]?.name : c.name;
+
+    (incomesRes.data ?? []).forEach((i: CategoryRow) => {
         movements.push({
             kind: "income",
-            id: i.id,
-            date: i.date,
+            id: i.id!,
+            date: i.date!,
             amount: Number(i.amount),
             description: i.description ?? undefined,
-            category: (i.category as { name: string } | null)?.name,
+            category: categoryName(i.category),
         });
     });
-    (expensesRes.data ?? []).forEach((e: { id: string; date: string; amount: number; description?: string | null; category?: { name: string } | null }) => {
+    (expensesRes.data ?? []).forEach((e: CategoryRow) => {
         movements.push({
             kind: "expense",
-            id: e.id,
-            date: e.date,
+            id: e.id!,
+            date: e.date!,
             amount: Number(e.amount),
             description: e.description ?? undefined,
-            category: (e.category as { name: string } | null)?.name,
+            category: categoryName(e.category),
         });
     });
-    (transfersRes.data ?? []).forEach((t: {
+    type WalletRef = { name: string } | { name: string }[] | null | undefined;
+    const walletName = (w: WalletRef) => w == null ? undefined : Array.isArray(w) ? w[0]?.name : w.name;
+
+    type TransferRow = {
         id: string; date: string; amount: number; description?: string | null;
         from_wallet_id: string; to_wallet_id: string;
-        from_wallet?: { name: string } | null; to_wallet?: { name: string } | null;
-    }) => {
+        from_wallet?: WalletRef; to_wallet?: WalletRef;
+    };
+    (transfersRes.data ?? []).forEach((t: TransferRow) => {
         if (t.from_wallet_id === walletId) {
             movements.push({
                 kind: "transfer_out",
@@ -437,7 +445,7 @@ export async function getWalletMovementHistory(
                 date: t.date,
                 amount: Number(t.amount),
                 description: t.description ?? undefined,
-                toWalletName: (t.to_wallet as { name: string } | null)?.name,
+                toWalletName: walletName(t.to_wallet),
             });
         } else {
             movements.push({
@@ -446,7 +454,7 @@ export async function getWalletMovementHistory(
                 date: t.date,
                 amount: Number(t.amount),
                 description: t.description ?? undefined,
-                fromWalletName: (t.from_wallet as { name: string } | null)?.name,
+                fromWalletName: walletName(t.from_wallet),
             });
         }
     });

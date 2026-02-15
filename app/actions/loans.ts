@@ -106,7 +106,7 @@ export async function recordLoanPayment(
 
   const { data: loan } = await supabase
     .from("loans")
-    .select("id, name, currency")
+    .select("id, name, currency, shared_account_id")
     .eq("id", loanId)
     .single();
   if (!loan) return { error: "Préstamo no encontrado" };
@@ -144,7 +144,7 @@ export async function recordLoanPayment(
     date: parsed.data.paid_at,
     category_id: null,
     wallet_id: parsed.data.wallet_id,
-    shared_account_id: null,
+    shared_account_id: (loan as { shared_account_id?: string | null }).shared_account_id ?? null,
     loan_payment_id: payment.id,
   });
   if (expenseError) return { error: expenseError.message };

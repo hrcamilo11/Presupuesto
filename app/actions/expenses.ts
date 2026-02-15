@@ -67,11 +67,13 @@ export async function createExpense(formData: {
     const monthStart = `${y}-${m}-01`;
     const lastDay = new Date(Number(y), Number(m), 0).getDate();
     const monthEnd = `${y}-${m}-${String(lastDay).padStart(2, "0")}`;
+    // Solo notificar por presupuestos personales vs gastos personales del mes
     const { data: budgets } = await supabase
       .from("budgets")
       .select("id, amount, categories(name)")
       .eq("user_id", user.id)
       .eq("category_id", expense.category_id)
+      .is("shared_account_id", null)
       .in("period", ["monthly", `${y}-${m}`]);
     if (budgets?.length) {
       const { data: monthExpenses } = await supabase
