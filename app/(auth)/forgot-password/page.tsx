@@ -26,7 +26,9 @@ export default function ForgotPasswordPage() {
     setError(null);
     setLoading(true);
     const supabase = createClient();
-    const redirectTo = `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback?next=/update-password`;
+    // Usar NEXT_PUBLIC_APP_URL si está disponible (producción), sino usar window.location.origin (desarrollo)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
+    const redirectTo = `${baseUrl}/update-password`;
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email.trim(),
       { redirectTo }
