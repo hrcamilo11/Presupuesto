@@ -44,6 +44,8 @@ export async function updateSession(request: NextRequest) {
     pathname === "/register" ||
     pathname === "/forgot-password";
   const isAuthCallback = pathname === "/auth/callback";
+  // /update-password debe ser accesible sin autenticación inicialmente para procesar el hash del token de recovery
+  const isUpdatePassword = pathname === "/update-password";
   const isDashboardRoute =
     pathname.startsWith("/dashboard") ||
     pathname === "/incomes" ||
@@ -61,13 +63,16 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/settings/") ||
     pathname === "/shared" ||
     pathname.startsWith("/shared/") ||
-    pathname === "/update-password" ||
     pathname === "/";
 
   const failoverUserId = request.cookies.get(FAILOVER_USER_ID_COOKIE)?.value;
   const hasAuth = Boolean(user?.id) || Boolean(failoverUserId);
 
   if (isAuthCallback) {
+    return response;
+  }
+  // Permitir acceso a /update-password sin autenticación inicialmente (el componente cliente procesará el hash)
+  if (isUpdatePassword) {
     return response;
   }
   if (pathname === "/" && hasAuth) {

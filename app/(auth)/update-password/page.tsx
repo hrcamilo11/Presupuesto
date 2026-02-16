@@ -29,43 +29,62 @@ export default function UpdatePasswordPage() {
   useEffect(() => {
     const supabase = createClient();
     let mounted = true;
+    let timeoutId: NodeJS.Timeout;
     
     // Procesar el hash del token de reset password si viene en la URL (#access_token=...&type=recovery)
     // Supabase procesa automáticamente el hash cuando llamamos getSession()
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    async function checkAuth() {
+      // Primero intentar obtener la sesión (esto procesa el hash si existe)
+      const { data: { session } } = await supabase.auth.getSession();
+      
       if (!mounted) return;
+      
       if (session) {
         // Hay sesión válida (el token de recovery fue procesado correctamente)
         setChecking(false);
         return;
       }
       
-      // Si no hay sesión inmediatamente, verificar después de un breve delay
-      // para dar tiempo a que Supabase procese el hash si existe
-      setTimeout(async () => {
+      // Si no hay sesión inmediatamente, escuchar cambios en el estado de autenticación
+      // para detectar cuando Supabase procesa el hash del token de recovery
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         if (!mounted) return;
+        
+        // El evento PASSWORD_RECOVERY se dispara cuando Supabase procesa el hash del token
+        if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+          setChecking(false);
+          subscription.unsubscribe();
+          return;
+        }
+      });
+      
+      // También verificar después de un delay por si el hash se procesa de forma asíncrona
+      timeoutId = setTimeout(async () => {
+        if (!mounted) return;
+        
+        const { data: { session: delayedSession } } = await supabase.auth.getSession();
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        
+        subscription.unsubscribe();
+        
+        if (!mounted) return;
+        
+        if (delayedSession || user) {
+          // Hay sesión o usuario autenticado
+          setChecking(false);
+        } else {
           // No hay usuario autenticado - el token puede haber expirado o ser inválido
           setChecking(false);
           router.replace("/login?error=reset_token_invalid");
-        } else {
-          setChecking(false);
         }
-      }, 500);
-    });
+      }, 1500);
+    }
     
-    // También escuchar cambios en el estado de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-      if (event === "PASSWORD_RECOVERY" || session) {
-        setChecking(false);
-      }
-    });
+    checkAuth();
     
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [router]);
 
