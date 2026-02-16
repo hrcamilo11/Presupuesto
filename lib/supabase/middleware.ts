@@ -3,6 +3,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { FAILOVER_USER_ID_COOKIE } from "@/lib/backend/auth-context";
 
 export async function updateSession(request: NextRequest) {
+  // Redirigir www a sin www para evitar problemas de cookies y configuración
+  const url = request.nextUrl;
+  if (url.hostname.startsWith("www.")) {
+    const newUrl = url.clone();
+    newUrl.hostname = url.hostname.replace(/^www\./, "");
+    return NextResponse.redirect(newUrl, 301);
+  }
+
   const response = NextResponse.next({
     request,
   });

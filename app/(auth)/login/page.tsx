@@ -34,14 +34,17 @@ function LoginForm() {
   const errorParam = searchParams.get("error");
   const otpExpired = errorCode === "otp_expired";
   const callbackFailed = errorParam === "auth_callback_failed";
+  const redirectError = errorCode === "-310" || errorParam === "redirect_url_mismatch";
 
   useEffect(() => {
     if (otpExpired) {
       setError("El enlace de confirmación ha caducado. Solicita uno nuevo abajo.");
     } else if (callbackFailed) {
       setError("No se pudo completar el acceso. Vuelve a intentar o inicia sesión con tu contraseña.");
+    } else if (redirectError) {
+      setError("Error de configuración: la URL de redirección no coincide. Por favor, usa https://presupuesto.cfd (sin www) o contacta al administrador.");
     }
-  }, [otpExpired, callbackFailed]);
+  }, [otpExpired, callbackFailed, redirectError]);
 
   async function handleResendConfirmation() {
     const e = email.trim();
