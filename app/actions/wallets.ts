@@ -82,7 +82,7 @@ export async function getWallets() {
 
 export async function createWallet(formData: {
     name: string;
-    type: "cash" | "debit" | "credit" | "savings" | "investment";
+    type: "cash" | "debit" | "credit" | "investment";
     currency: string;
     balance?: number;
     color?: string | null;
@@ -120,7 +120,7 @@ export async function createWallet(formData: {
             color: formData.color || null,
             bank: formData.type === "debit" || formData.type === "credit" ? formData.bank ?? null : null,
             debit_card_brand: formData.type === "debit" ? formData.debit_card_brand ?? null : null,
-            last_four_digits: (formData.type === "debit" || formData.type === "credit") && formData.last_four_digits && /^\d{1,4}$/.test(formData.last_four_digits) ? formData.last_four_digits : null,
+            last_four_digits: (formData.type === "debit" || formData.type === "credit" || formData.type === "investment") ? (formData.last_four_digits && /^\d{1,4}$/.test(formData.last_four_digits) ? formData.last_four_digits : null) : null,
             credit_mode: formData.type === "credit" ? formData.credit_mode ?? null : null,
             card_brand: formData.type === "credit" ? formData.card_brand ?? null : null,
             cut_off_day: formData.type === "credit" ? formData.cut_off_day ?? null : null,
@@ -171,7 +171,7 @@ export async function updateWallet(
     id: string,
     formData: {
         name: string;
-        type: "cash" | "debit" | "credit" | "savings" | "investment";
+        type: "cash" | "debit" | "credit" | "investment";
         currency: string;
         balance?: number;
         color?: string | null;
