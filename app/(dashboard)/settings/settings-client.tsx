@@ -213,38 +213,38 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
             </header>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-                <TabsList className="inline-flex w-full justify-start gap-0.5 overflow-x-auto rounded-xl bg-muted/60 p-1.5 text-muted-foreground md:flex-wrap">
+                <TabsList className="grid w-full grid-cols-2 gap-1.5 rounded-xl bg-muted/60 p-1.5 text-muted-foreground sm:grid-cols-3 md:inline-flex md:flex-row md:flex-nowrap md:justify-start md:gap-0.5">
                     <TabsTrigger
                         value="profile"
-                        className="gap-2 min-w-[120px] rounded-lg px-4 py-2 transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                        className="gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm md:min-w-[120px] md:px-4"
                     >
                         <User className="h-4 w-4 shrink-0" />
                         <span>Perfil</span>
                     </TabsTrigger>
                     <TabsTrigger
                         value="categories"
-                        className="gap-2 min-w-[140px] rounded-lg px-4 py-2 transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                        className="gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm md:min-w-[140px] md:px-4"
                     >
                         <LayoutGrid className="h-4 w-4 shrink-0" />
                         <span>Categorías</span>
                     </TabsTrigger>
                     <TabsTrigger
                         value="tags"
-                        className="gap-2 min-w-[130px] rounded-lg px-4 py-2 transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                        className="gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm md:min-w-[130px] md:px-4"
                     >
                         <Tag className="h-4 w-4 shrink-0" />
                         <span>Etiquetas</span>
                     </TabsTrigger>
                     <TabsTrigger
                         value="personalization"
-                        className="gap-2 min-w-[170px] rounded-lg px-4 py-2 transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                        className="gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm md:min-w-[170px] md:px-4"
                     >
                         <Palette className="h-4 w-4 shrink-0" />
                         <span>Dashboard</span>
                     </TabsTrigger>
                     <TabsTrigger
                         value="notifications"
-                        className="gap-2 min-w-[140px] rounded-lg px-4 py-2 transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                        className="col-span-2 gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:col-span-1 md:col-span-auto md:min-w-[140px] md:px-4"
                     >
                         <Bell className="h-4 w-4 shrink-0" />
                         <span>Notificaciones</span>
