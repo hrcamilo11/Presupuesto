@@ -109,6 +109,24 @@ export async function deleteNotification(id: string) {
   return { error: null };
 }
 
+export async function deleteAllNotifications() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const { error } = await supabase
+    .from("notifications")
+    .delete()
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath(NOTIFICATIONS_PAGE);
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
 export async function getNotificationPreferences() {
   const supabase = await createClient();
   const {

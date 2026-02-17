@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { markAsRead, markAllAsRead, deleteNotification } from "@/app/actions/notifications";
+import { markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications } from "@/app/actions/notifications";
 import type { Notification } from "@/lib/database.types";
 import {
   AlertCircle,
@@ -14,6 +14,7 @@ import {
   Wallet,
   CheckCheck,
   Trash2,
+  Brush,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FilterBar } from "@/components/ui/filter-bar";
@@ -40,6 +41,7 @@ export function NotificationsList({
   const router = useRouter();
   const [list, setList] = useState(initialNotifications);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   async function handleMarkAsRead(id: string) {
     await markAsRead(id);
@@ -66,6 +68,15 @@ export function NotificationsList({
     router.refresh();
   }
 
+  async function handleDeleteAll() {
+    if (!confirm("¿Eliminar todas las notificaciones? Esta acción no se puede deshacer.")) return;
+    setIsDeletingAll(true);
+    await deleteAllNotifications();
+    setList([]);
+    setIsDeletingAll(false);
+    router.refresh();
+  }
+
   function setFilter(value: "all" | "unread") {
     const params = new URLSearchParams();
     if (value === "unread") params.set("filter", "unread");
@@ -88,44 +99,56 @@ export function NotificationsList({
         label="Mostrar notificaciones"
         description="Todas o solo las que aún no has leído."
       >
-        <div
-          className="inline-flex rounded-lg border border-input bg-muted/50 p-1 shadow-sm"
-          role="group"
-          aria-label="Filtro de notificaciones"
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setFilter("all")}
-            className={cn(
-              "rounded-md text-sm font-medium transition-colors",
-              initialFilter === "all"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
+        <div className="flex flex-wrap items-center gap-2 ml-auto">
+          <div
+            className="inline-flex rounded-lg border border-input bg-muted/50 p-1 shadow-sm"
+            role="group"
+            aria-label="Filtro de notificaciones"
           >
-            Todas
-          </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFilter("all")}
+              className={cn(
+                "rounded-md text-sm font-medium transition-colors",
+                initialFilter === "all"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Todas
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFilter("unread")}
+              className={cn(
+                "rounded-md text-sm font-medium transition-colors",
+                initialFilter === "unread"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              No leídas
+            </Button>
+          </div>
+          {unreadCount > 0 && (
+            <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
+              <CheckCheck className="mr-2 h-4 w-4" />
+              Marcar todas
+            </Button>
+          )}
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            onClick={() => setFilter("unread")}
-            className={cn(
-              "rounded-md text-sm font-medium transition-colors",
-              initialFilter === "unread"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
+            onClick={handleDeleteAll}
+            disabled={isDeletingAll}
+            className="text-muted-foreground hover:text-destructive hover:border-destructive/50"
           >
-            No leídas
+            <Brush className="mr-2 h-4 w-4" />
+            Limpiar todo
           </Button>
         </div>
-        {unreadCount > 0 && (
-          <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} className="ml-auto">
-            <CheckCheck className="mr-2 h-4 w-4" />
-            Marcar todas como leídas
-          </Button>
-        )}
       </FilterBar>
       <ul className="space-y-1">
         {list.map((n) => {
@@ -153,9 +176,8 @@ export function NotificationsList({
           return (
             <li
               key={n.id}
-              className={`rounded-lg border bg-card transition-colors ${
-                !n.read_at ? "border-primary/20 bg-primary/5" : ""
-              }`}
+              className={`rounded-lg border bg-card transition-colors ${!n.read_at ? "border-primary/20 bg-primary/5" : ""
+                }`}
             >
               <div className="flex gap-4 p-4 items-start">
                 {href !== "#" ? (
