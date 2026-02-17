@@ -53,10 +53,12 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
     overflow-x: hidden;
   }
+
   html {
     overflow-x: hidden;
   }
@@ -71,6 +73,7 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
@@ -82,19 +85,37 @@
   display: none !important;
 }
 
-[data-sileo-toast] [data-sileo-header] {
-  background-color: #09090b !important; /* zinc-950 */
-  color: #fafafa !important; /* zinc-50 */
-  border: 1px solid #27272a !important; /* zinc-800 */
-  border-radius: 0.75rem !important; /* Rounded corners */
+/* Apply card styling to the main toast container to ensure full coverage */
+[data-sileo-toast] {
+  background-color: #09090b !important;
+  /* zinc-950 */
+  border: 1px solid #27272a !important;
+  /* zinc-800 */
+  border-radius: 0.75rem !important;
+  /* Rounded corners */
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3) !important;
+  overflow: hidden !important;
+  /* Clip content to rounded corners */
 }
 
+/* Remove specific background from header to avoid layering issues */
+[data-sileo-toast] [data-sileo-header] {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure text is light */
 [data-sileo-toast] [data-sileo-title],
 [data-sileo-toast] [data-sileo-description] {
   color: #fafafa !important;
 }
 
+/* Ensure content is visible */
+[data-sileo-toast] [data-sileo-content] {
+  opacity: 1 !important;
+}
+
 [data-sileo-toast] [data-sileo-badge] {
-   --sileo-tone-bg: rgba(255, 255, 255, 0.1) !important;
+  --sileo-tone-bg: rgba(255, 255, 255, 0.1) !important;
 }
