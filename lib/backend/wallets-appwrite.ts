@@ -29,7 +29,9 @@ function docToWallet(doc: AppwriteDoc): Wallet {
     credit_limit: (doc.credit_limit as number) ?? null,
     cash_advance_limit: (doc.cash_advance_limit as number) ?? null,
     purchase_interest_rate: (doc.purchase_interest_rate as number) ?? null,
-    cash_advance_interest_rate: (doc.cash_advance_interest_rate as number) ?? null,
+    investment_yield_rate: (doc.investment_yield_rate as number) ?? null,
+    investment_term: (doc.investment_term as string) ?? null,
+    investment_start_date: (doc.investment_start_date as string) ?? null,
     created_at: (doc.created_at as string) ?? new Date().toISOString(),
     updated_at: (doc.updated_at as string) ?? new Date().toISOString(),
   };
@@ -55,6 +57,9 @@ function walletToData(wallet: Partial<Wallet> & { user_id: string; name: string;
   if (wallet.cash_advance_limit != null) data.cash_advance_limit = wallet.cash_advance_limit;
   if (wallet.purchase_interest_rate != null) data.purchase_interest_rate = wallet.purchase_interest_rate;
   if (wallet.cash_advance_interest_rate != null) data.cash_advance_interest_rate = wallet.cash_advance_interest_rate;
+  if (wallet.investment_yield_rate != null) data.investment_yield_rate = wallet.investment_yield_rate;
+  if (wallet.investment_term != null) data.investment_term = wallet.investment_term;
+  if (wallet.investment_start_date != null) data.investment_start_date = wallet.investment_start_date;
   const now = new Date().toISOString();
   data.updated_at = wallet.updated_at ?? now;
   if (wallet.created_at != null) data.created_at = wallet.created_at;
@@ -111,7 +116,7 @@ export async function deleteWalletFromAppwrite(walletId: string): Promise<void> 
 /** FormData para crear wallet (mismo shape que createWallet en actions) */
 export type CreateWalletFormData = {
   name: string;
-  type: "cash" | "debit" | "credit" | "savings" | "investment";
+  type: "cash" | "debit" | "credit" | "investment";
   currency: string;
   balance?: number;
   color?: string | null;
@@ -126,6 +131,9 @@ export type CreateWalletFormData = {
   cash_advance_limit?: number;
   purchase_interest_rate?: number;
   cash_advance_interest_rate?: number;
+  investment_yield_rate?: number;
+  investment_term?: string;
+  investment_start_date?: string;
 };
 
 /** Crea una wallet solo en Appwrite (fallback cuando Supabase está caído). Devuelve la wallet creada. */
@@ -155,6 +163,9 @@ export async function createWalletInAppwrite(userId: string, formData: CreateWal
     cash_advance_limit: formData.type === "credit" ? formData.cash_advance_limit ?? null : null,
     purchase_interest_rate: formData.type === "credit" ? formData.purchase_interest_rate ?? null : null,
     cash_advance_interest_rate: formData.type === "credit" ? formData.cash_advance_interest_rate ?? null : null,
+    investment_yield_rate: formData.type === "investment" ? formData.investment_yield_rate ?? null : null,
+    investment_term: formData.type === "investment" ? formData.investment_term ?? null : null,
+    investment_start_date: formData.type === "investment" ? formData.investment_start_date ?? null : null,
     created_at: now,
     updated_at: now,
   };
