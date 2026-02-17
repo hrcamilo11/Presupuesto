@@ -76,10 +76,18 @@
 }
 
 /* Sileo Toast Dark Theme Overrides */
+/* Sileo Toast Dark Theme Overrides */
+/* Hide the SVG background/morphing effect to avoid white blobs and allow standard CSS styling */
+[data-sileo-svg] {
+  display: none !important;
+}
+
 [data-sileo-toast] [data-sileo-header] {
   background-color: #09090b !important; /* zinc-950 */
   color: #fafafa !important; /* zinc-50 */
   border: 1px solid #27272a !important; /* zinc-800 */
+  border-radius: 0.75rem !important; /* Rounded corners */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3) !important;
 }
 
 [data-sileo-toast] [data-sileo-title],
