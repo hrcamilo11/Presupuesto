@@ -77,9 +77,15 @@ interface WalletFormProps {
     wallet?: Wallet;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    allowedTypes?: ("cash" | "debit" | "credit" | "investment")[];
 }
 
-export function WalletForm({ wallet, open: controlledOpen, onOpenChange: controlledOnOpenChange }: WalletFormProps = {}) {
+export function WalletForm({
+    wallet,
+    open: controlledOpen,
+    onOpenChange: controlledOnOpenChange,
+    allowedTypes,
+}: WalletFormProps = {}) {
     const [internalOpen, setInternalOpen] = useState(false);
     const [showBalanceHelp, setShowBalanceHelp] = useState(false);
     const [showLimitHelp, setShowLimitHelp] = useState(false);
@@ -119,7 +125,7 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
             }
             : {
                 name: "",
-                type: "cash",
+                type: allowedTypes && allowedTypes.length > 0 ? allowedTypes[0] : "cash",
                 currency: "COP",
                 balance: 0,
             },
@@ -227,11 +233,13 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {walletTypes.map((type) => (
-                                                    <SelectItem key={type.value} value={type.value}>
-                                                        {type.label}
-                                                    </SelectItem>
-                                                ))}
+                                                {walletTypes
+                                                    .filter(type => !allowedTypes || allowedTypes.includes(type.value as any))
+                                                    .map((type) => (
+                                                        <SelectItem key={type.value} value={type.value}>
+                                                            {type.label}
+                                                        </SelectItem>
+                                                    ))}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

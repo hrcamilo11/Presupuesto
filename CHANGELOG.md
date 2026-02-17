@@ -13,6 +13,7 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 
 ### Cambiado
 - **Refactor de Cuentas**: Se eliminó el tipo de cuenta "Ahorros" para simplificar la gestión financiera.
+- **Restricción de Creación**: Ahora el sistema solo permite crear cuentas coherentes con la sección actual (ej: solo inversiones en la vista de Inversiones).
 - **Separación de Vistas**: Las cuentas de inversión ahora están filtradas de la vista de "Cuentas" principal.
 - **Restricción de Pagos**: Las cuentas de inversión ya no pueden seleccionarse para pagar gastos directamente.
 

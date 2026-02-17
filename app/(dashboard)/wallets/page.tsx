@@ -18,7 +18,7 @@ export default async function WalletsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     {wallets.length > 1 && <TransferFormWrapper wallets={wallets} />}
-                    <WalletForm />
+                    <WalletForm allowedTypes={["cash", "debit", "credit"]} />
                 </div>
             </div>
 

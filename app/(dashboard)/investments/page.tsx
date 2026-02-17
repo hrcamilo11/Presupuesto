@@ -17,7 +17,7 @@ export default async function InvestmentsPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <WalletForm />
+                    <WalletForm allowedTypes={["investment"]} />
                 </div>
             </div>
 
@@ -34,7 +34,7 @@ export default async function InvestmentsPage() {
                     <p className="mb-4 mt-2 text-sm text-muted-foreground">
                         Registra tu primera inversión para empezar a ver tus rendimientos.
                     </p>
-                    <WalletForm />
+                    <WalletForm allowedTypes={["investment"]} />
                 </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
