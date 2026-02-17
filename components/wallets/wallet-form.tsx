@@ -234,7 +234,7 @@ export function WalletForm({
                                             </FormControl>
                                             <SelectContent>
                                                 {walletTypes
-                                                    .filter(type => !allowedTypes || allowedTypes.includes(type.value as any))
+                                                    .filter(type => !allowedTypes || allowedTypes.includes(type.value as "cash" | "debit" | "credit" | "investment"))
                                                     .map((type) => (
                                                         <SelectItem key={type.value} value={type.value}>
                                                             {type.label}
