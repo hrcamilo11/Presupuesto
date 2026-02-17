@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordForm() {
   const searchParams = useSearchParams();
   const emailFromLogin = searchParams.get("email") ?? "";
   const [email, setEmail] = useState(emailFromLogin);
@@ -105,5 +105,21 @@ export default function ForgotPasswordPage() {
         </CardFooter>
       </form>
     </Card>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <Card className="w-full max-w-md">
+          <CardContent className="py-8 text-center text-muted-foreground">
+            Cargando…
+          </CardContent>
+        </Card>
+      }
+    >
+      <ForgotPasswordForm />
+    </Suspense>
   );
 }
