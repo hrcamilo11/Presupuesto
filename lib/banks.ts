@@ -19,6 +19,13 @@ export const COLOMBIAN_BANKS = [
   { value: "banco_colpatria", label: "Colpatria", color: "#E31837", gradient: "from-red-600 via-red-700 to-red-800" },
   { value: "banco_raizal", label: "Banco Raizal", color: "#003DA5", gradient: "from-blue-700 via-blue-800 to-blue-900" },
   { value: "banco_w", label: "W", color: "#000000", gradient: "from-gray-900 via-gray-800 to-gray-900" },
+  { value: "nequi", label: "Nequi", color: "#7000FF", gradient: "from-purple-600 via-purple-700 to-pink-600" },
+  { value: "daviplata", label: "Daviplata", color: "#E31837", gradient: "from-red-600 via-red-700 to-red-500" },
+  { value: "nubank", label: "Nubank", color: "#820AD1", gradient: "from-purple-700 via-purple-800 to-indigo-900" },
+  { value: "lulo_bank", label: "Lulo Bank", color: "#C0FF00", gradient: "from-lime-400 via-lime-500 to-green-500" },
+  { value: "rappipay", label: "RappiPay", color: "#FF441F", gradient: "from-orange-500 via-orange-600 to-red-600" },
+  { value: "movii", label: "Movii", color: "#FFD700", gradient: "from-yellow-400 via-yellow-500 to-orange-400" },
+  { value: "dale", label: "Dale!", color: "#00D1FF", gradient: "from-cyan-400 via-cyan-500 to-blue-500" },
   { value: "banco_otro", label: "Otro banco", color: "#6B7280", gradient: "from-gray-500 via-gray-600 to-gray-700" },
 ] as const;
 
