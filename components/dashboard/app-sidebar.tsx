@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  History,
   LayoutDashboard,
   TrendingUp,
   TrendingDown,
@@ -21,6 +22,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/movements", label: "Movimientos", icon: History },
   { href: "/incomes", label: "Ingresos", icon: TrendingUp },
   { href: "/expenses", label: "Gastos", icon: TrendingDown },
   { href: "/subscriptions", label: "Suscripciones", icon: Repeat },

@@ -27,14 +27,29 @@ import { Pencil, Trash2, Check } from "lucide-react";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
-type Props = { taxes: TaxObligation[] };
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
-export function TaxList({ taxes }: Props) {
+type Props = {
+  taxes: TaxObligation[];
+  wallets: any[];
+};
+
+export function TaxList({ taxes, wallets }: Props) {
   const router = useRouter();
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TaxObligation | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [payingTax, setPayingTax] = useState<TaxObligation | null>(null);
+  const [selectedWalletId, setSelectedWalletId] = useState<string>("");
+  const [isPaying, setIsPaying] = useState(false);
   const [selectedTax, setSelectedTax] = useState<TaxObligation | null>(null);
 
   async function handleDelete(id: string) {
@@ -55,8 +70,17 @@ export function TaxList({ taxes }: Props) {
     }
   }
 
-  async function handleMarkPaid(id: string) {
-    const { error } = await markTaxPaid(id, new Date().toISOString().slice(0, 10));
+  async function handleMarkPaid() {
+    if (!payingTax || !selectedWalletId) return;
+    setIsPaying(true);
+    const { error } = await markTaxPaid(
+      payingTax.id,
+      selectedWalletId,
+      new Date().toISOString().slice(0, 10)
+    );
+    setIsPaying(false);
+    setPayingTax(null);
+
     if (error) {
       toast({
         title: "Error",
@@ -66,7 +90,7 @@ export function TaxList({ taxes }: Props) {
     } else {
       toast({
         title: "Obligación pagada",
-        description: "Se ha registrado el pago de la obligación fiscal.",
+        description: "Se ha registrado el pago de la obligación y el gasto asociado.",
       });
       router.refresh();
     }
@@ -121,7 +145,8 @@ export function TaxList({ taxes }: Props) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleMarkPaid(t.id)}
+                      onClick={() => { setPayingTax(t); setSelectedWalletId(""); }}
+                      disabled={isPaying}
                       title="Marcar como pagado"
                     >
                       <Check className="h-4 w-4 text-green-600" />
@@ -181,7 +206,8 @@ export function TaxList({ taxes }: Props) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleMarkPaid(t.id)}
+                            onClick={() => { setPayingTax(t); setSelectedWalletId(""); }}
+                            disabled={isPaying}
                             title="Marcar como pagado"
                           >
                             <Check className="h-4 w-4 text-green-600" />
@@ -248,6 +274,43 @@ export function TaxList({ taxes }: Props) {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!payingTax} onOpenChange={(o) => !o && setPayingTax(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar Pago</DialogTitle>
+            <DialogDescription>
+              Selecciona la cuenta desde la que realizarás el pago de <strong>{payingTax?.name}</strong> por <strong>${formatNumber(Number(payingTax?.amount ?? 0))}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Cuenta de origen</Label>
+              <Select value={selectedWalletId} onValueChange={setSelectedWalletId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona una cuenta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {wallets.map((w: any) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name} (${formatNumber(w.balance)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayingTax(null)}>Cancelar</Button>
+            <Button
+              onClick={handleMarkPaid}
+              disabled={!selectedWalletId || isPaying}
+            >
+              {isPaying ? "Procesando..." : "Confirmar Pago"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>

@@ -82,16 +82,51 @@ export async function deleteTaxObligation(id: string) {
   return { error: null };
 }
 
-export async function markTaxPaid(id: string, paidAt: string) {
+export async function markTaxPaid(id: string, walletId: string, paidAt: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
-  const { error } = await supabase
+
+  const { data: tax } = await supabase
+    .from("tax_obligations")
+    .select("name, amount, currency, shared_account_id")
+    .eq("id", id)
+    .single();
+
+  if (!tax) return { error: "Obligación tributaria no encontrada" };
+
+  // 1. Update tax obligation
+  const { error: taxError } = await supabase
     .from("tax_obligations")
     .update({ paid_at: paidAt, updated_at: new Date().toISOString() })
     .eq("id", id);
-  if (error) return { error: error.message };
+  if (taxError) return { error: taxError.message };
+
+  // 2. Create expense
+  const { error: expenseError } = await supabase.from("expenses").insert({
+    user_id: user.id,
+    amount: tax.amount,
+    currency: tax.currency,
+    expense_priority: "obligatory",
+    description: `Pago impuesto: ${tax.name}`,
+    date: paidAt,
+    category_id: null,
+    wallet_id: walletId,
+    shared_account_id: tax.shared_account_id,
+  });
+
+  if (expenseError) return { error: expenseError.message };
+
+  // 3. Adjust wallet balance
+  const { error: balanceError } = await supabase.rpc("adjust_wallet_balance", {
+    p_wallet_id: walletId,
+    p_delta: -tax.amount,
+  });
+
+  if (balanceError) return { error: balanceError.message };
+
   revalidatePath("/taxes");
+  revalidatePath("/expenses");
   revalidatePath("/dashboard");
   return { error: null };
 }

@@ -75,19 +75,54 @@ export async function deleteSubscription(id: string) {
 }
 
 /** Marca la suscripción como pagada y avanza next_due_date. */
-export async function markSubscriptionPaid(id: string) {
+export async function markSubscriptionPaid(id: string, walletId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado" };
-  const { data: sub } = await supabase.from("subscriptions").select("next_due_date, frequency").eq("id", id).single();
+
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("name, amount, currency, frequency, next_due_date, shared_account_id")
+    .eq("id", id)
+    .single();
+
   if (!sub) return { error: "Suscripción no encontrada" };
+
   const next = nextDueFromFrequency(sub.next_due_date, sub.frequency as SubscriptionFrequency);
-  const { error } = await supabase
+
+  // 1. Update subscription next due date
+  const { error: subError } = await supabase
     .from("subscriptions")
     .update({ next_due_date: next, updated_at: new Date().toISOString() })
     .eq("id", id);
-  if (error) return { error: error.message };
+  if (subError) return { error: subError.message };
+
+  // 2. Create expense
+  const { error: expenseError } = await supabase.from("expenses").insert({
+    user_id: user.id,
+    amount: sub.amount,
+    currency: sub.currency,
+    expense_priority: "obligatory",
+    description: `Pago suscripción: ${sub.name}`,
+    date: new Date().toISOString().slice(0, 10),
+    category_id: null,
+    wallet_id: walletId,
+    shared_account_id: sub.shared_account_id,
+    subscription_id: id,
+  });
+
+  if (expenseError) return { error: expenseError.message };
+
+  // 3. Adjust wallet balance
+  const { error: balanceError } = await supabase.rpc("adjust_wallet_balance", {
+    p_wallet_id: walletId,
+    p_delta: -sub.amount,
+  });
+
+  if (balanceError) return { error: balanceError.message };
+
   revalidatePath("/subscriptions");
+  revalidatePath("/expenses");
   revalidatePath("/dashboard");
   return { error: null };
 }

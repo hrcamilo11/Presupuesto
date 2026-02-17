@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SubscriptionList } from "@/components/subscriptions/subscription-list";
 import { SubscriptionsAddButton } from "@/components/subscriptions/subscriptions-add-button";
 import { SubscriptionFilter } from "@/components/subscriptions/subscription-filter";
+import { getWallets } from "@/app/actions/wallets";
 
 export default async function SubscriptionsPage({
   searchParams,
@@ -31,6 +32,7 @@ export default async function SubscriptionsPage({
   }
 
   const { data: subscriptions } = await query;
+  const { data: wallets } = await getWallets();
 
   return (
     <div className="space-y-6">
@@ -44,7 +46,7 @@ export default async function SubscriptionsPage({
         </div>
         <SubscriptionFilter currentFilter={filter} />
       </div>
-      <SubscriptionList subscriptions={subscriptions ?? []} />
+      <SubscriptionList subscriptions={subscriptions ?? []} wallets={wallets ?? []} />
     </div>
   );
 }

@@ -21,8 +21,9 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
-import { transferBetweenWallets } from "@/app/actions/wallets";
+import { payCreditCard } from "@/app/actions/wallets";
 import { formatCurrency } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 import type { Wallet } from "@/lib/database.types";
 
 interface PayCreditCardDialogProps {
@@ -39,6 +40,7 @@ export function PayCreditCardDialog({
     wallets,
 }: PayCreditCardDialogProps) {
     const router = useRouter();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [fromWalletId, setFromWalletId] = useState("");
     const [amount, setAmount] = useState("");
@@ -54,19 +56,29 @@ export function PayCreditCardDialog({
         if (!fromWalletId || num <= 0) return;
 
         setLoading(true);
-        const result = await transferBetweenWallets({
+        const result = await payCreditCard({
             from_wallet_id: fromWalletId,
             to_wallet_id: creditWallet.id,
             amount: num,
             description: description || "Pago tarjeta de crédito",
         });
 
-        setLoading(false);
+        setLoading(true);
         if (result.error) {
-            alert(result.error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: result.error,
+            });
+            setLoading(false);
             return;
         }
 
+        toast({
+            title: "Pago realizado",
+            description: "Se ha registrado el pago de la tarjeta y el gasto asociado.",
+        });
+        setLoading(false);
         onOpenChange(false);
         setAmount("");
         setDescription("");

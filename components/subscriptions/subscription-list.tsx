@@ -27,15 +27,31 @@ import { Pencil, Trash2, Check } from "lucide-react";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
-type Props = { subscriptions: Subscription[] };
+import { CategoryList } from "@/components/categories/category-list";
+import { TagList } from "@/components/tags/tag-list";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
-export function SubscriptionList({ subscriptions }: Props) {
+type Props = {
+  subscriptions: Subscription[];
+  wallets: any[];
+};
+
+export function SubscriptionList({ subscriptions, wallets }: Props) {
   const router = useRouter();
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [payingId, setPayingId] = useState<string | null>(null);
+  const [payingSub, setPayingSub] = useState<Subscription | null>(null);
+  const [selectedWalletId, setSelectedWalletId] = useState<string>("");
+  const [isPaying, setIsPaying] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
 
   async function handleDelete(id: string) {
@@ -56,10 +72,12 @@ export function SubscriptionList({ subscriptions }: Props) {
     }
   }
 
-  async function handleMarkPaid(id: string) {
-    setPayingId(id);
-    const { error } = await markSubscriptionPaid(id);
-    setPayingId(null);
+  async function handleMarkPaid() {
+    if (!payingSub || !selectedWalletId) return;
+    setIsPaying(true);
+    const { error } = await markSubscriptionPaid(payingSub.id, selectedWalletId);
+    setIsPaying(false);
+    setPayingSub(null);
 
     if (error) {
       toast({
@@ -70,7 +88,7 @@ export function SubscriptionList({ subscriptions }: Props) {
     } else {
       toast({
         title: "Suscripción pagada",
-        description: "Se ha registrado el pago de la suscripción.",
+        description: "Se ha registrado el pago de la suscripción y el gasto asociado.",
       });
       router.refresh();
     }
@@ -116,8 +134,8 @@ export function SubscriptionList({ subscriptions }: Props) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleMarkPaid(s.id)}
-                    disabled={!!payingId}
+                    onClick={() => { setPayingSub(s); setSelectedWalletId(""); }}
+                    disabled={isPaying}
                     title="Marcar como pagado"
                   >
                     <Check className="h-4 w-4 text-green-600" />
@@ -169,8 +187,8 @@ export function SubscriptionList({ subscriptions }: Props) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleMarkPaid(s.id)}
-                          disabled={!!payingId}
+                          onClick={() => { setPayingSub(s); setSelectedWalletId(""); }}
+                          disabled={isPaying}
                           title="Marcar como pagado"
                         >
                           <Check className="h-4 w-4 text-green-600" />
@@ -236,6 +254,44 @@ export function SubscriptionList({ subscriptions }: Props) {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!payingSub} onOpenChange={(o) => !o && setPayingSub(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar Pago</DialogTitle>
+            <DialogDescription>
+              Selecciona la cuenta desde la que realizarás el pago de <strong>{payingSub?.name}</strong> por <strong>${formatNumber(Number(payingSub?.amount ?? 0))}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Cuenta de origen</Label>
+              <Select value={selectedWalletId} onValueChange={setSelectedWalletId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona una cuenta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {wallets.map((w: any) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name} (${formatNumber(w.balance)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayingSub(null)}>Cancelar</Button>
+            <Button
+              onClick={handleMarkPaid}
+              disabled={!selectedWalletId || isPaying}
+            >
+              {isPaying ? "Procesando..." : "Confirmar Pago"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>

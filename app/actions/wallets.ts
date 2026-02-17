@@ -297,6 +297,59 @@ export async function deleteWallet(id: string) {
     return { error: null };
 }
 
+export async function payCreditCard(params: {
+    from_wallet_id: string;
+    to_wallet_id: string;
+    amount: number;
+    description?: string;
+    date?: string;
+}) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "No autenticado" };
+
+    const date = params.date || new Date().toISOString().slice(0, 10);
+
+    // 1. Transfer funds (internal)
+    const { data: transferId, error: transferError } = await supabase.rpc("transfer_between_wallets", {
+        p_from_wallet_id: params.from_wallet_id,
+        p_to_wallet_id: params.to_wallet_id,
+        p_amount: params.amount,
+        p_description: params.description || "Pago Tarjeta de Crédito",
+    });
+
+    if (transferError) return { error: transferError.message };
+
+    // 2. Create the associated expense (to track it as money spent)
+    // Note: The transfer just moves money between accounts, but paying a credit card debt
+    // is often treated as the moment the expense "hits" the cash flow if not tracked otherwise.
+    // However, usually items bought WITH the card are expenses. 
+    // The user explicitly asked for: "al realizar un pago de una obligacion ... se cree automaticamente un gasto"
+    // So we record an expense here.
+
+    // Fetch credit card name for description
+    const { data: ccWallet } = await supabase.from("wallets").select("name, currency").eq("id", params.to_wallet_id).single();
+
+    const { error: expenseError } = await supabase.from("expenses").insert({
+        user_id: user.id,
+        amount: params.amount,
+        currency: ccWallet?.currency || "COP",
+        expense_priority: "obligatory",
+        description: `Pago Tarjeta: ${ccWallet?.name || ""}`,
+        date: date,
+        wallet_id: params.from_wallet_id,
+        // We don't deduct balance again because the transfer already did it for from_wallet
+        // and increased it for to_wallet (credit card balance is usually negative/liability).
+    });
+
+    if (expenseError) return { error: expenseError.message };
+
+    revalidatePath("/wallets");
+    revalidatePath("/expenses");
+    revalidatePath("/dashboard");
+    return { data: transferId, error: null };
+}
+
 export async function transferBetweenWallets(params: {
     from_wallet_id: string;
     to_wallet_id: string;
@@ -346,10 +399,128 @@ export async function getWalletTransfers() {
 }
 
 export type WalletMovement =
-    | { kind: "income"; id: string; date: string; amount: number; description?: string | null; category?: string }
-    | { kind: "expense"; id: string; date: string; amount: number; description?: string | null; category?: string }
-    | { kind: "transfer_out"; id: string; date: string; amount: number; description?: string | null; toWalletName?: string }
-    | { kind: "transfer_in"; id: string; date: string; amount: number; description?: string | null; fromWalletName?: string };
+    | { kind: "income"; id: string; date: string; amount: number; description?: string | null; category?: string; walletName?: string }
+    | { kind: "expense"; id: string; date: string; amount: number; description?: string | null; category?: string; walletName?: string }
+    | { kind: "transfer_out"; id: string; date: string; amount: number; description?: string | null; toWalletName?: string; walletName?: string }
+    | { kind: "transfer_in"; id: string; date: string; amount: number; description?: string | null; fromWalletName?: string; walletName?: string }
+    | { kind: "investment"; id: string; date: string; amount: number; description?: string | null; goalName?: string; walletName?: string };
+
+export async function getAllMovementsHistory(
+    options?: { limit?: number; fromDate?: string; toDate?: string }
+) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "No autenticado" };
+
+    const toDate = options?.toDate ?? new Date().toISOString().slice(0, 10);
+    const from = options?.fromDate ?? new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const limit = options?.limit ?? 200;
+
+    const [incomesRes, expensesRes, transfersRes, savingsRes] = await Promise.all([
+        supabase
+            .from("incomes")
+            .select("id, date, amount, description, category:categories(name), wallet:wallets(name)")
+            .eq("user_id", user.id)
+            .gte("date", from)
+            .lte("date", toDate)
+            .order("date", { ascending: false })
+            .limit(limit),
+        supabase
+            .from("expenses")
+            .select("id, date, amount, description, category:categories(name), wallet:wallets(name)")
+            .eq("user_id", user.id)
+            .gte("date", from)
+            .lte("date", toDate)
+            .order("date", { ascending: false })
+            .limit(limit),
+        supabase
+            .from("wallet_transfers")
+            .select(`
+                id, date, amount, description,
+                from_wallet_id, to_wallet_id,
+                from_wallet:wallets!from_wallet_id(name),
+                to_wallet:wallets!to_wallet_id(name)
+            `)
+            .eq("user_id", user.id)
+            .gte("date", from)
+            .lte("date", toDate)
+            .order("date", { ascending: false })
+            .limit(limit),
+        supabase
+            .from("savings_transactions")
+            .select(`
+                id, date, amount, notes,
+                savings_goal:savings_goals(name),
+                wallet:wallets(name)
+            `)
+            .gte("date", from)
+            .lte("date", toDate)
+            .order("date", { ascending: false })
+            .limit(limit),
+    ]);
+
+    const movements: WalletMovement[] = [];
+
+    type MovementRow = {
+        id: string; date: string; amount: number; description?: string | null;
+        category?: { name: string } | { name: string }[] | null;
+        wallet?: { name: string } | { name: string }[] | null;
+    };
+    const getName = (n: { name: string } | { name: string }[] | null | undefined) =>
+        n == null ? undefined : Array.isArray(n) ? n[0]?.name : n.name;
+
+    (incomesRes.data ?? []).forEach((i: any) => {
+        movements.push({
+            kind: "income",
+            id: i.id,
+            date: i.date,
+            amount: Number(i.amount),
+            description: i.description ?? undefined,
+            category: getName(i.category),
+            walletName: getName(i.wallet),
+        });
+    });
+    (expensesRes.data ?? []).forEach((e: any) => {
+        movements.push({
+            kind: "expense",
+            id: e.id,
+            date: e.date,
+            amount: Number(e.amount),
+            description: e.description ?? undefined,
+            category: getName(e.category),
+            walletName: getName(e.wallet),
+        });
+    });
+    (transfersRes.data ?? []).forEach((t: any) => {
+        movements.push({
+            kind: "transfer_out",
+            id: t.id,
+            date: t.date,
+            amount: Number(t.amount),
+            description: t.description ?? undefined,
+            toWalletName: getName(t.to_wallet),
+            walletName: getName(t.from_wallet),
+        });
+    });
+    (savingsRes.data ?? []).forEach((s: any) => {
+        movements.push({
+            kind: "investment",
+            id: s.id,
+            date: s.date,
+            amount: Number(s.amount),
+            description: s.notes ?? undefined,
+            goalName: getName(s.savings_goal),
+            walletName: getName(s.wallet),
+        });
+    });
+
+    movements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return {
+        data: movements.slice(0, limit),
+        error: null,
+    };
+}
 
 export async function getWalletMovementHistory(
     walletId: string,

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { TaxList } from "@/components/taxes/tax-list";
 import { TaxesAddButton } from "@/components/taxes/taxes-add-button";
 import { TaxFilter } from "@/components/taxes/tax-filter";
+import { getWallets } from "@/app/actions/wallets";
 
 export default async function TaxesPage({
   searchParams,
@@ -29,6 +30,7 @@ export default async function TaxesPage({
   }
 
   const { data: taxes } = await query;
+  const { data: wallets } = await getWallets();
 
   return (
     <div className="space-y-6">
@@ -42,7 +44,7 @@ export default async function TaxesPage({
         </div>
         <TaxFilter currentFilter={filter} />
       </div>
-      <TaxList taxes={taxes ?? []} />
+      <TaxList taxes={taxes ?? []} wallets={wallets ?? []} />
     </div>
   );
 }
