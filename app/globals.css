@@ -77,3 +77,41 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Sileo Toast Theme-Specific Overrides */
+
+/* Default (Light Mode): Black background, white text */
+[data-sileo-toast] [data-sileo-svg] path {
+  fill: #09090b !important;
+  /* zinc-950 (Black) */
+  stroke: #27272a !important;
+  /* zinc-800 */
+}
+
+[data-sileo-toast] [data-sileo-title],
+[data-sileo-toast] [data-sileo-description] {
+  color: #fafafa !important;
+  /* zinc-50 (White) */
+}
+
+/* Dark Mode (.dark): White background, black text */
+.dark [data-sileo-toast] [data-sileo-svg] path {
+  fill: #fafafa !important;
+  /* zinc-50 (White) */
+  stroke: #e4e4e7 !important;
+  /* zinc-200 */
+}
+
+.dark [data-sileo-toast] [data-sileo-title],
+.dark [data-sileo-toast] [data-sileo-description] {
+  color: #09090b !important;
+  /* zinc-950 (Black) */
+}
+
+.dark [data-sileo-toast] [data-sileo-badge] {
+  --sileo-tone-bg: rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-sileo-toast] [data-sileo-badge] {
+  --sileo-tone-bg: rgba(255, 255, 255, 0.1) !important;
+}
