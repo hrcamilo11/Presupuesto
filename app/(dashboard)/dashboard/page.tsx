@@ -38,11 +38,12 @@ const DEFAULT_DASHBOARD_SETTINGS = {
   show_pie_charts: true,
   show_quick_access: true,
   show_distribution_section: true,
-   show_debts_section: true,
+  show_debts_section: true,
 };
 
 const DEFAULT_SECTIONS_ORDER = [
   "summary_cards",
+  "investments_summary",
   "savings_totals",
   "budgets_accounts_savings",
   "ring_trend",
@@ -96,7 +97,7 @@ export default async function DashboardPage({
 
   // Recordatorios de vencimiento (suscripciones, impuestos, préstamos)
   const { createDueReminders } = await import("@/app/actions/notifications");
-  createDueReminders().catch(() => {});
+  createDueReminders().catch(() => { });
 
   // Apply defaults (only when user didn't choose a filter yet)
   const hasWalletParam = typeof searchParams.wallet === "string" && searchParams.wallet.length > 0;
@@ -242,6 +243,7 @@ export default async function DashboardPage({
 
   const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
   const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
+
   const balance = totalIncome - totalExpense;
   const savingsRate = totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0;
 
@@ -467,7 +469,48 @@ export default async function DashboardPage({
   );
 
   function renderSection(sectionId: string) {
+    const investmentWallets = wallets.filter((w: any) => w.type === "investment");
+    const totalInvested = investmentWallets.reduce((s: number, w: any) => s + Number(w.balance ?? 0), 0);
+    const estimatedMonthlyGains = investmentWallets.reduce((s: number, w: any) => {
+      const balance = Number(w.balance ?? 0);
+      const yieldRate = Number(w.investment_yield_rate ?? 0);
+      if (balance <= 0 || yieldRate <= 0) return s;
+      return s + (balance * (yieldRate / 100) / 12);
+    }, 0);
+
     switch (sectionId) {
+      case "investments_summary":
+        if (investmentWallets.length === 0) return null;
+        return (
+          <section className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-blue-500/20 bg-blue-500/5 shadow-sm sm:min-h-[110px]">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
+                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+                  Total Invertido
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 shrink-0 text-blue-600" />
+              </CardHeader>
+              <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
+                <p className="truncate text-lg font-bold text-blue-600 dark:text-blue-400 sm:text-2xl">
+                  {formatNumber(totalInvested)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="card-hover flex min-h-[100px] flex-col justify-between overflow-hidden border-cyan-500/20 bg-cyan-500/5 shadow-sm sm:min-h-[110px]">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 sm:pb-2 sm:pt-6">
+                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
+                  Rendimiento Est. Mes
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 shrink-0 text-cyan-600" />
+              </CardHeader>
+              <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
+                <p className="truncate text-lg font-bold text-cyan-600 dark:text-cyan-400 sm:text-2xl">
+                  {formatNumber(estimatedMonthlyGains)}
+                </p>
+              </CardContent>
+            </Card>
+          </section>
+        );
       case "summary_cards":
         if (dashboardSettings.show_summary_cards === false) return null;
         return (
@@ -507,9 +550,8 @@ export default async function DashboardPage({
               </CardHeader>
               <CardContent className="pb-4 pt-0 sm:pb-6 sm:pt-0">
                 <p
-                  className={`truncate text-lg font-bold sm:text-2xl ${
-                    balance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                  }`}
+                  className={`truncate text-lg font-bold sm:text-2xl ${balance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                    }`}
                 >
                   {formatNumber(balance)}
                 </p>
@@ -599,10 +641,10 @@ export default async function DashboardPage({
                           {w.type === "debit"
                             ? "Débito"
                             : w.type === "credit"
-                            ? "Crédito"
-                            : w.type === "cash"
-                            ? "Efectivo"
-                            : w.type}
+                              ? "Crédito"
+                              : w.type === "cash"
+                                ? "Efectivo"
+                                : w.type}
                         </div>
                       </div>
                     ))}

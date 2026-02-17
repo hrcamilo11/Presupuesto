@@ -4,7 +4,8 @@ import { WalletCard } from "@/components/wallets/wallet-card";
 import { TransferFormWrapper } from "@/components/wallets/transfer-form-wrapper";
 
 export default async function WalletsPage() {
-    const { data: wallets, error } = await getWallets();
+    const { data: allWallets, error } = await getWallets();
+    const wallets = allWallets.filter(w => w.type !== "investment");
 
     return (
         <div className="space-y-6">

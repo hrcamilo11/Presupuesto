@@ -17,6 +17,7 @@ import {
   Settings,
   X,
   Bell,
+  LineChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/loans", label: "Préstamos", icon: Landmark },
   { href: "/taxes", label: "Impuestos", icon: Receipt },
   { href: "/wallets", label: "Cuentas", icon: Wallet },
+  { href: "/investments", label: "Inversiones", icon: LineChart },
   { href: "/savings", label: "Ahorros", icon: PiggyBank },
   { href: "/shared", label: "Cuentas compartidas", icon: UsersRound },
   { href: "/notifications", label: "Notificaciones", icon: Bell },
