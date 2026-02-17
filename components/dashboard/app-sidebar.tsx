@@ -55,7 +55,7 @@ export function AppSidebar({ isOpen = false, onClose }: AppSidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-screen flex-col border-r bg-card shadow-sm transition-transform duration-300",
+          "fixed left-0 top-[env(safe-area-inset-top,0px)] z-50 flex h-[calc(100dvh-env(safe-area-inset-top,0px))] flex-col border-r bg-card shadow-sm transition-transform duration-300",
           "w-64",
           // Mobile: slide in/out
           "md:translate-x-0",
