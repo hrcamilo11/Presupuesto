@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell, Settings, ChevronUp, ChevronDown, KeyRound, Smartphone, Moon, Sun, Monitor } from "lucide-react";
+import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell, Settings, ChevronUp, ChevronDown, KeyRound, Smartphone, Moon, Sun, Monitor, Sparkles, Leaf, TabletSmartphone } from "lucide-react";
 import Link from "next/link";
 import { CategoryList } from "@/components/categories/category-list";
 import { TagList } from "@/components/tags/tag-list";
@@ -582,6 +582,24 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                                     <div className="flex items-center gap-2">
                                                         <Monitor className="h-4 w-4" />
                                                         <span>Sistema</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="amoled">
+                                                    <div className="flex items-center gap-2">
+                                                        <TabletSmartphone className="h-4 w-4" />
+                                                        <span>AMOLED</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="pastel">
+                                                    <div className="flex items-center gap-2">
+                                                        <Sparkles className="h-4 w-4" />
+                                                        <span>Pastel</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="forest">
+                                                    <div className="flex items-center gap-2">
+                                                        <Leaf className="h-4 w-4" />
+                                                        <span>Bosque</span>
                                                     </div>
                                                 </SelectItem>
                                             </SelectContent>

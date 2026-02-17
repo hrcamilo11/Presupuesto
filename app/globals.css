@@ -47,6 +47,72 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
+
+  .amoled {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 84.2% 98%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 98%;
+  }
+
+  .pastel {
+    --background: 250 60% 98%;
+    --foreground: 260 20% 20%;
+    --card: 250 60% 98%;
+    --card-foreground: 260 20% 20%;
+    --popover: 250 60% 98%;
+    --popover-foreground: 260 20% 20%;
+    --primary: 260 80% 60%;
+    --primary-foreground: 250 60% 98%;
+    --secondary: 180 40% 90%;
+    --secondary-foreground: 180 60% 20%;
+    --muted: 250 20% 92%;
+    --muted-foreground: 260 10% 40%;
+    --accent: 330 80% 90%;
+    --accent-foreground: 330 80% 30%;
+    --destructive: 0 84.2% 80%;
+    --destructive-foreground: 0 84.2% 30%;
+    --border: 250 20% 88%;
+    --input: 250 20% 88%;
+    --ring: 260 80% 60%;
+  }
+
+  .forest {
+    --background: 140 30% 8%;
+    --foreground: 60 20% 95%;
+    --card: 140 30% 10%;
+    --card-foreground: 60 20% 95%;
+    --popover: 140 30% 8%;
+    --popover-foreground: 60 20% 95%;
+    --primary: 140 50% 40%;
+    --primary-foreground: 140 30% 8%;
+    --secondary: 140 20% 15%;
+    --secondary-foreground: 60 20% 95%;
+    --muted: 140 20% 15%;
+    --muted-foreground: 140 10% 60%;
+    --accent: 35 40% 20%;
+    --accent-foreground: 35 40% 95%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 84.2% 98%;
+    --border: 140 20% 20%;
+    --input: 140 20% 20%;
+    --ring: 140 50% 40%;
+  }
 }
 
 @layer base {
@@ -80,16 +146,17 @@
 
 /* Sileo Toast Theme-Specific Overrides */
 
-/* Default (Light Mode): Black background, white text */
-[data-sileo-toast] [data-sileo-svg] path {
+/* FORCE Light Mode Toasts: Black background, white text */
+/* Using :root to ensure it applies when no specific theme class is on html */
+:root [data-sileo-toast] [data-sileo-svg] path {
   fill: #09090b !important;
   /* zinc-950 (Black) */
   stroke: #27272a !important;
   /* zinc-800 */
 }
 
-[data-sileo-toast] [data-sileo-title],
-[data-sileo-toast] [data-sileo-description] {
+:root [data-sileo-toast] [data-sileo-title],
+:root [data-sileo-toast] [data-sileo-description] {
   color: #fafafa !important;
   /* zinc-50 (White) */
 }
@@ -108,10 +175,40 @@
   /* zinc-950 (Black) */
 }
 
-.dark [data-sileo-toast] [data-sileo-badge] {
-  --sileo-tone-bg: rgba(0, 0, 0, 0.05) !important;
+/* AMOLED: High contrast, pure black background toasts? No, user wants consistency maybe?
+   Let's make AMOLED toasts white for readability on pure black background. */
+.amoled [data-sileo-toast] [data-sileo-svg] path {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.amoled [data-sileo-toast] [data-sileo-title],
+.amoled [data-sileo-toast] [data-sileo-description] {
+  color: #000000 !important;
+}
+
+/* Pastel: Soft colored toasts */
+.pastel [data-sileo-toast] [data-sileo-svg] path {
+  fill: #ffffff !important;
+  stroke: #e9e9ff !important;
+}
+
+.pastel [data-sileo-toast] [data-sileo-title],
+.pastel [data-sileo-toast] [data-sileo-description] {
+  color: #2e1a47 !important;
+}
+
+/* Forest: Earthy toasts */
+.forest [data-sileo-toast] [data-sileo-svg] path {
+  fill: #fdfdf5 !important;
+  stroke: #d1d1c1 !important;
+}
+
+.forest [data-sileo-toast] [data-sileo-title],
+.forest [data-sileo-toast] [data-sileo-description] {
+  color: #1a2a1a !important;
 }
 
 [data-sileo-toast] [data-sileo-badge] {
-  --sileo-tone-bg: rgba(255, 255, 255, 0.1) !important;
+  --sileo-tone-bg: rgba(128, 128, 128, 0.1) !important;
 }
