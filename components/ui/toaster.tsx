@@ -6,7 +6,7 @@ import "sileo/styles.css";
 export function Toaster() {
     return (
         <SileoToaster
-            position="top-right"
+            position="bottom-center"
             options={{
                 duration: 4000,
             }}

@@ -22,6 +22,7 @@ import {
 import { createCategory, updateCategory } from "@/app/actions/categories";
 import type { Category, CategoryType } from "@/lib/database.types";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 type CategoryFormProps = {
     open: boolean;
@@ -40,6 +41,7 @@ const COLORS = [
 
 export function CategoryForm({ open, onOpenChange, editCategory, type = "expense" }: CategoryFormProps) {
     const router = useRouter();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [name, setName] = useState("");
     const [color, setColor] = useState(COLORS[0]);
@@ -80,9 +82,20 @@ export function CategoryForm({ open, onOpenChange, editCategory, type = "expense
 
         setLoading(false);
         if (result.error) {
-            alert(result.error);
+            toast({
+                title: "Error",
+                description: result.error,
+                variant: "destructive",
+            });
             return;
         }
+
+        toast({
+            title: isEdit ? "Categoría actualizada" : "Categoría creada",
+            description: isEdit
+                ? "La categoría se ha actualizado correctamente."
+                : "La categoría se ha creado correctamente.",
+        });
 
         onOpenChange(false);
         router.refresh();

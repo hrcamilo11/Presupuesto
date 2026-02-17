@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { upsertBudget } from "@/app/actions/budgets";
+import { useToast } from "@/components/ui/use-toast";
 import type { Category, Budget } from "@/lib/database.types";
 
 interface BudgetFormProps {
@@ -33,6 +34,7 @@ interface BudgetFormProps {
 
 export function BudgetForm({ open, onOpenChange, categories, editBudget, sharedAccountId }: BudgetFormProps) {
     const router = useRouter();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [categoryId, setCategoryId] = useState(editBudget?.category_id || "");
     const [amount, setAmount] = useState(editBudget ? String(editBudget.amount) : "");
@@ -60,9 +62,20 @@ export function BudgetForm({ open, onOpenChange, categories, editBudget, sharedA
 
         setLoading(false);
         if (result.error) {
-            alert(result.error);
+            toast({
+                title: "Error",
+                description: result.error,
+                variant: "destructive",
+            });
             return;
         }
+
+        toast({
+            title: editBudget ? "Presupuesto actualizado" : "Presupuesto creado",
+            description: editBudget
+                ? "El presupuesto se ha actualizado correctamente."
+                : "El presupuesto se ha creado correctamente.",
+        });
 
         onOpenChange(false);
         router.refresh();

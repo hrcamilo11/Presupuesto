@@ -25,11 +25,13 @@ import { SubscriptionForm } from "./subscription-form";
 import type { Subscription } from "@/lib/database.types";
 import { Pencil, Trash2, Check } from "lucide-react";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = { subscriptions: Subscription[] };
 
 export function SubscriptionList({ subscriptions }: Props) {
   const router = useRouter();
+  const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -37,16 +39,41 @@ export function SubscriptionList({ subscriptions }: Props) {
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
 
   async function handleDelete(id: string) {
-    await deleteSubscription(id);
+    const { error } = await deleteSubscription(id);
     setDeleteId(null);
-    router.refresh();
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Suscripción eliminada",
+        description: "La suscripción se ha eliminado correctamente.",
+      });
+      router.refresh();
+    }
   }
 
   async function handleMarkPaid(id: string) {
     setPayingId(id);
-    await markSubscriptionPaid(id);
+    const { error } = await markSubscriptionPaid(id);
     setPayingId(null);
-    router.refresh();
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Suscripción pagada",
+        description: "Se ha registrado el pago de la suscripción.",
+      });
+      router.refresh();
+    }
   }
 
   const totalMonthly = subscriptions.reduce((sum, s) => {

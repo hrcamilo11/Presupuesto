@@ -24,6 +24,7 @@ import {
 import { SUBSCRIPTION_FREQUENCY_LABELS, type SubscriptionFrequency } from "@/lib/database.types";
 import { createSubscription, updateSubscription } from "@/app/actions/subscriptions";
 import type { Subscription } from "@/lib/database.types";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
   open: boolean;
@@ -33,6 +34,7 @@ type Props = {
 
 export function SubscriptionForm({ open, onOpenChange, editSubscription }: Props) {
   const router = useRouter();
+  const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
@@ -72,8 +74,21 @@ export function SubscriptionForm({ open, onOpenChange, editSubscription }: Props
     setLoading(false);
     if (result.error) {
       setError(result.error);
+      toast({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      });
       return;
     }
+
+    toast({
+      title: isEdit ? "Suscripción actualizada" : "Suscripción creada",
+      description: isEdit
+        ? "La suscripción se ha actualizado correctamente."
+        : "La suscripción se ha creado correctamente.",
+    });
+
     onOpenChange(false);
     router.refresh();
   }

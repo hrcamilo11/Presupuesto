@@ -25,25 +25,51 @@ import { TaxForm } from "./tax-form";
 import type { TaxObligation } from "@/lib/database.types";
 import { Pencil, Trash2, Check } from "lucide-react";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = { taxes: TaxObligation[] };
 
 export function TaxList({ taxes }: Props) {
   const router = useRouter();
+  const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TaxObligation | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selectedTax, setSelectedTax] = useState<TaxObligation | null>(null);
 
   async function handleDelete(id: string) {
-    await deleteTaxObligation(id);
+    const { error } = await deleteTaxObligation(id);
     setDeleteId(null);
-    router.refresh();
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Obligación eliminada",
+        description: "La obligación fiscal se ha eliminado correctamente.",
+      });
+      router.refresh();
+    }
   }
 
   async function handleMarkPaid(id: string) {
-    await markTaxPaid(id, new Date().toISOString().slice(0, 10));
-    router.refresh();
+    const { error } = await markTaxPaid(id, new Date().toISOString().slice(0, 10));
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Obligación pagada",
+        description: "Se ha registrado el pago de la obligación fiscal.",
+      });
+      router.refresh();
+    }
   }
 
   const pending = taxes.filter((t) => !t.paid_at);

@@ -26,6 +26,7 @@ import type { Expense, SharedAccount, Wallet, Category } from "@/lib/database.ty
 import { Pencil, Trash2, MessageCircle } from "lucide-react";
 import { ExpenseComments } from "./expense-comments";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 type ExpenseListProps = {
   expenses: Expense[];
@@ -41,10 +42,15 @@ export function ExpenseList({ expenses, sharedAccounts, wallets, categories }: E
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [selectedExpenseForComments, setSelectedExpenseForComments] = useState<Expense | null>(null);
+  const { toast } = useToast();
 
   async function handleDelete(id: string) {
     setDeleting(true);
     await deleteExpense(id);
+    toast({
+      title: "Gasto eliminado",
+      description: "El gasto se ha eliminado correctamente.",
+    });
     setDeleting(false);
     setDeleteId(null);
     router.refresh();

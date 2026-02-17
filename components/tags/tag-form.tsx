@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { createTag, updateTag } from "@/app/actions/tags";
 import { useRouter } from "next/navigation";
 import type { Tag } from "@/lib/database.types";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
     open: boolean;
@@ -17,6 +18,7 @@ type Props = {
 
 export function TagForm({ open, onOpenChange, editTag }: Props) {
     const router = useRouter();
+    const { toast } = useToast();
     const [name, setName] = useState(editTag?.name ?? "");
     const [color, setColor] = useState(editTag?.color ?? "#3b82f6");
     const [loading, setLoading] = useState(false);
@@ -32,9 +34,21 @@ export function TagForm({ open, onOpenChange, editTag }: Props) {
 
         setLoading(false);
         if (result.error) {
-            alert(result.error);
+            toast({
+                title: "Error",
+                description: result.error,
+                variant: "destructive",
+            });
             return;
         }
+
+        toast({
+            title: isEdit ? "Etiqueta actualizada" : "Etiqueta creada",
+            description: isEdit
+                ? "La etiqueta se ha actualizado correctamente."
+                : "La etiqueta se ha creado correctamente.",
+        });
+
         onOpenChange(false);
         router.refresh();
     }

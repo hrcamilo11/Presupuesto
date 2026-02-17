@@ -7,6 +7,7 @@ import { LucideIcon, Edit2, Trash2, Tag, Utensils, Car, Home, Gamepad2, HeartPul
 import { deleteCategory } from "@/app/actions/categories";
 import { CategoryForm } from "./category-form";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 const ICON_MAP: Record<string, LucideIcon> = {
     Tag, Utensils, Car, Home, Gamepad2, HeartPulse, Banknote, ShoppingBag, Gift, TrendingUp, Laptop, Coffee, Plane, Book
@@ -19,11 +20,23 @@ type Props = {
 export function CategoryList({ categories }: Props) {
     const [editCategory, setEditCategory] = useState<Category | null>(null);
     const [formOpen, setFormOpen] = useState(false);
+    const { toast } = useToast();
 
     async function handleDelete(id: string) {
-        if (!confirm("¿Eliminar esta categoría? Los movimientos asociados se quedarán sin categoría.")) return;
+        // if (!confirm("¿Eliminar esta categoría? Los movimientos asociados se quedarán sin categoría.")) return;
         const { error } = await deleteCategory(id);
-        if (error) alert(error);
+        if (error) {
+            toast({
+                title: "Error",
+                description: error,
+                variant: "destructive",
+            });
+        } else {
+            toast({
+                title: "Categoría eliminada",
+                description: "La categoría se ha eliminado correctamente.",
+            });
+        }
     }
 
     return (

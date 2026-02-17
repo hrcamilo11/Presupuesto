@@ -7,6 +7,7 @@ import { Edit2, Trash2 } from "lucide-react";
 import { deleteTag } from "@/app/actions/tags";
 import { TagForm } from "./tag-form";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
     tags: Tag[];
@@ -15,11 +16,23 @@ type Props = {
 export function TagList({ tags }: Props) {
     const [editTag, setEditTag] = useState<Tag | null>(null);
     const [formOpen, setFormOpen] = useState(false);
+    const { toast } = useToast();
 
     async function handleDelete(id: string) {
         if (!confirm("¿Eliminar esta etiqueta? Se quitará de todos los movimientos asociados.")) return;
         const { error } = await deleteTag(id);
-        if (error) alert(error);
+        if (error) {
+            toast({
+                title: "Error",
+                description: error,
+                variant: "destructive",
+            });
+        } else {
+            toast({
+                title: "Etiqueta eliminada",
+                description: "La etiqueta se ha eliminado correctamente.",
+            });
+        }
     }
 
     return (

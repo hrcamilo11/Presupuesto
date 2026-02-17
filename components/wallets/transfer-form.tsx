@@ -23,6 +23,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { transferBetweenWallets } from "@/app/actions/wallets";
 import type { Wallet } from "@/lib/database.types";
+import { useToast } from "@/components/ui/use-toast";
 
 interface TransferFormProps {
     open: boolean;
@@ -32,6 +33,7 @@ interface TransferFormProps {
 
 export function TransferForm({ open, onOpenChange, wallets }: TransferFormProps) {
     const router = useRouter();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [fromWalletId, setFromWalletId] = useState("");
     const [toWalletId, setToWalletId] = useState("");
@@ -41,7 +43,11 @@ export function TransferForm({ open, onOpenChange, wallets }: TransferFormProps)
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (fromWalletId === toWalletId) {
-            alert("Las cuentas de origen y destino deben ser diferentes.");
+            toast({
+                title: "Error",
+                description: "Las cuentas de origen y destino deben ser diferentes.",
+                variant: "destructive",
+            });
             return;
         }
 
@@ -55,9 +61,18 @@ export function TransferForm({ open, onOpenChange, wallets }: TransferFormProps)
 
         setLoading(false);
         if (result.error) {
-            alert(result.error);
+            toast({
+                title: "Error",
+                description: result.error,
+                variant: "destructive",
+            });
             return;
         }
+
+        toast({
+            title: "Transferencia exitosa",
+            description: `Se han transferido $${Number(amount).toLocaleString()} correctamente.`,
+        });
 
         onOpenChange(false);
         router.refresh();

@@ -25,6 +25,7 @@ import { IncomeForm } from "./income-form";
 import type { Income, SharedAccount, Wallet, Category } from "@/lib/database.types";
 import { Pencil, Trash2 } from "lucide-react";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 type IncomeListProps = {
   incomes: Income[];
@@ -40,10 +41,15 @@ export function IncomeList({ incomes, sharedAccounts, wallets, categories }: Inc
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [selectedIncome, setSelectedIncome] = useState<Income | null>(null);
+  const { toast } = useToast();
 
   async function handleDelete(id: string) {
     setDeleting(true);
     await deleteIncome(id);
+    toast({
+      title: "Ingreso eliminado",
+      description: "El ingreso se ha eliminado correctamente.",
+    });
     setDeleting(false);
     setDeleteId(null);
     router.refresh();

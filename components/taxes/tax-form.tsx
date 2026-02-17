@@ -24,6 +24,7 @@ import {
 import { TAX_PERIOD_LABELS, type TaxPeriodType } from "@/lib/database.types";
 import { createTaxObligation, updateTaxObligation } from "@/app/actions/tax";
 import type { TaxObligation } from "@/lib/database.types";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
   open: boolean;
@@ -33,6 +34,7 @@ type Props = {
 
 export function TaxForm({ open, onOpenChange, editTax }: Props) {
   const router = useRouter();
+  const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
@@ -75,8 +77,21 @@ export function TaxForm({ open, onOpenChange, editTax }: Props) {
     setLoading(false);
     if (result.error) {
       setError(result.error);
+      toast({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      });
       return;
     }
+
+    toast({
+      title: isEdit ? "Obligación actualizada" : "Obligación creada",
+      description: isEdit
+        ? "La obligación fiscal se ha actualizado correctamente."
+        : "La obligación fiscal se ha creado correctamente.",
+    });
+
     onOpenChange(false);
     router.refresh();
   }

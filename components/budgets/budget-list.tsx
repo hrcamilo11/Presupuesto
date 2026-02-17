@@ -16,6 +16,7 @@ import { BudgetForm } from "./budget-form";
 import { deleteBudget } from "@/app/actions/budgets";
 import { useRouter } from "next/navigation";
 import { formatNumber } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 interface BudgetListProps {
     budgets: (Budget & { category: Category })[];
@@ -25,14 +26,19 @@ interface BudgetListProps {
 
 export function BudgetList({ budgets, categories, sharedAccountId }: BudgetListProps) {
     const router = useRouter();
+    const { toast } = useToast();
     const [editing, setEditing] = useState<Budget | null>(null);
     const [formOpen, setFormOpen] = useState(false);
 
     async function onDelete(id: string) {
-        if (confirm("¿Seguro que quieres eliminar este presupuesto?")) {
-            await deleteBudget(id);
-            router.refresh();
-        }
+        // if (confirm("¿Seguro que quieres eliminar este presupuesto?")) {
+        await deleteBudget(id);
+        toast({
+            title: "Presupuesto eliminado",
+            description: "El presupuesto se ha eliminado correctamente.",
+        });
+        router.refresh();
+        // }
     }
 
     const categoryFor = (b: Budget & { category?: Category; categories?: Category }) => {

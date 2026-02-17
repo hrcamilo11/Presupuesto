@@ -74,3 +74,19 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Sileo Toast Dark Theme Overrides */
+[data-sileo-toast] [data-sileo-header] {
+  background-color: #09090b !important; /* zinc-950 */
+  color: #fafafa !important; /* zinc-50 */
+  border: 1px solid #27272a !important; /* zinc-800 */
+}
+
+[data-sileo-toast] [data-sileo-title],
+[data-sileo-toast] [data-sileo-description] {
+  color: #fafafa !important;
+}
+
+[data-sileo-toast] [data-sileo-badge] {
+   --sileo-tone-bg: rgba(255, 255, 255, 0.1) !important;
+}

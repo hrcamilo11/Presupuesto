@@ -28,6 +28,7 @@ import { Pencil, Trash2, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { LoanForm } from "./loan-form";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
   loan: Loan;
@@ -49,6 +50,7 @@ export function LoanCard({ loan, payments, wallets }: Props) {
   const [walletId, setWalletId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const schedule = getAmortizationSchedule(
     Number(loan.principal),
@@ -78,8 +80,17 @@ export function LoanCard({ loan, payments, wallets }: Props) {
     setSubmitting(false);
     if (result.error) {
       setError(result.error);
+      toast({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      });
       return;
     }
+    toast({
+      title: "Pago registrado",
+      description: "El pago se ha registrado correctamente.",
+    });
     setRecordOpen(false);
     setAmount("");
     setPrincipalPortion("");
@@ -102,6 +113,10 @@ export function LoanCard({ loan, payments, wallets }: Props) {
 
   async function handleDelete() {
     await deleteLoan(loan.id);
+    toast({
+      title: "Préstamo eliminado",
+      description: "El préstamo se ha eliminado correctamente.",
+    });
     setDeleteConfirm(false);
     router.refresh();
   }
