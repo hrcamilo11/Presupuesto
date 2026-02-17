@@ -135,8 +135,8 @@ export async function createWallet(formData: {
 
         if (error) {
             const msg = error.message || "Error al crear cuenta";
-            if (msg.includes("schema cache") && msg.includes("card_brand")) {
-                return { error: "Tu Supabase aún no tiene aplicada la migración de tarjetas. Aplica las migraciones." };
+            if (msg.toLowerCase().includes("schema cache") || msg.toLowerCase().includes("column") && msg.toLowerCase().includes("not found")) {
+                return { error: "Hubo un problema con la caché de la base de datos (columna no encontrada). Por favor, intenta de nuevo en unos momentos o recarga la configuración de Supabase si eres el administrador." };
             }
             throw new Error(msg);
         }
