@@ -117,7 +117,7 @@ export async function createWallet(formData: {
             color: formData.color || null,
             bank: formData.type === "debit" || formData.type === "credit" ? formData.bank ?? null : null,
             debit_card_brand: formData.type === "debit" ? formData.debit_card_brand ?? null : null,
-            last_four_digits: formData.last_four_digits && /^\d{1,4}$/.test(formData.last_four_digits) ? formData.last_four_digits : null,
+            last_four_digits: (formData.type === "debit" || formData.type === "credit") && formData.last_four_digits && /^\d{1,4}$/.test(formData.last_four_digits) ? formData.last_four_digits : null,
             credit_mode: formData.type === "credit" ? formData.credit_mode ?? null : null,
             card_brand: formData.type === "credit" ? formData.card_brand ?? null : null,
             cut_off_day: formData.type === "credit" ? formData.cut_off_day ?? null : null,
@@ -141,7 +141,7 @@ export async function createWallet(formData: {
             throw new Error(msg);
         }
         if (created && isAppwriteConfigured()) {
-            syncWalletToAppwrite(created as Wallet).catch(() => {});
+            syncWalletToAppwrite(created as Wallet).catch(() => { });
         }
     } catch (err) {
         if (isAppwriteConfigured() && isNetworkOrServerError(err)) {
@@ -247,7 +247,7 @@ export async function updateWallet(
 
         if (error) throw new Error(error.message);
         if (updated && isAppwriteConfigured()) {
-            updateWalletInAppwrite(updated as Wallet).catch(() => {});
+            updateWalletInAppwrite(updated as Wallet).catch(() => { });
         }
     } catch (err) {
         if (isAppwriteConfigured() && isNetworkOrServerError(err)) {
@@ -279,7 +279,7 @@ export async function deleteWallet(id: string) {
 
         if (error) throw new Error(error.message);
         if (isAppwriteConfigured()) {
-            deleteWalletFromAppwrite(id).catch(() => {});
+            deleteWalletFromAppwrite(id).catch(() => { });
         }
     } catch (err) {
         if (isAppwriteConfigured() && isNetworkOrServerError(err)) {
