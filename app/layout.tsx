@@ -39,19 +39,28 @@ export const metadata: Metadata = {
   },
 };
 
+import { ThemeProvider } from "@/components/providers/theme-provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <Toaster />
-        <InstallPrompt />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+          <InstallPrompt />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell, Settings, ChevronUp, ChevronDown, KeyRound, Smartphone } from "lucide-react";
+import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell, Settings, ChevronUp, ChevronDown, KeyRound, Smartphone, Moon, Sun, Monitor } from "lucide-react";
 import Link from "next/link";
 import { CategoryList } from "@/components/categories/category-list";
 import { TagList } from "@/components/tags/tag-list";
@@ -23,6 +23,7 @@ import { updateNotificationPreferences, sendTestEmail } from "@/app/actions/noti
 import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
 import { requestInstallPrompt } from "@/components/pwa/install-prompt";
 import { useTransition, useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import type { NotificationPreferences } from "@/lib/database.types";
 
 interface SettingsPageClientProps {
@@ -66,6 +67,13 @@ const DEFAULT_NOTIFICATION_PREFS = {
 export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, profile, notificationPreferences }: SettingsPageClientProps) {
     const [activeTab, setActiveTab] = useState("profile");
     const [isPending, startTransition] = useTransition();
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    // Evitar errores de hidratación
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Perfil
     const [fullName, setFullName] = useState(profile?.full_name ?? "");
@@ -537,6 +545,53 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                     <Button onClick={saveDashboard} disabled={isPending}>
                                         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
                                     </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="overflow-hidden rounded-xl border border-border/80 shadow-sm">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Palette className="h-5 w-5" />
+                                    Apariencia
+                                </CardTitle>
+                                <p className="text-sm text-muted-foreground">Personaliza el tema visual de la aplicación.</p>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Tema</Label>
+                                    {mounted ? (
+                                        <Select value={theme} onValueChange={setTheme}>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Selecciona un tema" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="light">
+                                                    <div className="flex items-center gap-2">
+                                                        <Sun className="h-4 w-4" />
+                                                        <span>Claro</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="dark">
+                                                    <div className="flex items-center gap-2">
+                                                        <Moon className="h-4 w-4" />
+                                                        <span>Oscuro</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="system">
+                                                    <div className="flex items-center gap-2">
+                                                        <Monitor className="h-4 w-4" />
+                                                        <span>Sistema</span>
+                                                    </div>
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                        Elige entre modo claro, oscuro o sincronizar con la configuración de tu sistema.
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
