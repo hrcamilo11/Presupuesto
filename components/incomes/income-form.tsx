@@ -26,6 +26,7 @@ import { createIncome, updateIncome } from "@/app/actions/incomes";
 import { getTags, setTransactionTags } from "@/app/actions/tags";
 import type { Income, SharedAccount, Wallet, Category } from "@/lib/database.types";
 import { TagSelector } from "@/components/tags/tag-selector";
+import { useToast } from "@/components/ui/use-toast";
 
 type IncomeFormProps = {
   open: boolean;
@@ -49,6 +50,7 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const { toast } = useToast();
 
   const isEdit = Boolean(editIncome?.id);
 
@@ -93,6 +95,11 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
     if (result.error) {
       setLoading(false);
       setError(result.error);
+      toast({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      });
       return;
     }
 
@@ -104,6 +111,12 @@ export function IncomeForm({ open, onOpenChange, editIncome, sharedAccounts = []
 
     setLoading(false);
     onOpenChange(false);
+    toast({
+      title: isEdit ? "Ingreso actualizado" : "Ingreso creado",
+      description: isEdit
+        ? "El ingreso se ha actualizado correctamente."
+        : "El ingreso se ha creado correctamente.",
+    });
     router.refresh();
   }
 

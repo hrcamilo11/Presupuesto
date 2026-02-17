@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { createLoan, updateLoan } from "@/app/actions/loans";
 import type { Loan } from "@/lib/database.types";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
   open: boolean;
@@ -33,6 +34,7 @@ export function LoanForm({ open, onOpenChange, editLoan }: Props) {
   const [termMonths, setTermMonths] = useState("");
   const [startDate, setStartDate] = useState("");
   const [description, setDescription] = useState("");
+  const { toast } = useToast();
 
   const isEdit = Boolean(editLoan?.id);
 
@@ -67,9 +69,20 @@ export function LoanForm({ open, onOpenChange, editLoan }: Props) {
     setLoading(false);
     if (result.error) {
       setError(result.error);
+      toast({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      });
       return;
     }
     onOpenChange(false);
+    toast({
+      title: isEdit ? "Préstamo actualizado" : "Préstamo creado",
+      description: isEdit
+        ? "El préstamo se ha actualizado correctamente."
+        : "El préstamo se ha creado correctamente.",
+    });
     router.refresh();
   }
 
