@@ -159,7 +159,11 @@ function LoginForm() {
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Contraseña</Label>
               <Link
-                href="/forgot-password"
+                href={
+                  email.trim()
+                    ? `/forgot-password?email=${encodeURIComponent(email.trim())}`
+                    : "/forgot-password"
+                }
                 className="text-xs text-muted-foreground hover:text-primary"
               >
                 ¿Olvidaste tu contraseña?

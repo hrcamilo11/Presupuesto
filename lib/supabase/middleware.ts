@@ -44,6 +44,7 @@ export async function updateSession(request: NextRequest) {
     pathname === "/register" ||
     pathname === "/forgot-password";
   const isAuthCallback = pathname === "/auth/callback";
+  const isAuthConfirm = pathname === "/auth/confirm";
   const isDashboardRoute =
     pathname.startsWith("/dashboard") ||
     pathname === "/incomes" ||
@@ -67,7 +68,7 @@ export async function updateSession(request: NextRequest) {
   const failoverUserId = request.cookies.get(FAILOVER_USER_ID_COOKIE)?.value;
   const hasAuth = Boolean(user?.id) || Boolean(failoverUserId);
 
-  if (isAuthCallback) {
+  if (isAuthCallback || isAuthConfirm) {
     return response;
   }
   if (pathname === "/" && hasAuth) {

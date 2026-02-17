@@ -53,15 +53,25 @@ Aplicación para seguimiento de ingresos y gastos con Next.js, shadcn/ui y Supab
 Para que el registro y la confirmación por correo funcionen bien:
 
 1. En el **Dashboard de Supabase** → **Authentication** → **URL Configuration**:
-   - **Site URL** (producción): `https://presupuesto.cfd/auth/callback`
+   - **Site URL** (producción): `https://presupuesto.cfd`
    - **Redirect URLs** — añade estas (en local y producción):
      - `http://localhost:3000`
      - `http://localhost:3000/auth/callback`
+     - `http://localhost:3000/auth/confirm`
      - `https://presupuesto.cfd`
      - `https://presupuesto.cfd/auth/callback`
-   - Para probar en local, cambia **Site URL** temporalmente a `http://localhost:3000/auth/callback`.
+     - `https://presupuesto.cfd/auth/confirm`
+   - Para probar en local, cambia **Site URL** temporalmente a `http://localhost:3000`.
 
-2. Opcional: en **Authentication** → **Providers** → **Email** puedes subir el tiempo de validez del enlace de confirmación.
+2. **Recuperar contraseña:** Para que funcione al abrir el enlace desde otro dispositivo (p. ej. el móvil donde recibes el correo), personaliza el template de email en **Authentication** → **Email Templates** → **Reset Password**. Sustituye el enlace por:
+
+   ```html
+   <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/update-password">Restablecer contraseña</a>
+   ```
+
+   Así el flujo usa `verifyOtp` en lugar de PKCE y funciona aunque abras el enlace en un dispositivo distinto al que solicitó el restablecimiento.
+
+3. Opcional: en **Authentication** → **Providers** → **Email** puedes subir el tiempo de validez del enlace de confirmación.
 
 - En **login** puedes usar **"¿Olvidaste tu contraseña?"** para recuperar acceso.
 - El correo de confirmación solo se envía al **registrarte**; en la pantalla de éxito puedes **"Reenviar correo de confirmación"** si no lo recibes. Si el enlace caduca y vuelves a login, también podrás solicitar un nuevo enlace allí.
