@@ -461,56 +461,57 @@ export async function getAllMovementsHistory(
 
     const movements: WalletMovement[] = [];
 
-    type MovementRow = {
-        id: string; date: string; amount: number; description?: string | null;
-        category?: { name: string } | { name: string }[] | null;
-        wallet?: { name: string } | { name: string }[] | null;
-    };
     const getName = (n: { name: string } | { name: string }[] | null | undefined) =>
         n == null ? undefined : Array.isArray(n) ? n[0]?.name : n.name;
 
-    (incomesRes.data ?? []).forEach((i: any) => {
+    type RelationName = { name: string } | { name: string }[] | null | undefined;
+
+    (incomesRes.data ?? []).forEach((i) => {
+        const row = i as { id: string; date: string; amount: number; description?: string | null; category?: RelationName; wallet?: RelationName };
         movements.push({
             kind: "income",
-            id: i.id,
-            date: i.date,
-            amount: Number(i.amount),
-            description: i.description ?? undefined,
-            category: getName(i.category),
-            walletName: getName(i.wallet),
+            id: row.id,
+            date: row.date,
+            amount: Number(row.amount),
+            description: row.description ?? undefined,
+            category: getName(row.category),
+            walletName: getName(row.wallet),
         });
     });
-    (expensesRes.data ?? []).forEach((e: any) => {
+    (expensesRes.data ?? []).forEach((e) => {
+        const row = e as { id: string; date: string; amount: number; description?: string | null; category?: RelationName; wallet?: RelationName };
         movements.push({
             kind: "expense",
-            id: e.id,
-            date: e.date,
-            amount: Number(e.amount),
-            description: e.description ?? undefined,
-            category: getName(e.category),
-            walletName: getName(e.wallet),
+            id: row.id,
+            date: row.date,
+            amount: Number(row.amount),
+            description: row.description ?? undefined,
+            category: getName(row.category),
+            walletName: getName(row.wallet),
         });
     });
-    (transfersRes.data ?? []).forEach((t: any) => {
+    (transfersRes.data ?? []).forEach((t) => {
+        const row = t as { id: string; date: string; amount: number; description?: string | null; from_wallet?: RelationName; to_wallet?: RelationName };
         movements.push({
             kind: "transfer_out",
-            id: t.id,
-            date: t.date,
-            amount: Number(t.amount),
-            description: t.description ?? undefined,
-            toWalletName: getName(t.to_wallet),
-            walletName: getName(t.from_wallet),
+            id: row.id,
+            date: row.date,
+            amount: Number(row.amount),
+            description: row.description ?? undefined,
+            toWalletName: getName(row.to_wallet),
+            walletName: getName(row.from_wallet),
         });
     });
-    (savingsRes.data ?? []).forEach((s: any) => {
+    (savingsRes.data ?? []).forEach((s) => {
+        const row = s as { id: string; date: string; amount: number; notes?: string | null; savings_goal?: RelationName; wallet?: RelationName };
         movements.push({
             kind: "investment",
-            id: s.id,
-            date: s.date,
-            amount: Number(s.amount),
-            description: s.notes ?? undefined,
-            goalName: getName(s.savings_goal),
-            walletName: getName(s.wallet),
+            id: row.id,
+            date: row.date,
+            amount: Number(row.amount),
+            description: row.notes ?? undefined,
+            goalName: getName(row.savings_goal),
+            walletName: getName(row.wallet),
         });
     });
 

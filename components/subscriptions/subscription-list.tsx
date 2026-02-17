@@ -22,13 +22,11 @@ import {
 import { SUBSCRIPTION_FREQUENCY_LABELS } from "@/lib/database.types";
 import { deleteSubscription, markSubscriptionPaid } from "@/app/actions/subscriptions";
 import { SubscriptionForm } from "./subscription-form";
-import type { Subscription } from "@/lib/database.types";
+import type { Subscription, Wallet } from "@/lib/database.types";
 import { Pencil, Trash2, Check } from "lucide-react";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
-import { CategoryList } from "@/components/categories/category-list";
-import { TagList } from "@/components/tags/tag-list";
 import {
   Select,
   SelectContent,
@@ -40,7 +38,7 @@ import { Label } from "@/components/ui/label";
 
 type Props = {
   subscriptions: Subscription[];
-  wallets: any[];
+  wallets: Wallet[];
 };
 
 export function SubscriptionList({ subscriptions, wallets }: Props) {
@@ -271,7 +269,7 @@ export function SubscriptionList({ subscriptions, wallets }: Props) {
                   <SelectValue placeholder="Selecciona una cuenta" />
                 </SelectTrigger>
                 <SelectContent>
-                  {wallets.map((w: any) => (
+                  {wallets.map((w: Wallet) => (
                     <SelectItem key={w.id} value={w.id}>
                       {w.name} (${formatNumber(w.balance)})
                     </SelectItem>

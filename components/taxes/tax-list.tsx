@@ -22,7 +22,7 @@ import {
 import { TAX_PERIOD_LABELS } from "@/lib/database.types";
 import { deleteTaxObligation, markTaxPaid } from "@/app/actions/tax";
 import { TaxForm } from "./tax-form";
-import type { TaxObligation } from "@/lib/database.types";
+import type { TaxObligation, Wallet } from "@/lib/database.types";
 import { Pencil, Trash2, Check } from "lucide-react";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
@@ -38,7 +38,7 @@ import { Label } from "@/components/ui/label";
 
 type Props = {
   taxes: TaxObligation[];
-  wallets: any[];
+  wallets: Wallet[];
 };
 
 export function TaxList({ taxes, wallets }: Props) {
@@ -293,7 +293,7 @@ export function TaxList({ taxes, wallets }: Props) {
                   <SelectValue placeholder="Selecciona una cuenta" />
                 </SelectTrigger>
                 <SelectContent>
-                  {wallets.map((w: any) => (
+                  {wallets.map((w: Wallet) => (
                     <SelectItem key={w.id} value={w.id}>
                       {w.name} (${formatNumber(w.balance)})
                     </SelectItem>
