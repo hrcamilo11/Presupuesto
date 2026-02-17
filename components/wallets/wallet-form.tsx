@@ -45,7 +45,6 @@ const walletTypes = [
     { value: "cash", label: "Efectivo" },
     { value: "debit", label: "Débito" },
     { value: "credit", label: "Crédito" },
-    { value: "savings", label: "Ahorros" },
     { value: "investment", label: "Inversión" },
 ] as const;
 
@@ -98,43 +97,49 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
         resolver: zodResolver(walletSchema) as Resolver<WalletSchema>,
         defaultValues: wallet
             ? {
-                  name: wallet.name,
-                  type: wallet.type,
-                  currency: wallet.currency,
-                  balance: wallet.balance,
-                  color: wallet.color ?? undefined,
-                  bank: wallet.bank ?? undefined,
-                  debit_card_brand: wallet.debit_card_brand ?? undefined,
-                  last_four_digits: (wallet as { last_four_digits?: string | null }).last_four_digits ?? undefined,
-                  credit_mode: wallet.credit_mode ?? undefined,
-                  card_brand: wallet.card_brand ?? undefined,
-                  cut_off_day: wallet.cut_off_day ?? undefined,
-                  payment_due_day: (wallet as { payment_due_day?: number }).payment_due_day ?? undefined,
-                  credit_limit: wallet.credit_limit ?? undefined,
-                  cash_advance_limit: wallet.cash_advance_limit ?? undefined,
-                  purchase_interest_rate: wallet.purchase_interest_rate ?? undefined,
-                  cash_advance_interest_rate: wallet.cash_advance_interest_rate ?? undefined,
-              }
+                name: wallet.name,
+                type: wallet.type,
+                currency: wallet.currency,
+                balance: wallet.balance,
+                color: wallet.color ?? undefined,
+                bank: wallet.bank ?? undefined,
+                debit_card_brand: wallet.debit_card_brand ?? undefined,
+                last_four_digits: wallet.last_four_digits ?? undefined,
+                credit_mode: wallet.credit_mode ?? undefined,
+                card_brand: wallet.card_brand ?? undefined,
+                cut_off_day: wallet.cut_off_day ?? undefined,
+                payment_due_day: wallet.payment_due_day ?? undefined,
+                credit_limit: wallet.credit_limit ?? undefined,
+                cash_advance_limit: wallet.cash_advance_limit ?? undefined,
+                purchase_interest_rate: wallet.purchase_interest_rate ?? undefined,
+                cash_advance_interest_rate: wallet.cash_advance_interest_rate ?? undefined,
+                investment_yield_rate: wallet.investment_yield_rate ?? undefined,
+                investment_term: wallet.investment_term ?? undefined,
+                investment_start_date: wallet.investment_start_date ?? undefined,
+            }
             : {
-                  name: "",
-                  type: "cash",
-                  currency: "COP",
-                  balance: 0,
-              },
+                name: "",
+                type: "cash",
+                currency: "COP",
+                balance: 0,
+            },
     });
 
     const isLoading = form.formState.isSubmitting;
     const watchType = form.watch("type");
     const isCredit = watchType === "credit";
     const isDebit = watchType === "debit";
+    const isInvestment = watchType === "investment";
     const watchCreditMode = form.watch("credit_mode");
     const isCreditCard = isCredit && watchCreditMode === "card";
     const watchBank = form.watch("bank");
-    const balanceLabel = isCredit ? "Deuda inicial" : "Balance inicial";
+    const balanceLabel = isCredit ? "Deuda inicial" : isInvestment ? "Capital invertido" : "Balance inicial";
     const balanceHelp = isCredit
         ? "Si ya tienes saldo por pagar en esta tarjeta/crédito, colócalo aquí. Si está en $0, déjalo en 0."
-        : "Dinero disponible con el que inicias esta cuenta.";
-    
+        : isInvestment
+            ? "Dinero total que tienes invertido en este producto actualmente."
+            : "Dinero disponible con el que inicias esta cuenta.";
+
     // Auto-asignar color del banco si es débito o crédito y no hay color personalizado
     const selectedBank = COLOMBIAN_BANKS.find((b) => b.value === watchBank);
     if ((isDebit || isCredit) && selectedBank && !form.watch("color")) {
@@ -272,7 +277,6 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                                             <Select
                                                 onValueChange={(value) => {
                                                     field.onChange(value);
-                                                    // Auto-asignar color del banco si no hay color personalizado
                                                     if (!form.watch("color")) {
                                                         const bankData = COLOMBIAN_BANKS.find((b) => b.value === value);
                                                         if (bankData) {
@@ -330,18 +334,17 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                             </div>
                         )}
 
-                        {isCredit && (
+                        {(isCredit || isInvestment) && (
                             <FormField
                                 control={form.control}
                                 name="bank"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Banco (opcional)</FormLabel>
+                                        <FormLabel>Banco o Entidad (opcional)</FormLabel>
                                         <Select
                                             onValueChange={(value) => {
                                                 const next = value === "__none__" ? null : value;
                                                 field.onChange(next);
-                                                // Auto-asignar color del banco si no hay color personalizado
                                                 if (next && !form.watch("color")) {
                                                     const bankData = COLOMBIAN_BANKS.find((b) => b.value === next);
                                                     if (bankData) {
@@ -403,7 +406,7 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                             )}
                         />
 
-                        {(isDebit || isCreditCard) && (
+                        {(isDebit || isCreditCard || isInvestment) && (
                             <FormField
                                 control={form.control}
                                 name="last_four_digits"
@@ -425,7 +428,7 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                                             />
                                         </FormControl>
                                         <FormDescription>
-                                            Para identificar la tarjeta en la vista (ej: •••• 5543).
+                                            Para identificar la cuenta en la vista (ej: •••• 5543).
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -433,69 +436,129 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                             />
                         )}
 
+                        {isInvestment && (
+                            <div className="space-y-4 pt-2 border-t border-dashed">
+                                <h4 className="text-sm font-medium text-muted-foreground">Detalles de Inversión</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="investment_yield_rate"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Rendimiento (%)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        placeholder="Ej. 12"
+                                                        value={field.value ?? ""}
+                                                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>Tasa estimada.</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="investment_term"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Plazo</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Ej. 90 días, 1 año"
+                                                        {...field}
+                                                        value={field.value ?? ""}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="investment_start_date"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Fecha de inicio</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="date"
+                                                    {...field}
+                                                    value={field.value ?? ""}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
+
                         <FormField
                             control={form.control}
                             name="color"
                             render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Color personalizado (opcional)</FormLabel>
-                                        <div className="space-y-2">
-                                            <input
-                                                ref={colorPickerRef}
-                                                type="color"
-                                                className="sr-only w-0 h-0 opacity-0 absolute pointer-events-none"
-                                                value={field.value && /^#[0-9A-Fa-f]{6}$/.test(field.value) ? field.value : "#3B82F6"}
-                                                onChange={(e) => field.onChange(e.target.value)}
-                                                aria-hidden
-                                            />
-                                            <div className="flex gap-2 flex-wrap">
-                                                {PRESET_COLORS.map((color) => (
-                                                    <button
-                                                        key={color}
-                                                        type="button"
-                                                        className={`w-8 h-8 rounded-full border-2 transition-all ${
-                                                            field.value === color
-                                                                ? "border-foreground scale-110"
-                                                                : "border-transparent hover:scale-105"
+                                <FormItem>
+                                    <FormLabel>Color personalizado (opcional)</FormLabel>
+                                    <div className="space-y-2">
+                                        <input
+                                            ref={colorPickerRef}
+                                            type="color"
+                                            className="sr-only w-0 h-0 opacity-0 absolute pointer-events-none"
+                                            value={field.value && /^#[0-9A-Fa-f]{6}$/.test(field.value) ? field.value : "#3B82F6"}
+                                            onChange={(e) => field.onChange(e.target.value)}
+                                            aria-hidden
+                                        />
+                                        <div className="flex gap-2 flex-wrap">
+                                            {PRESET_COLORS.map((color) => (
+                                                <button
+                                                    key={color}
+                                                    type="button"
+                                                    className={`w-8 h-8 rounded-full border-2 transition-all ${field.value === color
+                                                        ? "border-foreground scale-110"
+                                                        : "border-transparent hover:scale-105"
                                                         }`}
-                                                        style={{ backgroundColor: color }}
-                                                        onClick={() => field.onChange(field.value === color ? null : color)}
-                                                        aria-label={`Seleccionar color ${color}`}
-                                                    />
-                                                ))}
+                                                    style={{ backgroundColor: color }}
+                                                    onClick={() => field.onChange(field.value === color ? null : color)}
+                                                    aria-label={`Seleccionar color ${color}`}
+                                                />
+                                            ))}
+                                            <button
+                                                type="button"
+                                                className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center bg-muted hover:bg-muted/80 ${field.value && !PRESET_COLORS.includes(field.value)
+                                                    ? "border-foreground scale-110"
+                                                    : "border-transparent hover:scale-105"
+                                                    }`}
+                                                onClick={() => colorPickerRef.current?.click()}
+                                                aria-label="Abrir selector de color RGB"
+                                                title="Elegir otro color"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                        {field.value && (
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <div
+                                                    className="w-4 h-4 rounded border"
+                                                    style={{ backgroundColor: field.value }}
+                                                />
+                                                <span>{field.value}</span>
                                                 <button
                                                     type="button"
-                                                    className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center bg-muted hover:bg-muted/80 ${
-                                                        field.value && !PRESET_COLORS.includes(field.value)
-                                                            ? "border-foreground scale-110"
-                                                            : "border-transparent hover:scale-105"
-                                                    }`}
-                                                    onClick={() => colorPickerRef.current?.click()}
-                                                    aria-label="Abrir selector de color RGB"
-                                                    title="Elegir otro color"
+                                                    onClick={() => field.onChange(null)}
+                                                    className="text-destructive hover:underline"
                                                 >
-                                                    +
+                                                    Quitar
                                                 </button>
                                             </div>
-                                            {field.value && (
-                                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                    <div
-                                                        className="w-4 h-4 rounded border"
-                                                        style={{ backgroundColor: field.value }}
-                                                    />
-                                                    <span>{field.value}</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => field.onChange(null)}
-                                                        className="text-destructive hover:underline"
-                                                    >
-                                                        Quitar
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <FormMessage />
-                                    </FormItem>
+                                        )}
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
                             )}
                         />
 
@@ -775,6 +838,6 @@ export function WalletForm({ wallet, open: controlledOpen, onOpenChange: control
                     </form>
                 </Form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

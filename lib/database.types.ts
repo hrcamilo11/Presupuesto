@@ -250,7 +250,7 @@ export const TAX_PERIOD_LABELS: Record<TaxPeriodType, string> = {
   yearly: "Anual",
 };
 
-export type WalletType = "cash" | "debit" | "credit" | "savings" | "investment";
+export type WalletType = "cash" | "debit" | "credit" | "investment";
 
 export type Wallet = {
   id: string;
@@ -272,6 +272,10 @@ export type Wallet = {
   cash_advance_limit?: number | null;
   purchase_interest_rate?: number | null;
   cash_advance_interest_rate?: number | null;
+  // Campos para inversión
+  investment_yield_rate?: number | null;
+  investment_term?: string | null;
+  investment_start_date?: string | null;
   created_at: string;
   updated_at: string;
 };

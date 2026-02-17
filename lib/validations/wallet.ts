@@ -2,19 +2,23 @@ import { z } from "zod";
 
 const baseWalletSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio"),
-  type: z.enum(["cash", "debit", "credit", "savings", "investment"]),
+  type: z.enum(["cash", "debit", "credit", "investment"]),
   currency: z.string().min(3).max(3),
   balance: z.number().min(0, "El balance no puede ser negativo").optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "El color debe ser un código hexadecimal válido (ej: #FF5733)").optional().nullable(),
   bank: z.string().max(100).optional().nullable(),
   debit_card_brand: z.string().max(50).optional().nullable(),
   last_four_digits: z
-        .string()
-        .max(4, "Máximo 4 dígitos")
-        .regex(/^\d{0,4}$/, "Solo números")
-        .optional()
-        .nullable()
-        .transform((v) => (v === "" || v == null ? undefined : v)),
+    .string()
+    .max(4, "Máximo 4 dígitos")
+    .regex(/^\d{0,4}$/, "Solo números")
+    .optional()
+    .nullable()
+    .transform((v) => (v === "" || v == null ? undefined : v)),
+  // Campos para inversión
+  investment_yield_rate: z.number().min(0, "El rendimiento no puede ser negativo").optional(),
+  investment_term: z.string().max(100).optional(),
+  investment_start_date: z.string().optional(),
   // Campos opcionales para crédito; se validan condicionalmente más abajo
   credit_mode: z.enum(["account", "card"]).optional(),
   card_brand: z.string().max(50).optional(),

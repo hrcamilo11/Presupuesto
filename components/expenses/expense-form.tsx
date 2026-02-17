@@ -140,11 +140,13 @@ export function ExpenseForm({ open, onOpenChange, editExpense, sharedAccounts = 
                 <SelectValue placeholder="Selecciona una cuenta" />
               </SelectTrigger>
               <SelectContent>
-                {wallets.map((w) => (
-                  <SelectItem key={w.id} value={w.id}>
-                    {w.name} ({w.currency})
-                  </SelectItem>
-                ))}
+                {wallets
+                  .filter((w) => w.type !== "investment")
+                  .map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name} ({w.currency} {w.balance.toLocaleString('es-CO')})
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">

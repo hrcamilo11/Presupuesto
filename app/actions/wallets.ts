@@ -97,6 +97,9 @@ export async function createWallet(formData: {
     cash_advance_limit?: number;
     purchase_interest_rate?: number;
     cash_advance_interest_rate?: number;
+    investment_yield_rate?: number;
+    investment_term?: string;
+    investment_start_date?: string;
 }) {
     const parsed = walletSchema.safeParse(formData);
     if (!parsed.success) {
@@ -126,6 +129,9 @@ export async function createWallet(formData: {
             cash_advance_limit: formData.type === "credit" ? formData.cash_advance_limit ?? null : null,
             purchase_interest_rate: formData.type === "credit" ? formData.purchase_interest_rate ?? null : null,
             cash_advance_interest_rate: formData.type === "credit" ? formData.cash_advance_interest_rate ?? null : null,
+            investment_yield_rate: formData.type === "investment" ? formData.investment_yield_rate ?? null : null,
+            investment_term: formData.type === "investment" ? formData.investment_term ?? null : null,
+            investment_start_date: formData.type === "investment" ? formData.investment_start_date ?? null : null,
         };
         const { data: created, error } = await supabase
             .from("wallets")
@@ -180,6 +186,9 @@ export async function updateWallet(
         cash_advance_limit?: number;
         purchase_interest_rate?: number;
         cash_advance_interest_rate?: number;
+        investment_yield_rate?: number;
+        investment_term?: string;
+        investment_start_date?: string;
     }
 ) {
     const parsed = walletSchema.safeParse(formData);
