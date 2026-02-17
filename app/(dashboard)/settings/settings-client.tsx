@@ -213,7 +213,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
             </header>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-                <TabsList className="flex w-full flex-wrap gap-1.5 rounded-xl bg-muted/60 p-1.5 text-muted-foreground md:flex-nowrap md:gap-0.5 [&>button]:flex-shrink-0">
+                <TabsList className="grid h-auto min-h-9 w-full grid-cols-2 grid-rows-auto gap-1.5 rounded-xl bg-muted/60 p-1.5 text-muted-foreground sm:grid-cols-3 md:inline-flex md:flex-row md:flex-nowrap md:gap-0.5">
                     <TabsTrigger
                         value="profile"
                         className="shrink-0 gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm md:min-w-[120px] md:px-4"
@@ -244,7 +244,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                     </TabsTrigger>
                     <TabsTrigger
                         value="notifications"
-                        className="shrink-0 gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm md:min-w-[140px] md:px-4"
+                        className="col-span-2 gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:col-span-1 md:col-span-auto md:min-w-[140px] md:px-4"
                     >
                         <Bell className="h-4 w-4 shrink-0" />
                         <span>Notificaciones</span>
