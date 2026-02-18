@@ -20,7 +20,7 @@ export async function searchUsers(query: string) {
     return { data: filtered, error: null };
 }
 
-export async function sendFriendRequest(friendId: string) {
+export async function sendFriendRequest(friendId: string): Promise<{ error: string | null; message?: string }> {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };

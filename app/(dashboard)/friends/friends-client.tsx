@@ -38,8 +38,8 @@ export function FriendsClient({ initialFriends, initialPendingRequests, initialS
 
     function handleSendRequest(friendId: string) {
         startTransition(async () => {
-            const { error, message } = await sendFriendRequest(friendId) as any;
-            setMsg(error ? error : (message || "Solicitud de amistad enviada."));
+            const { error, message } = await sendFriendRequest(friendId);
+            setMsg(error ? error : ((message as string) || "Solicitud de amistad enviada."));
             if (!error) {
                 setSearchResults(prev => prev.filter(p => p.id !== friendId));
                 router.refresh();
