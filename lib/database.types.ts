@@ -4,7 +4,7 @@ export type SubscriptionFrequency = "monthly" | "yearly";
 export type TaxPeriodType = "monthly" | "quarterly" | "yearly";
 export type CategoryType = "income" | "expense";
 export type FriendStatus = "pending" | "accepted" | "rejected";
-export type CollectionStatus = "pending_approval" | "active" | "rejected" | "paid" | "cancelled";
+export type CollectionStatus = 'pending_approval' | 'active' | 'partially_paid' | 'rejected' | 'paid' | 'cancelled';
 
 export interface Category {
   id: string;
@@ -369,7 +369,8 @@ export interface Friend {
 
 export interface Collection {
   id: string;
-  creditor_id: string;
+  creditor_id: string | null;
+  creditor_name: string | null;
   debtor_id: string | null;
   debtor_name: string | null;
   amount: number;
@@ -381,4 +382,13 @@ export interface Collection {
   paid_at: string | null;
   creditor?: Profile;
   debtor?: Profile;
+}
+
+export interface CollectionPayment {
+  id: string;
+  collection_id: string;
+  amount: number;
+  date: string;
+  notes: string | null;
+  created_at: string;
 }

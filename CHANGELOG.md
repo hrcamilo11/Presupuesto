@@ -2,6 +2,13 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+## [1.3.0] - 2026-02-18
+### Added
+- **Pagos Parciales**: Posibilidad de registrar abonos a los cobros, con historial detallado y cálculo de saldo pendiente.
+- **Iniciación de Deudas**: Ahora puedes registrar una deuda propia y notificar al acreedor (amigo) para su aprobación.
+- **Deudas Manuales**: Registro de deudas con personas externas (sin cuenta) para seguimiento personal.
+- **Interfaz Mejorada**: Nuevas tarjetas informativas en Cobros y Deudas con estados claros y balances.
+
 ## [1.2.0] - 2026-02-18
 
 ### Añadido
