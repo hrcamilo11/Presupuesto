@@ -153,6 +153,32 @@ export async function getPendingFriendRequests() {
     return { data: mapped as unknown as { id: string, user_id: string, created_at: string, sender: Profile }[], error: null };
 }
 
+export async function getSentFriendRequests() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "No autenticado" };
+
+    const { data, error } = await supabase
+        .from("friends")
+        .select(`
+      id,
+      friend_id,
+      created_at,
+      receiver:profiles!friends_friend_id_fkey(id, full_name, username)
+    `)
+        .eq("user_id", user.id)
+        .eq("status", "pending");
+
+    if (error) return { data: [], error: error.message };
+
+    const mapped = (data || []).map(req => ({
+        ...req,
+        receiver: Array.isArray(req.receiver) ? req.receiver[0] : req.receiver
+    }));
+
+    return { data: mapped as unknown as { id: string, friend_id: string, created_at: string, receiver: Profile }[], error: null };
+}
+
 export async function removeFriend(friendshipId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

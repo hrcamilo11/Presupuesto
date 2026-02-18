@@ -14,14 +14,16 @@ import type { FriendStatus, Profile } from "@/lib/database.types";
 interface FriendsClientProps {
     initialFriends: { friendship_id: string, profile: Profile }[];
     initialPendingRequests: { id: string, user_id: string, created_at: string, sender: Profile }[];
+    initialSentRequests: { id: string, friend_id: string, created_at: string, receiver: Profile }[];
 }
 
-export function FriendsClient({ initialFriends, initialPendingRequests }: FriendsClientProps) {
+export function FriendsClient({ initialFriends, initialPendingRequests, initialSentRequests }: FriendsClientProps) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Profile[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
+    const [activeRequestTab, setActiveRequestTab] = useState<"received" | "sent">("received");
     const [isPending, startTransition] = useTransition();
     const [msg, setMsg] = useState<string | null>(null);
 
@@ -99,6 +101,8 @@ export function FriendsClient({ initialFriends, initialPendingRequests }: Friend
         }
     }
 
+    const totalRequests = initialPendingRequests.length + initialSentRequests.length;
+
     return (
         <div className="mx-auto w-full max-w-5xl space-y-8 px-4 pb-12 md:px-8">
             <header className="space-y-1 border-b border-border/80 pb-6">
@@ -128,7 +132,7 @@ export function FriendsClient({ initialFriends, initialPendingRequests }: Friend
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="list">Mis Amigos ({initialFriends.length})</TabsTrigger>
                             <TabsTrigger value="pending">
-                                Solicitudes {initialPendingRequests.length > 0 && `(${initialPendingRequests.length})`}
+                                Solicitudes {totalRequests > 0 && `(${totalRequests})`}
                             </TabsTrigger>
                         </TabsList>
 
@@ -164,45 +168,96 @@ export function FriendsClient({ initialFriends, initialPendingRequests }: Friend
                         </TabsContent>
 
                         <TabsContent value="pending" className="space-y-4 pt-4">
-                            {initialPendingRequests.length === 0 ? (
-                                <Card>
-                                    <CardContent className="pt-6 text-center text-muted-foreground">
-                                        No tienes solicitudes pendientes.
-                                    </CardContent>
-                                </Card>
+                            <div className="flex gap-2 mb-4 bg-muted/50 p-1 rounded-lg">
+                                <Button
+                                    variant={activeRequestTab === "received" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="flex-1"
+                                    onClick={() => setActiveRequestTab("received")}
+                                >
+                                    Recibidas ({initialPendingRequests.length})
+                                </Button>
+                                <Button
+                                    variant={activeRequestTab === "sent" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="flex-1"
+                                    onClick={() => setActiveRequestTab("sent")}
+                                >
+                                    Enviadas ({initialSentRequests.length})
+                                </Button>
+                            </div>
+
+                            {activeRequestTab === "received" ? (
+                                initialPendingRequests.length === 0 ? (
+                                    <Card>
+                                        <CardContent className="pt-6 text-center text-muted-foreground">
+                                            No tienes solicitudes recibidas.
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    initialPendingRequests.map((req) => (
+                                        <Card key={req.id}>
+                                            <CardContent className="flex items-center justify-between py-4">
+                                                <div>
+                                                    <p className="font-medium">{req.sender.full_name || req.sender.username}</p>
+                                                    <p className="text-sm text-muted-foreground">@{req.sender.username}</p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="border-green-500 text-green-600 hover:bg-green-50"
+                                                        onClick={() => handleResponse(req.id, 'accepted')}
+                                                        disabled={isPending}
+                                                    >
+                                                        <Check className="h-4 w-4 mr-2" />
+                                                        Aceptar
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="border-red-500 text-red-600 hover:bg-red-50"
+                                                        onClick={() => handleResponse(req.id, 'rejected')}
+                                                        disabled={isPending}
+                                                    >
+                                                        <X className="h-4 w-4 mr-2" />
+                                                        Rechazar
+                                                    </Button>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))
+                                )
                             ) : (
-                                initialPendingRequests.map((req) => (
-                                    <Card key={req.id}>
-                                        <CardContent className="flex items-center justify-between py-4">
-                                            <div>
-                                                <p className="font-medium">{req.sender.full_name || req.sender.username}</p>
-                                                <p className="text-sm text-muted-foreground">@{req.sender.username}</p>
-                                            </div>
-                                            <div className="flex gap-2">
+                                initialSentRequests.length === 0 ? (
+                                    <Card>
+                                        <CardContent className="pt-6 text-center text-muted-foreground">
+                                            No tienes solicitudes enviadas.
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    initialSentRequests.map((req) => (
+                                        <Card key={req.id}>
+                                            <CardContent className="flex items-center justify-between py-4">
+                                                <div>
+                                                    <p className="font-medium">{req.receiver.full_name || req.receiver.username}</p>
+                                                    <p className="text-sm text-muted-foreground">@{req.receiver.username}</p>
+                                                    <p className="text-[10px] text-muted-foreground italic">Esperando respuesta...</p>
+                                                </div>
                                                 <Button
                                                     size="sm"
-                                                    variant="outline"
-                                                    className="border-green-500 text-green-600 hover:bg-green-50"
-                                                    onClick={() => handleResponse(req.id, 'accepted')}
-                                                    disabled={isPending}
-                                                >
-                                                    <Check className="h-4 w-4 mr-2" />
-                                                    Aceptar
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="border-red-500 text-red-600 hover:bg-red-50"
-                                                    onClick={() => handleResponse(req.id, 'rejected')}
+                                                    variant="ghost"
+                                                    className="text-destructive hover:bg-destructive/10"
+                                                    onClick={() => handleRemove(req.id)}
                                                     disabled={isPending}
                                                 >
                                                     <X className="h-4 w-4 mr-2" />
-                                                    Rechazar
+                                                    Cancelar
                                                 </Button>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))
+                                            </CardContent>
+                                        </Card>
+                                    ))
+                                )
                             )}
                         </TabsContent>
                     </Tabs>
