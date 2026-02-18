@@ -4,16 +4,16 @@ import { useState, useTransition } from "react";
 import { ArrowUpRight, Plus, Check, X, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createCollection, markCollectionAsPaid } from "@/app/actions/collections";
-import type { Friend, Collection } from "@/lib/database.types";
+import type { Profile, Collection } from "@/lib/database.types";
 
 interface CobrosClientProps {
-    initialCollections: any[];
-    friends: any[];
+    initialCollections: (Collection & { debtor: Profile })[];
+    friends: { friendship_id: string, profile: Profile }[];
 }
 
 export function CobrosClient({ initialCollections, friends }: CobrosClientProps) {

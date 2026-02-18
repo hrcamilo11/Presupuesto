@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { Collection, CollectionStatus } from "@/lib/database.types";
+import type { CollectionStatus } from "@/lib/database.types";
 
 export async function createCollection(debtorId: string, amount: number, currency: string = 'COP', description?: string) {
     const supabase = await createClient();

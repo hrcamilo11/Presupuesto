@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { Friend, FriendStatus, Profile } from "@/lib/database.types";
+import type { FriendStatus, Profile } from "@/lib/database.types";
 
 export async function searchUsers(query: string) {
     const supabase = await createClient();
@@ -115,9 +115,9 @@ export async function getFriends() {
     if (error) return { data: [], error: error.message };
 
     // Map to a simpler format
-    const friends = (data as any[]).map(f => {
+    const friends = (data || []).map(f => {
         const isSender = f.user_id === user.id;
-        const friendProfile = isSender ? f.receiver : f.sender;
+        const friendProfile = isSender ? (f.receiver as unknown as Profile) : (f.sender as unknown as Profile);
         return {
             friendship_id: f.id,
             profile: friendProfile

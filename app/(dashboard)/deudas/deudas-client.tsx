@@ -5,9 +5,10 @@ import { ArrowDownLeft, Check, X, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { respondToCollection } from "@/app/actions/collections";
+import type { Collection, Profile } from "@/lib/database.types";
 
 interface DeudasClientProps {
-    initialDebts: any[];
+    initialDebts: (Collection & { creditor: Profile })[];
 }
 
 export function DeudasClient({ initialDebts }: DeudasClientProps) {

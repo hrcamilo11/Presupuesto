@@ -8,11 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { searchUsers, sendFriendRequest, respondToFriendRequest, removeFriend } from "@/app/actions/social";
 import { QRScanner } from "@/components/social/qr-scanner";
-import type { Friend, FriendStatus, Profile } from "@/lib/database.types";
+import type { FriendStatus, Profile } from "@/lib/database.types";
 
 interface FriendsClientProps {
-    initialFriends: any[];
-    initialPendingRequests: any[];
+    initialFriends: { friendship_id: string, profile: Profile }[];
+    initialPendingRequests: { id: string, user_id: string, created_at: string, sender: Profile }[];
 }
 
 export function FriendsClient({ initialFriends, initialPendingRequests }: FriendsClientProps) {

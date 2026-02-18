@@ -5,7 +5,7 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 
 interface QRScannerProps {
     onScan: (decodedText: string) => void;
-    onError?: (error: any) => void;
+    onError?: (error: unknown) => void;
 }
 
 export function QRScanner({ onScan, onError }: QRScannerProps) {
