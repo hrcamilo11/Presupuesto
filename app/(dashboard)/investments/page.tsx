@@ -1,11 +1,12 @@
 import { getWallets } from "@/app/actions/wallets";
 import { WalletForm } from "@/components/wallets/wallet-form";
-import { WalletCard } from "@/components/wallets/wallet-card";
 import { LineChart } from "lucide-react";
+import type { Wallet } from "@/lib/database.types";
+import { SortableWalletList } from "@/components/wallets/sortable-wallet-list";
 
 export default async function InvestmentsPage() {
     const { data: allWallets, error } = await getWallets();
-    const wallets = allWallets.filter(w => w.type === "investment");
+    const wallets = (allWallets as Wallet[]).filter(w => w.type === "investment");
 
     return (
         <div className="space-y-6">
@@ -37,11 +38,7 @@ export default async function InvestmentsPage() {
                     <WalletForm allowedTypes={["investment"]} />
                 </div>
             ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {wallets.map((wallet) => (
-                        <WalletCard key={wallet.id} wallet={wallet} wallets={allWallets} />
-                    ))}
-                </div>
+                <SortableWalletList initialWallets={wallets} />
             )}
         </div>
     );

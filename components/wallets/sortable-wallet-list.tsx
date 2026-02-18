@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import {
     DndContext,
     closestCenter,
@@ -28,6 +28,11 @@ export function SortableWalletList({ initialWallets }: SortableWalletListProps) 
     const [wallets, setWallets] = useState(initialWallets);
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
+
+    // Sincronizar el estado local si las tarjetas cambian desde el padre (ej. después de editar)
+    useEffect(() => {
+        setWallets(initialWallets);
+    }, [initialWallets]);
 
     // Configuración del sensor con retardo de 3 segundos para activación (long press)
     const sensors = useSensors(
