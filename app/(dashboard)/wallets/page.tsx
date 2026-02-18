@@ -1,11 +1,12 @@
+import { SortableWalletList } from "@/components/wallets/sortable-wallet-list";
 import { getWallets } from "@/app/actions/wallets";
 import { WalletForm } from "@/components/wallets/wallet-form";
-import { WalletCard } from "@/components/wallets/wallet-card";
 import { TransferFormWrapper } from "@/components/wallets/transfer-form-wrapper";
+import type { Wallet } from "@/lib/database.types";
 
 export default async function WalletsPage() {
     const { data: allWallets, error } = await getWallets();
-    const wallets = allWallets.filter(w => w.type !== "investment");
+    const wallets = (allWallets as Wallet[]).filter(w => w.type !== "investment");
 
     return (
         <div className="space-y-6">
@@ -51,11 +52,7 @@ export default async function WalletsPage() {
                     <WalletForm allowedTypes={["cash", "debit", "credit"]} />
                 </div>
             ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {wallets.map((wallet) => (
-                        <WalletCard key={wallet.id} wallet={wallet} wallets={wallets} />
-                    ))}
-                </div>
+                <SortableWalletList initialWallets={wallets} />
             )}
         </div>
     );

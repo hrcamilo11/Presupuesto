@@ -45,6 +45,7 @@ export async function getWallets() {
             .from("wallets")
             .select("*")
             .eq("user_id", user.id)
+            .order("display_order", { ascending: true })
             .order("created_at", { ascending: true });
         if (error) throw new Error(error.message);
         if (!data || data.length === 0) {
@@ -53,6 +54,7 @@ export async function getWallets() {
                 .from("wallets")
                 .select("*")
                 .eq("user_id", user.id)
+                .order("display_order", { ascending: true })
                 .order("created_at", { ascending: true });
             if (ret.error) throw new Error(ret.error.message);
             return ret.data ?? [];
@@ -111,12 +113,23 @@ export async function createWallet(formData: {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return { error: "No autenticado" };
 
+        // Get current max display_order
+        const { data: maxOrderData } = await supabase
+            .from("wallets")
+            .select("display_order")
+            .eq("user_id", user.id)
+            .order("display_order", { ascending: false })
+            .limit(1);
+
+        const nextOrder = (maxOrderData?.[0]?.display_order ?? 0) + 1;
+
         const insertPayload = {
             user_id: user.id,
             name: formData.name,
             type: formData.type,
             currency: formData.currency,
             balance: formData.balance || 0,
+            display_order: nextOrder,
             color: formData.color || null,
             bank: formData.type === "debit" || formData.type === "credit" ? formData.bank ?? null : null,
             debit_card_brand: formData.type === "debit" ? formData.debit_card_brand ?? null : null,
@@ -648,4 +661,31 @@ export async function getWalletMovementHistory(
         wallet: { id: walletRow.id, name: walletRow.name, currency: (walletRow as { currency?: string }).currency ?? "COP" },
         error: null,
     };
+}
+
+export async function reorderWallets(walletIds: string[]) {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { error: "No autenticado" };
+
+        const updates = walletIds.map((id, index) => {
+            return supabase
+                .from("wallets")
+                .update({ display_order: index + 1 })
+                .eq("id", id)
+                .eq("user_id", user.id);
+        });
+
+        const results = await Promise.all(updates);
+        const firstError = results.find(r => r.error);
+        if (firstError) throw new Error(firstError.error?.message || "Error desconocido al reordenar");
+
+        revalidatePath("/wallets");
+        revalidatePath("/investments");
+        revalidatePath("/dashboard");
+        return { error: null };
+    } catch (err) {
+        return { error: err instanceof Error ? err.message : "Error al reordenar cuentas" };
+    }
 }
