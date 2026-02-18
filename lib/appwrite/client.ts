@@ -4,7 +4,7 @@ const WALLETS_COLLECTION_ID = "wallets";
 
 function getConfig() {
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
-  const projectId = process.env.APPWRITE_PROJECT_ID;
+  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
   const apiKey = process.env.APPWRITE_API_KEY;
   const databaseId = process.env.APPWRITE_DATABASE_ID ?? "main";
   return { endpoint, projectId, apiKey, databaseId };
