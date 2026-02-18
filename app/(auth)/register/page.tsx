@@ -23,6 +23,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -37,7 +38,12 @@ export default function RegisterPage() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName || undefined } },
+      options: {
+        data: {
+          full_name: fullName || undefined,
+          username: username.toLowerCase() || undefined
+        }
+      },
     });
     setLoading(false);
     if (signUpError) {
@@ -128,7 +134,7 @@ export default function RegisterPage() {
             </p>
           )}
           <div className="space-y-2">
-            <Label htmlFor="fullName">Nombre (opcional)</Label>
+            <Label htmlFor="fullName">Nombre completo (opcional)</Label>
             <Input
               id="fullName"
               type="text"
@@ -137,6 +143,22 @@ export default function RegisterPage() {
               onChange={(e) => setFullName(e.target.value)}
               autoComplete="name"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="username">Nombre de usuario (@username)</Label>
+            <Input
+              id="username"
+              type="text"
+              placeholder="ej: juan_perez"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+              required
+              minLength={3}
+              maxLength={30}
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Solo letras minúsculas, números y guiones bajos (_). Mínimo 3 caracteres.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Correo</Label>

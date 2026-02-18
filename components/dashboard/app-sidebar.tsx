@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -20,10 +21,14 @@ import {
   Users,
   ArrowUpRight,
   ArrowDownLeft,
+  ChevronDown,
+  ChevronUp,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const financeItems = [
+  { href: "/wallets", label: "Billeteras", icon: Wallet },
   { href: "/movements", label: "Movimientos", icon: History },
   { href: "/incomes", label: "Ingresos", icon: TrendingUp },
   { href: "/expenses", label: "Gastos", icon: TrendingDown },
@@ -33,6 +38,7 @@ const financeItems = [
 ] as const;
 
 const planningItems = [
+  { href: "/budgets", label: "Presupuestos", icon: Receipt },
   { href: "/savings", label: "Ahorros", icon: PiggyBank },
   { href: "/investments", label: "Inversiones", icon: LineChart },
   { href: "/taxes", label: "Impuestos", icon: Receipt },
@@ -116,32 +122,9 @@ export function AppSidebar({ isOpen = false, onClose }: AppSidebarProps) {
             </Link>
           </div>
 
-          <div className="space-y-1">
-            <h3 className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-2 mb-1">
-              📊 Finanzas
-            </h3>
-            {financeItems.map((item) => (
-              <SidebarItem key={item.href} {...item} pathname={pathname} onClose={onClose} />
-            ))}
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-2 mb-1">
-              📈 Planificación
-            </h3>
-            {planningItems.map((item) => (
-              <SidebarItem key={item.href} {...item} pathname={pathname} onClose={onClose} />
-            ))}
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-2 mb-1">
-              👥 Cuenta
-            </h3>
-            {accountItems.map((item) => (
-              <SidebarItem key={item.href} {...item} pathname={pathname} onClose={onClose} />
-            ))}
-          </div>
+          <SidebarGroup label="Finanzas" items={financeItems} pathname={pathname || ""} onClose={onClose} />
+          <SidebarGroup label="Planificación" items={planningItems} pathname={pathname || ""} onClose={onClose} />
+          <SidebarGroup label="Cuenta" items={accountItems} pathname={pathname || ""} onClose={onClose} />
         </nav>
 
         {/* Logout */}
@@ -183,5 +166,34 @@ function SidebarItem({ href, label, icon: Icon, pathname, onClose }: { href: str
       <Icon className="h-4 w-4 shrink-0" />
       <span className="truncate">{label}</span>
     </Link>
+  );
+}
+
+function SidebarGroup({
+  label,
+  items,
+  pathname,
+  onClose
+}: {
+  label: string,
+  items: readonly any[],
+  pathname: string,
+  onClose?: () => void
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <div className="space-y-1">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center justify-between hover:bg-accent/50 hover:text-foreground rounded-lg transition-colors mb-1"
+      >
+        <span>{label}</span>
+        {isOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+      </button>
+      {isOpen && items.map((item) => (
+        <SidebarItem key={item.href} {...item} pathname={pathname} onClose={onClose} />
+      ))}
+    </div>
   );
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRouter } from "next/navigation";
 import { searchUsers, sendFriendRequest, respondToFriendRequest, removeFriend } from "@/app/actions/social";
 import { QRScanner } from "@/components/social/qr-scanner";
 import type { FriendStatus, Profile } from "@/lib/database.types";
@@ -16,6 +17,7 @@ interface FriendsClientProps {
 }
 
 export function FriendsClient({ initialFriends, initialPendingRequests }: FriendsClientProps) {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Profile[]>([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -38,6 +40,7 @@ export function FriendsClient({ initialFriends, initialPendingRequests }: Friend
             setMsg(error ? error : "Solicitud de amistad enviada.");
             if (!error) {
                 setSearchResults(prev => prev.filter(p => p.id !== friendId));
+                router.refresh();
             }
         });
     }
@@ -45,7 +48,12 @@ export function FriendsClient({ initialFriends, initialPendingRequests }: Friend
     function handleResponse(requestId: string, status: FriendStatus) {
         startTransition(async () => {
             const { error } = await respondToFriendRequest(requestId, status);
-            setMsg(error ? error : status === 'accepted' ? "Petición aceptada." : "Petición rechazada.");
+            if (!error) {
+                setMsg(status === 'accepted' ? "Petición aceptada." : "Petición rechazada.");
+                router.refresh();
+            } else {
+                setMsg(error);
+            }
         });
     }
 
@@ -53,7 +61,12 @@ export function FriendsClient({ initialFriends, initialPendingRequests }: Friend
         if (!confirm("¿Estás seguro de que quieres eliminar a este amigo?")) return;
         startTransition(async () => {
             const { error } = await removeFriend(friendshipId);
-            setMsg(error ? error : "Amigo eliminado.");
+            if (!error) {
+                setMsg("Amigo eliminado.");
+                router.refresh();
+            } else {
+                setMsg(error);
+            }
         });
     }
 

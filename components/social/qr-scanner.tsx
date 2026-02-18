@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import QrScanner from "qr-scanner";
 
 interface QRScannerProps {
     onScan: (decodedText: string) => void;
@@ -9,45 +9,48 @@ interface QRScannerProps {
 }
 
 export function QRScanner({ onScan, onError }: QRScannerProps) {
-    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const scannerRef = useRef<QrScanner | null>(null);
 
     useEffect(() => {
-        scannerRef.current = new Html5QrcodeScanner(
-            "qr-reader",
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0,
-                showTorchButtonIfSupported: true,
-                videoConstraints: {
-                    facingMode: "environment"
-                }
-            },
-            /* verbose= */ false
-        );
+        if (!videoRef.current) return;
 
-        scannerRef.current.render(
-            (decodedText) => {
-                onScan(decodedText);
-                if (scannerRef.current) {
-                    scannerRef.current.clear();
-                }
+        scannerRef.current = new QrScanner(
+            videoRef.current,
+            (result) => {
+                onScan(result.data);
             },
-            (error) => {
-                if (onError) onError(error);
+            {
+                onDecodeError: (error) => {
+                    // Solo loguear errores reales, no "No QR code found" que es constante
+                    if (typeof error === 'string' && error.includes("No QR code found")) return;
+                    if (onError) onError(error);
+                },
+                highlightScanRegion: true,
+                highlightCodeOutline: true,
+                preferredCamera: 'environment'
             }
         );
+
+        scannerRef.current.start().catch(err => {
+            console.error("Error starting scanner:", err);
+            if (onError) onError(err);
+        });
 
         return () => {
-            if (scannerRef.current) {
-                scannerRef.current.clear().catch(e => console.error("Failed to clear scanner", e));
-            }
+            scannerRef.current?.destroy();
+            scannerRef.current = null;
         };
     }, [onScan, onError]);
 
     return (
-        <div className="w-full max-w-sm mx-auto overflow-hidden rounded-xl border border-border bg-muted/30 p-2">
-            <div id="qr-reader" className="w-full"></div>
+        <div className="w-full max-w-sm mx-auto overflow-hidden rounded-xl border border-border bg-black relative aspect-square flex items-center justify-center">
+            <video
+                ref={videoRef}
+                className="absolute inset-0 h-full w-full object-cover"
+                playsInline
+            />
+            <div className="absolute inset-0 border-2 border-primary/50 m-12 rounded-xl pointer-events-none" />
         </div>
     );
 }

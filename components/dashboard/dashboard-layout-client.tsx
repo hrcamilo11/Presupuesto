@@ -4,12 +4,14 @@ import { useState } from "react";
 import { Menu } from "lucide-react";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { UsernamePromptModal } from "@/components/social/username-prompt-modal";
 
 export function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
         <div className="min-h-screen min-h-[100dvh] bg-gradient-to-b from-background to-muted/30">
+            <UsernamePromptModal />
             {/* Mobile header with hamburger and notifications */}
             <header className="fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between border-b bg-card px-4 pt-[env(safe-area-inset-top)] md:hidden">
                 <div className="flex items-center">
