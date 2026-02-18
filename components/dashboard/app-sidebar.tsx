@@ -37,7 +37,13 @@ const financeItems = [
   { href: "/loans", label: "Préstamos", icon: Landmark },
 ] as const;
 
-const planningItems = [
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+}
+
+const planningItems: readonly NavItem[] = [
   { href: "/budgets", label: "Presupuestos", icon: Receipt },
   { href: "/savings", label: "Ahorros", icon: PiggyBank },
   { href: "/investments", label: "Inversiones", icon: LineChart },
@@ -45,7 +51,7 @@ const planningItems = [
   { href: "/subscriptions", label: "Suscripciones", icon: Repeat },
 ] as const;
 
-const accountItems = [
+const accountItems: readonly NavItem[] = [
   { href: "/shared", label: "Cuentas compartidas", icon: UsersRound },
   { href: "/friends", label: "Amigos", icon: Users },
   { href: "/notifications", label: "Notificaciones", icon: Bell },
@@ -176,7 +182,7 @@ function SidebarGroup({
   onClose
 }: {
   label: string,
-  items: readonly any[],
+  items: readonly NavItem[],
   pathname: string,
   onClose?: () => void
 }) {
