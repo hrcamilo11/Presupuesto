@@ -18,6 +18,9 @@ import {
   X,
   Bell,
   LineChart,
+  Users,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +36,9 @@ const navItems = [
   { href: "/investments", label: "Inversiones", icon: LineChart },
   { href: "/savings", label: "Ahorros", icon: PiggyBank },
   { href: "/shared", label: "Cuentas compartidas", icon: UsersRound },
+  { href: "/friends", label: "Amigos", icon: Users },
+  { href: "/cobros", label: "Cobros", icon: ArrowUpRight },
+  { href: "/deudas", label: "Deudas", icon: ArrowDownLeft },
   { href: "/notifications", label: "Notificaciones", icon: Bell },
   { href: "/settings", label: "Configuración", icon: Settings },
 ] as const;

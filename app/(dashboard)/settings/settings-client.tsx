@@ -3,6 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, LayoutGrid, Tag, Palette, Loader2, Trash2, AlertTriangle, Bell, Settings, ChevronUp, ChevronDown, KeyRound, Smartphone, Moon, Sun, Monitor, Sparkles, Leaf, TabletSmartphone } from "lucide-react";
 import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 import { CategoryList } from "@/components/categories/category-list";
 import { TagList } from "@/components/tags/tag-list";
 import { Category, Tag as TagType, type Profile, type SharedAccount, type Wallet } from "@/lib/database.types";
@@ -18,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { updateMyDashboardSettings, updateMyProfileBasics, wipeMyPersonalData } from "@/app/actions/profile";
+import { updateMyDashboardSettings, updateMyProfileBasics, updateMyUsername, wipeMyPersonalData } from "@/app/actions/profile";
 import { updateNotificationPreferences, sendTestEmail } from "@/app/actions/notifications";
 import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
 import { requestInstallPrompt } from "@/components/pwa/install-prompt";
@@ -80,6 +81,8 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
     const [currency, setCurrency] = useState(profile?.currency ?? "COP");
     const [timezone, setTimezone] = useState(profile?.timezone ?? "America/Bogota");
     const [profileMsg, setProfileMsg] = useState<string | null>(null);
+    const [username, setUsername] = useState(profile?.username ?? "");
+    const [isEditingUsername, setIsEditingUsername] = useState(!profile?.username);
 
     // Dashboard
     const mergedDash = { ...DEFAULT_DASHBOARD_SETTINGS, ...(profile?.dashboard_settings ?? {}) };
@@ -146,6 +149,19 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                 timezone,
             });
             setProfileMsg(res.error ? res.error : "Perfil actualizado.");
+        });
+    }
+
+    function saveUsername() {
+        setProfileMsg(null);
+        startTransition(async () => {
+            const res = await updateMyUsername(username);
+            if (res.error) {
+                setProfileMsg(res.error);
+            } else {
+                setProfileMsg("Nombre de usuario actualizado.");
+                setIsEditingUsername(false);
+            }
         });
     }
 
@@ -280,6 +296,26 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                     />
                                 </div>
                                 <div className="space-y-2">
+                                    <Label htmlFor="username">Nombre de usuario (único)</Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="username"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                            placeholder="usuario123"
+                                            disabled={!isEditingUsername && !!profile?.username}
+                                        />
+                                        {(!isEditingUsername && !!profile?.username) ? (
+                                            <Button variant="outline" onClick={() => setIsEditingUsername(true)}>Editar</Button>
+                                        ) : (
+                                            <Button onClick={saveUsername} disabled={isPending}>Guardar</Button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Necesario para que tus amigos te encuentren.
+                                    </p>
+                                </div>
+                                <div className="space-y-2">
                                     <Label>Moneda</Label>
                                     <Select value={currency} onValueChange={setCurrency}>
                                         <SelectTrigger>
@@ -311,9 +347,25 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                     </Select>
                                 </div>
                             </div>
-                            <div className="flex justify-end">
+                            <div className="flex justify-between items-end">
+                                {profile?.username && (
+                                    <div className="space-y-2">
+                                        <Label>Tu código QR</Label>
+                                        <div className="rounded-xl border border-border bg-white p-4 w-fit shadow-sm">
+                                            <QRCodeSVG
+                                                value={`budget-tracker:user:${profile.username}`}
+                                                size={150}
+                                                level="H"
+                                                includeMargin={false}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground max-w-[150px]">
+                                            Comparte este código con tus amigos para que te agreguen.
+                                        </p>
+                                    </div>
+                                )}
                                 <Button onClick={saveProfile} disabled={isPending}>
-                                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
+                                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar Perfil"}
                                 </Button>
                             </div>
                         </CardContent>

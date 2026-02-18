@@ -3,6 +3,8 @@ export type ExpensePriority = "obligatory" | "necessary" | "optional";
 export type SubscriptionFrequency = "monthly" | "yearly";
 export type TaxPeriodType = "monthly" | "quarterly" | "yearly";
 export type CategoryType = "income" | "expense";
+export type FriendStatus = "pending" | "accepted" | "rejected";
+export type CollectionStatus = "pending_approval" | "active" | "rejected" | "paid" | "cancelled";
 
 export interface Category {
   id: string;
@@ -52,6 +54,7 @@ export interface PushSubscriptionRow {
 export interface Profile {
   id: string;
   full_name: string | null;
+  username?: string | null;
   currency: string;
   timezone: string;
   phone?: string | null;
@@ -353,4 +356,28 @@ export interface SharedSavingsGoal {
   deadline: string | null;
   created_at: string;
   updated_at: string;
+}
+export interface Friend {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  status: FriendStatus;
+  created_at: string;
+  updated_at: string;
+  profiles?: Profile; // Para joins
+}
+
+export interface Collection {
+  id: string;
+  creditor_id: string;
+  debtor_id: string;
+  amount: number;
+  currency: string;
+  description: string | null;
+  status: CollectionStatus;
+  created_at: string;
+  updated_at: string;
+  paid_at: string | null;
+  creditor?: Profile;
+  debtor?: Profile;
 }

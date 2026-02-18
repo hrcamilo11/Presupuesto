@@ -25,6 +25,14 @@ const profileBasicsSchema = z.object({
     .min(3, "Zona horaria inválida.")
     .max(64, "Zona horaria inválida.")
     .optional(),
+  username: z
+    .string()
+    .trim()
+    .min(3, "El nombre de usuario debe tener al menos 3 caracteres.")
+    .max(30, "El nombre de usuario es demasiado largo.")
+    .regex(/^[a-zA-Z0-9_]+$/, "El nombre de usuario solo puede contener letras, números y guiones bajos.")
+    .nullable()
+    .optional(),
 });
 
 const dashboardSettingsSchema = z.object({
@@ -141,6 +149,50 @@ export async function updateMyDashboardSettings(input: z.infer<typeof dashboardS
 
   revalidatePath("/settings");
   revalidatePath("/dashboard");
+  return { error: null };
+}
+
+export async function updateMyUsername(username: string) {
+  const schema = z.string()
+    .trim()
+    .min(3, "El nombre de usuario debe tener al menos 3 caracteres.")
+    .max(30, "El nombre de usuario es demasiado largo.")
+    .regex(/^[a-zA-Z0-9_]+$/, "El nombre de usuario solo puede contener letras, números y guiones bajos.");
+
+  const parsed = schema.safeParse(username);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  // Check if username is already taken
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("username", parsed.data)
+    .single();
+
+  if (existing && existing.id !== user.id) {
+    return { error: "Este nombre de usuario ya está en uso." };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      username: parsed.data,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/settings");
+  revalidatePath("/profile");
   return { error: null };
 }
 
