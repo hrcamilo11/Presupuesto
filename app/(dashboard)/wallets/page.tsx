@@ -48,7 +48,7 @@ export default async function WalletsPage() {
                     <p className="mb-4 mt-2 text-sm text-muted-foreground">
                         Registra tu primera cuenta para empezar a organizar tu dinero.
                     </p>
-                    <WalletForm />
+                    <WalletForm allowedTypes={["cash", "debit", "credit"]} />
                 </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

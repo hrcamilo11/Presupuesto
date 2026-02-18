@@ -200,6 +200,7 @@ export async function updateWallet(
         name: formData.name,
         type: formData.type,
         currency: formData.currency,
+        balance: formData.balance ?? null,
         color: formData.color || null,
     };
     const lastFour = formData.last_four_digits && /^\d{1,4}$/.test(formData.last_four_digits) ? formData.last_four_digits : null;

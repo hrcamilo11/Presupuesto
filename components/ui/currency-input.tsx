@@ -35,7 +35,7 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
             setDisplayValue(formattedValue);
 
             if (onChange) {
-                onChange(rawValue ? parseInt(rawValue, 10) : 0);
+                onChange(rawValue ? parseFloat(rawValue) : 0);
             }
         };
 
