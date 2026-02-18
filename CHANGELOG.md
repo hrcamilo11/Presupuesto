@@ -21,6 +21,7 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 - **Base de Datos**: Corregido el error de columna faltante `last_four_digits` en la tabla de cuentas.
 - **Sincronización**: Actualizada la capa de respaldo de Appwrite para soportar los nuevos campos de inversión.
 - **Tipado**: Resueltos múltiples errores de tipos e inconsistencias en los formularios de cuentas, incluyendo errores detectados durante el build en Vercel.
+- **Estabilidad**: Corregida la lista de rutas protegidas en el middleware y eliminados espacios accidentales en variables de entorno que podrían causar errores de red (ERR_ADDRESS_UNREACHABLE).
 
 ---
 
