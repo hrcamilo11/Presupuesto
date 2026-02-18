@@ -21,11 +21,7 @@ export function DashboardContextSelector({ sharedAccounts }: { sharedAccounts: S
 
     function handleContextChange(value: string) {
         const params = new URLSearchParams(searchParams.toString());
-        if (value === "global") {
-            params.delete("context");
-        } else {
-            params.set("context", value);
-        }
+        params.set("context", value);
 
         startTransition(() => {
             router.push(`?${params.toString()}`);
