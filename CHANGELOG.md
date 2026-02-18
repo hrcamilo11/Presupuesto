@@ -2,6 +2,21 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+## [1.4.0] - 2026-02-18
+### Añadido
+- **Username en Registro**: Añadido campo de nombre de usuario obligatorio al proceso de registro.
+- **Prompt de Username**: Implementada ventana modal obligatoria para usuarios existentes sin nombre de usuario.
+- **Gestión de Amigos Robusta**: 
+    - Pestañas separadas para solicitudes "Recibidas" y "Enviadas".
+    - Auto-aceptación de solicitudes si ambos usuarios intentan agregarse mutuamente.
+    - Los registros previos (rechazados) ahora pueden ser reactivados al enviar una nueva solicitud.
+- **Persistencia de Filtros**: El selector de contexto del Dashboard (Global/Personal) ahora persiste correctamente en la URL.
+
+### Corregido
+- **Bug de Amigos**: Solucionado el problema de solicitudes "invisibles" que bloqueaban nuevas conexiones.
+- **Escaner QR**: Migración a una librería más estable (`qr-scanner`) con mejor soporte de hardware.
+- **Estabilidad de Build**: Eliminados errores de linting (`no-explicit-any`) que bloqueaban el despliegue en Vercel.
+
 ## [1.3.0] - 2026-02-18
 ### Added
 - **Pagos Parciales**: Posibilidad de registrar abonos a los cobros, con historial detallado y cálculo de saldo pendiente.
