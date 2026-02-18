@@ -144,7 +144,13 @@ export async function getPendingFriendRequests() {
         .eq("status", "pending");
 
     if (error) return { data: [], error: error.message };
-    return { data, error: null };
+
+    const mapped = (data || []).map(req => ({
+        ...req,
+        sender: Array.isArray(req.sender) ? req.sender[0] : req.sender
+    }));
+
+    return { data: mapped as unknown as { id: string, user_id: string, created_at: string, sender: Profile }[], error: null };
 }
 
 export async function removeFriend(friendshipId: string) {
