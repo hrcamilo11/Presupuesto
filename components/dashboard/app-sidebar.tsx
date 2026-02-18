@@ -12,7 +12,6 @@ import {
   Landmark,
   Receipt,
   UsersRound,
-  Wallet,
   PiggyBank,
   Settings,
   X,
@@ -165,7 +164,7 @@ export function AppSidebar({ isOpen = false, onClose }: AppSidebarProps) {
     </>
   );
 }
-function SidebarItem({ href, label, icon: Icon, pathname, onClose }: { href: string, label: string, icon: any, pathname: string | null, onClose?: () => void }) {
+function SidebarItem({ href, label, icon: Icon, pathname, onClose }: { href: string, label: string, icon: React.ElementType, pathname: string | null, onClose?: () => void }) {
   const isActive = pathname === href || pathname?.startsWith(`${href}/`);
   return (
     <Link

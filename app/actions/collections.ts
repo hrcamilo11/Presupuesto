@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { CollectionStatus } from "@/lib/database.types";
 
 export async function createCollection(
     debtorId: string | null,
@@ -85,7 +84,7 @@ export async function addCollectionPayment(collectionId: string, amount: number,
     if (fetchError || !collection) return { error: "Cobro no encontrado." };
     if (collection.creditor_id !== user.id) return { error: "Solo el acreedor puede registrar pagos." };
 
-    const totalPaid = (collection.payments || []).reduce((acc: number, p: any) => acc + Number(p.amount), 0);
+    const totalPaid = (collection.payments || []).reduce((acc: number, p: { amount: number }) => acc + Number(p.amount), 0);
     const newTotal = totalPaid + amount;
 
     if (newTotal > collection.amount + 0.01) { // Tiny margin for float issues
