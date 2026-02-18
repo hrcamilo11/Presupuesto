@@ -7,7 +7,7 @@ import type { Wallet as WalletType } from "@/lib/database.types";
 
 interface SortableWalletCardProps {
     id: string;
-    wallet: any;
+    wallet: WalletType;
     wallets?: WalletType[];
 }
 

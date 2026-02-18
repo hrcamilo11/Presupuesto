@@ -21,7 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 import type { Wallet as WalletType } from "@/lib/database.types";
 
 interface SortableWalletListProps {
-    initialWallets: any[];
+    initialWallets: WalletType[];
 }
 
 export function SortableWalletList({ initialWallets }: SortableWalletListProps) {
