@@ -12,7 +12,7 @@ import { createCollection, markCollectionAsPaid } from "@/app/actions/collection
 import type { Profile, Collection } from "@/lib/database.types";
 
 interface CobrosClientProps {
-    initialCollections: (Collection & { debtor: Profile })[];
+    initialCollections: (Collection & { debtor: Profile | null })[];
     friends: { friendship_id: string, profile: Profile }[];
 }
 
@@ -22,20 +22,26 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
     const [msg, setMsg] = useState<string | null>(null);
 
     // Form state
-    const [selectedFriendId, setSelectedFriendId] = useState("");
+    const [selectedFriendId, setSelectedFriendId] = useState<string>("manual");
+    const [debtorName, setDebtorName] = useState("");
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
 
     function handleCreate() {
-        if (!selectedFriendId || !amount) return;
+        if (selectedFriendId !== "manual" && !selectedFriendId) return;
+        if (selectedFriendId === "manual" && !debtorName) return;
+        if (!amount) return;
+
         startTransition(async () => {
-            const { error } = await createCollection(selectedFriendId, parseFloat(amount), 'COP', description);
+            const finalDebtorId = selectedFriendId === "manual" ? null : selectedFriendId;
+            const { error } = await createCollection(finalDebtorId, parseFloat(amount), 'COP', description, debtorName);
             if (error) {
                 setMsg(error);
             } else {
-                setMsg("Cobro enviado al amigo.");
+                setMsg(finalDebtorId ? "Cobro enviado al amigo." : "Cobro manual registrado.");
                 setIsDialogOpen(false);
-                setSelectedFriendId("");
+                setSelectedFriendId("manual");
+                setDebtorName("");
                 setAmount("");
                 setDescription("");
             }
@@ -89,25 +95,32 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
-                                <Label>Amigo</Label>
+                                <Label>Destinatario</Label>
                                 <Select value={selectedFriendId} onValueChange={setSelectedFriendId}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un amigo" />
+                                        <SelectValue placeholder="Selecciona un amigo o registro manual" />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="manual">Registro manual (Persona sin cuenta)</SelectItem>
                                         {friends.map(f => (
                                             <SelectItem key={f.profile.id} value={f.profile.id}>
                                                 {f.profile.full_name || f.profile.username} (@{f.profile.username})
                                             </SelectItem>
                                         ))}
-                                        {friends.length === 0 && (
-                                            <div className="p-2 text-sm text-center text-muted-foreground">
-                                                No tienes amigos aceptados aún.
-                                            </div>
-                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
+                            {selectedFriendId === "manual" && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="debtorName">Nombre del deudor</Label>
+                                    <Input
+                                        id="debtorName"
+                                        placeholder="Ej: Juan Pérez"
+                                        value={debtorName}
+                                        onChange={(e) => setDebtorName(e.target.value)}
+                                    />
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <Label htmlFor="amount">Monto</Label>
                                 <Input
@@ -127,8 +140,8 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                                     onChange={(e) => setDescription(e.target.value)}
                                 />
                             </div>
-                            <Button className="w-full" onClick={handleCreate} disabled={isPending || !selectedFriendId || !amount}>
-                                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar Cobro"}
+                            <Button className="w-full" onClick={handleCreate} disabled={isPending || (selectedFriendId === 'manual' && !debtorName) || (selectedFriendId !== 'manual' && !selectedFriendId) || !amount}>
+                                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Registrar Cobro"}
                             </Button>
                         </div>
                     </DialogContent>
@@ -158,7 +171,9 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                                         <User className="h-5 w-5 text-muted-foreground" />
                                     </div>
                                     <div>
-                                        <p className="font-medium">{c.debtor.full_name || c.debtor.username}</p>
+                                        <p className="font-medium">
+                                            {c.debtor ? (c.debtor.full_name || c.debtor.username) : (c.debtor_name || "Desconocido")}
+                                        </p>
                                         <p className="text-sm text-muted-foreground">{c.description || "Sin descripción"}</p>
                                         <div className="flex items-center gap-2 mt-1">
                                             {getStatusBadge(c.status)}

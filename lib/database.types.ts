@@ -370,7 +370,8 @@ export interface Friend {
 export interface Collection {
   id: string;
   creditor_id: string;
-  debtor_id: string;
+  debtor_id: string | null;
+  debtor_name: string | null;
   amount: number;
   currency: string;
   description: string | null;

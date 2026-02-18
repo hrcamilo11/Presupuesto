@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { CollectionStatus } from "@/lib/database.types";
 
-export async function createCollection(debtorId: string, amount: number, currency: string = 'COP', description?: string) {
+export async function createCollection(debtorId: string | null, amount: number, currency: string = 'COP', description?: string, debtorName?: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
@@ -14,28 +14,31 @@ export async function createCollection(debtorId: string, amount: number, currenc
         .insert({
             creditor_id: user.id,
             debtor_id: debtorId,
+            debtor_name: debtorName,
             amount,
             currency,
             description,
-            status: 'pending_approval'
+            status: debtorId ? 'pending_approval' : 'active' // Manual ones are active immediately
         })
         .select()
         .single();
 
     if (error) return { error: error.message };
 
-    // Notify the debtor
-    const { data: myProfile } = await supabase.from("profiles").select("full_name, username").eq("id", user.id).single();
-    const creditorName = myProfile?.full_name || myProfile?.username || "Alguien";
+    // Notify the debtor only if it's a linked friend
+    if (debtorId) {
+        const { data: myProfile } = await supabase.from("profiles").select("full_name, username").eq("id", user.id).single();
+        const creditorName = myProfile?.full_name || myProfile?.username || "Alguien";
 
-    await supabase.rpc('insert_notification', {
-        p_user_id: debtorId,
-        p_title: "Nuevo cobro pendiente",
-        p_body: `${creditorName} ha registrado un cobro de ${amount} ${currency}.`,
-        p_type: "loan",
-        p_link: "/deudas",
-        p_metadata: { collection_id: data.id }
-    });
+        await supabase.rpc('insert_notification', {
+            p_user_id: debtorId,
+            p_title: "Nuevo cobro pendiente",
+            p_body: `${creditorName} ha registrado un cobro de ${amount} ${currency}.`,
+            p_type: "loan",
+            p_link: "/deudas",
+            p_metadata: { collection_id: data.id }
+        });
+    }
 
     revalidatePath("/cobros");
     return { data, error: null };

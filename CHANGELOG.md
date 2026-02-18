@@ -5,12 +5,9 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 ## [1.2.0] - 2026-02-18
 
 ### Añadido
-- **Nombres de usuario únicos**: Los usuarios ahora pueden establecer un nombre de usuario en su perfil para ser encontrados fácilmente.
-- **Sistema de Amigos**: Funcionalidad para buscar usuarios por nombre de usuario, enviar, aceptar y gestionar solicitudes de amistad.
-- **Códigos QR**: Generación de códigos QR de perfil y escáner integrado para agregar amigos rápidamente de forma presencial.
-- **Módulo de Cobros**: Permite registrar solicitudes de pago a amigos, con seguimiento de estado (pendiente, activo, pagado, etc.).
-- **Módulo de Deudas**: Vista dedicada para gestionar dineros que se deben a otros usuarios, con flujo de aprobación integrado.
-- **Notificaciones Sociales**: Alertas en tiempo real para solicitudes de amistad, cobros nuevos y actualizaciones de estados de pago.
+- **Módulo de Cobros Flexibles**: Ahora permite registrar deudas de personas que no usan la aplicación (con nombre manual).
+- **Menú Categorizado**: Rediseño de la barra lateral agrupando módulos en Finanzas, Planificación y Cuenta para una mejor navegación.
+- **Flujo de QR Automatizado**: El escáner ahora solicita acceso directo a la cámara trasera y envía la solicitud de amistad automáticamente al escanear un perfil válido.
 
 ### Corregido
 - **Build de Producción**: Resueltos errores críticos de tipado y linting detectados durante el despliegue en Vercel, asegurando compatibilidad con el modo estricto de TypeScript.

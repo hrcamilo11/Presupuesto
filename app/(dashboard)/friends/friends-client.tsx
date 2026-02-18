@@ -61,13 +61,24 @@ export function FriendsClient({ initialFriends, initialPendingRequests }: Friend
         // Expected format: budget-tracker:user:username
         if (decodedText.startsWith("budget-tracker:user:")) {
             const username = decodedText.replace("budget-tracker:user:", "");
-            setSearchQuery(username);
             setIsScanning(false);
-            // Auto search
+            setMsg("Procesando código QR...");
+
             startTransition(async () => {
-                const { data, error } = await searchUsers(username);
-                setSearchResults(data || []);
-                if (error) setMsg(error);
+                const { data, error: searchError } = await searchUsers(username);
+                if (searchError) {
+                    setMsg(searchError);
+                    return;
+                }
+
+                const friend = data ? data[0] : null;
+                if (!friend) {
+                    setMsg("Usuario no encontrado.");
+                    return;
+                }
+
+                const { error: requestError } = await sendFriendRequest(friend.id);
+                setMsg(requestError ? requestError : `Solicitud enviada a ${friend.full_name || friend.username}.`);
             });
         } else {
             setMsg("Código QR no válido para esta aplicación.");

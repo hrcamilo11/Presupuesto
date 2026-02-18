@@ -24,21 +24,25 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+const financeItems = [
   { href: "/movements", label: "Movimientos", icon: History },
   { href: "/incomes", label: "Ingresos", icon: TrendingUp },
   { href: "/expenses", label: "Gastos", icon: TrendingDown },
-  { href: "/subscriptions", label: "Suscripciones", icon: Repeat },
-  { href: "/loans", label: "Préstamos", icon: Landmark },
-  { href: "/taxes", label: "Impuestos", icon: Receipt },
-  { href: "/wallets", label: "Cuentas", icon: Wallet },
-  { href: "/investments", label: "Inversiones", icon: LineChart },
-  { href: "/savings", label: "Ahorros", icon: PiggyBank },
-  { href: "/shared", label: "Cuentas compartidas", icon: UsersRound },
-  { href: "/friends", label: "Amigos", icon: Users },
   { href: "/cobros", label: "Cobros", icon: ArrowUpRight },
   { href: "/deudas", label: "Deudas", icon: ArrowDownLeft },
+  { href: "/loans", label: "Préstamos", icon: Landmark },
+] as const;
+
+const planningItems = [
+  { href: "/savings", label: "Ahorros", icon: PiggyBank },
+  { href: "/investments", label: "Inversiones", icon: LineChart },
+  { href: "/taxes", label: "Impuestos", icon: Receipt },
+  { href: "/subscriptions", label: "Suscripciones", icon: Repeat },
+] as const;
+
+const accountItems = [
+  { href: "/shared", label: "Cuentas compartidas", icon: UsersRound },
+  { href: "/friends", label: "Amigos", icon: Users },
   { href: "/notifications", label: "Notificaciones", icon: Bell },
   { href: "/settings", label: "Configuración", icon: Settings },
 ] as const;
@@ -96,29 +100,49 @@ export function AppSidebar({ isOpen = false, onClose }: AppSidebarProps) {
         </div>
 
         {/* Nav */}
-        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-          {navItems.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href || pathname?.startsWith(`${href}/`);
-            return (
-              <Link
-                key={href}
-                href={href}
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                )}
-                aria-label={label}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                <span className="truncate">{label}</span>
-              </Link>
-            );
-          })}
+        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto p-3">
+          <div>
+            <Link
+              href="/dashboard"
+              onClick={onClose}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                pathname === "/dashboard"
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              )}
+            >
+              <LayoutDashboard className="h-4 w-4 shrink-0" />
+              <span>Dashboard</span>
+            </Link>
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-2 mb-1">
+              📊 Finanzas
+            </h3>
+            {financeItems.map((item) => (
+              <SidebarItem key={item.href} {...item} pathname={pathname} onClose={onClose} />
+            ))}
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-2 mb-1">
+              📈 Planificación
+            </h3>
+            {planningItems.map((item) => (
+              <SidebarItem key={item.href} {...item} pathname={pathname} onClose={onClose} />
+            ))}
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-2 mb-1">
+              👥 Cuenta
+            </h3>
+            {accountItems.map((item) => (
+              <SidebarItem key={item.href} {...item} pathname={pathname} onClose={onClose} />
+            ))}
+          </div>
         </nav>
 
         {/* Logout */}
@@ -139,5 +163,26 @@ export function AppSidebar({ isOpen = false, onClose }: AppSidebarProps) {
         </div>
       </aside>
     </>
+  );
+}
+function SidebarItem({ href, label, icon: Icon, pathname, onClose }: { href: string, label: string, icon: any, pathname: string | null, onClose?: () => void }) {
+  const isActive = pathname === href || pathname?.startsWith(`${href}/`);
+  return (
+    <Link
+      href={href}
+      onClick={onClose}
+      className={cn(
+        "flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+        isActive
+          ? "bg-accent text-accent-foreground"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      )}
+      aria-label={label}
+      aria-current={isActive ? "page" : undefined}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      <span className="truncate">{label}</span>
+    </Link>
   );
 }
