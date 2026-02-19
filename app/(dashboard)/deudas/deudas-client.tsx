@@ -15,6 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn, formatCurrency, formatCOP, parseCOP } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 interface DeudasClientProps {
     initialDebts: (Collection & { creditor: Profile | null, payments: CollectionPayment[] })[];
@@ -26,6 +27,7 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [msg, setMsg] = useState<string | null>(null);
+    const { toast } = useToast();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Form state for new debt
@@ -105,7 +107,11 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
 
         const balance = calculateBalance(selectedCollection);
         if (numericAmount > balance + 0.01) {
-            setMsg(`El pago (${formatCurrency(numericAmount)}) excede el saldo pendiente (${formatCurrency(balance)}).`);
+            toast({
+                variant: "destructive",
+                title: "Pago no permitido",
+                description: `El pago de ${formatCurrency(numericAmount)} no es posible porque excede el saldo pendiente actual de ${formatCurrency(balance)}.`
+            });
             return;
         }
 
@@ -117,9 +123,16 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                 paymentWalletId === "none" ? undefined : paymentWalletId
             );
             if (error) {
-                setMsg(error);
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: error
+                });
             } else {
-                setMsg("Pago registrado.");
+                toast({
+                    title: "Transacción exitosa",
+                    description: "Pago registrado correctamente."
+                });
                 setIsPaymentDialogOpen(false);
                 setPaymentAmount("");
                 setPaymentNotes("");
