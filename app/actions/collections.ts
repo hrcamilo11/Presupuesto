@@ -66,7 +66,7 @@ export async function createCollection(
     return { data, error: null };
 }
 
-export async function addCollectionPayment(collectionId: string, amount: number, notes?: string) {
+export async function addCollectionPayment(collectionId: string, amount: number, notes?: string, walletId?: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
@@ -83,7 +83,11 @@ export async function addCollectionPayment(collectionId: string, amount: number,
     const collection = results?.[0];
 
     if (fetchError || !collection) return { error: "Cobro no encontrado." };
-    if (collection.creditor_id !== user.id) return { error: "Solo el acreedor puede registrar pagos." };
+
+    const isCreditor = collection.creditor_id === user.id;
+    const isDebtor = collection.debtor_id === user.id;
+
+    if (!isCreditor && !isDebtor) return { error: "No autorizado para registrar pagos en este cobro." };
 
     const totalPaid = (collection.payments || []).reduce((acc: number, p: { amount: number }) => acc + Number(p.amount), 0);
     const newTotal = totalPaid + amount;
@@ -104,6 +108,35 @@ export async function addCollectionPayment(collectionId: string, amount: number,
 
     if (paymentError) return { error: paymentError.message };
 
+    // Create movement in wallet if provided
+    if (walletId) {
+        if (isCreditor) {
+            // Create income
+            await supabase.from("incomes").insert({
+                user_id: user.id,
+                amount,
+                currency: collection.currency,
+                income_type: 'occasional',
+                description: `Abono de: ${collection.debtor_name || 'Amigo'} (${collection.description || ''})`,
+                date: new Date().toISOString().slice(0, 10),
+                wallet_id: walletId
+            });
+            await supabase.rpc("adjust_wallet_balance", { p_wallet_id: walletId, p_delta: amount });
+        } else if (isDebtor) {
+            // Create expense
+            await supabase.from("expenses").insert({
+                user_id: user.id,
+                amount,
+                currency: collection.currency,
+                expense_priority: 'obligatory',
+                description: `Pago a: ${collection.creditor_name || 'Amigo'} (${collection.description || ''})`,
+                date: new Date().toISOString().slice(0, 10),
+                wallet_id: walletId
+            });
+            await supabase.rpc("adjust_wallet_balance", { p_wallet_id: walletId, p_delta: -amount });
+        }
+    }
+
     // Update collection status
     const isFullyPaid = newTotal >= collection.amount - 0.01;
     const { error: updateError } = await supabase
@@ -117,21 +150,24 @@ export async function addCollectionPayment(collectionId: string, amount: number,
 
     if (updateError) return { error: updateError.message };
 
-    // Notify debtor
-    if (collection.debtor_id) {
+    // Notify other party
+    const otherPartyId = isCreditor ? collection.debtor_id : collection.creditor_id;
+    if (otherPartyId) {
         await supabase.rpc('insert_notification', {
-            p_user_id: collection.debtor_id,
-            p_title: isFullyPaid ? "Deuda pagada" : "Abono recibido",
+            p_user_id: otherPartyId,
+            p_title: isFullyPaid ? "Deuda pagada" : "Abono registrado",
             p_body: isFullyPaid
-                ? `Tu deuda de ${collection.amount} ${collection.currency} ha sido saldada.`
-                : `Se ha registrado un abono de ${amount} ${collection.currency} a tu deuda.`,
+                ? `La deuda de ${collection.amount} ${collection.currency} ha sido saldada.`
+                : `Se ha registrado un abono de ${amount} ${collection.currency} a la deuda.`,
             p_type: "loan",
-            p_link: "/deudas"
+            p_link: isCreditor ? "/deudas" : "/cobros"
         });
     }
 
     revalidatePath("/cobros");
     revalidatePath("/deudas");
+    revalidatePath("/wallets");
+    revalidatePath("/dashboard");
     return { error: null };
 }
 
@@ -185,14 +221,17 @@ export async function respondToCollection(collectionId: string, accept: boolean)
     return { error: null };
 }
 
-export async function markCollectionAsPaid(collectionId: string) {
+export async function markCollectionAsPaid(collectionId: string, walletId?: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
 
     const { data: results, error: fetchError } = await supabase
         .from("collections")
-        .select("*")
+        .select(`
+            *,
+            payments:collection_payments(amount)
+        `)
         .eq("id", collectionId);
 
     const collection = results?.[0];
@@ -200,6 +239,10 @@ export async function markCollectionAsPaid(collectionId: string) {
     if (fetchError || !collection) return { error: "Cobro no encontrado." };
 
     if (collection.creditor_id !== user.id) return { error: "Solo el acreedor puede marcar como pagado." };
+
+    // Calculate remaining balance to register as income if wallet provided
+    const totalPaid = (collection.payments || []).reduce((acc: number, p: { amount: number }) => acc + Number(p.amount), 0);
+    const balance = collection.amount - totalPaid;
 
     const { error } = await supabase
         .from("collections")
@@ -211,6 +254,20 @@ export async function markCollectionAsPaid(collectionId: string) {
         .eq("id", collectionId);
 
     if (error) return { error: error.message };
+
+    // Movement in wallet if provided and there is pending balance
+    if (walletId && balance > 0) {
+        await supabase.from("incomes").insert({
+            user_id: user.id,
+            amount: balance,
+            currency: collection.currency,
+            income_type: 'occasional',
+            description: `Pago final de: ${collection.debtor_name || 'Amigo'} (${collection.description || ''})`,
+            date: new Date().toISOString().slice(0, 10),
+            wallet_id: walletId
+        });
+        await supabase.rpc("adjust_wallet_balance", { p_wallet_id: walletId, p_delta: balance });
+    }
 
     if (collection.debtor_id) {
         await supabase.rpc('insert_notification', {
@@ -224,6 +281,8 @@ export async function markCollectionAsPaid(collectionId: string) {
 
     revalidatePath("/deudas");
     revalidatePath("/cobros");
+    revalidatePath("/wallets");
+    revalidatePath("/dashboard");
     return { error: null };
 }
 

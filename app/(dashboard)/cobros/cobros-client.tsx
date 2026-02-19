@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createCollection, markCollectionAsPaid, addCollectionPayment } from "@/app/actions/collections";
-import type { Profile, Collection, CollectionPayment } from "@/lib/database.types";
+import type { Profile, Collection, CollectionPayment, Wallet } from "@/lib/database.types";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -18,9 +18,10 @@ import { cn, formatCurrency } from "@/lib/utils";
 interface CobrosClientProps {
     initialCollections: (Collection & { debtor: Profile | null, payments: CollectionPayment[] })[];
     friends: { friendship_id: string, profile: Profile }[];
+    wallets: Wallet[];
 }
 
-export function CobrosClient({ initialCollections, friends }: CobrosClientProps) {
+export function CobrosClient({ initialCollections, friends, wallets }: CobrosClientProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -38,6 +39,9 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
     const [selectedCollection, setSelectedCollection] = useState<(Collection & { payments: CollectionPayment[] }) | null>(null);
     const [paymentAmount, setPaymentAmount] = useState("");
     const [paymentNotes, setPaymentNotes] = useState("");
+    const [paymentWalletId, setPaymentWalletId] = useState<string>("none");
+
+    const [isMarkAsPaidDialogOpen, setIsMarkAsPaidDialogOpen] = useState(false);
 
     function handleCreate() {
         if (selectedFriendId !== "manual" && !selectedFriendId) return;
@@ -50,7 +54,7 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
             if (error) {
                 setMsg(error);
             } else {
-                setMsg(finalDebtorId ? "Cobro enviado al amigo." : "Cobro manual registrado.");
+                setMsg("Cobro registrado exitosamente.");
                 setIsDialogOpen(false);
                 setSelectedFriendId("manual");
                 setDebtorName("");
@@ -61,30 +65,42 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
         });
     }
 
-    function handleMarkAsPaid(id: string) {
-        if (!confirm("¿Confirmas que recibiste el pago total de este cobro?")) return;
+    function handleAddPayment() {
+        if (!selectedCollection || !paymentAmount) return;
+
         startTransition(async () => {
-            const { error } = await markCollectionAsPaid(id);
+            const { error } = await addCollectionPayment(
+                selectedCollection.id,
+                parseFloat(paymentAmount),
+                paymentNotes,
+                paymentWalletId === "none" ? undefined : paymentWalletId
+            );
             if (error) {
                 setMsg(error);
             } else {
-                setMsg("Cobro marcado como pagado.");
+                setMsg("Abono registrado.");
+                setIsPaymentDialogOpen(false);
+                setPaymentAmount("");
+                setPaymentNotes("");
+                setPaymentWalletId("none");
+                setSelectedCollection(null);
                 router.refresh();
             }
         });
     }
 
-    function handleAddPayment() {
-        if (!selectedCollection || !paymentAmount) return;
+    function handleMarkAsPaid(collectionId: string) {
         startTransition(async () => {
-            const { error } = await addCollectionPayment(selectedCollection.id, parseFloat(paymentAmount), paymentNotes);
+            const { error } = await markCollectionAsPaid(
+                collectionId,
+                paymentWalletId === "none" ? undefined : paymentWalletId
+            );
             if (error) {
                 setMsg(error);
             } else {
-                setMsg("Abono registrado con éxito.");
-                setIsPaymentDialogOpen(false);
-                setPaymentAmount("");
-                setPaymentNotes("");
+                setMsg("Cobro marcado como pagado.");
+                setIsMarkAsPaidDialogOpen(false);
+                setPaymentWalletId("none");
                 setSelectedCollection(null);
                 router.refresh();
             }
@@ -244,37 +260,43 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                                                         Pendiente: {formatCurrency(balance, c.currency)}
                                                     </p>
                                                 )}
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                {(c.status === 'active' || c.status === 'partially_paid') && (
-                                                    <>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="h-8 gap-1.5"
-                                                            onClick={() => {
-                                                                setSelectedCollection(c);
-                                                                setIsPaymentDialogOpen(true);
-                                                            }}
-                                                        >
-                                                            <Plus className="h-3.5 w-3.5" />
-                                                            Abonar
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            className="h-8 text-green-600 hover:text-green-700 hover:bg-green-50 px-2"
-                                                            onClick={() => handleMarkAsPaid(c.id)}
-                                                        >
-                                                            <Check className="h-4 w-4" />
-                                                            Total
-                                                        </Button>
-                                                    </>
-                                                )}
-                                                {c.status === 'pending_approval' && (
-                                                    <p className="text-xs italic text-muted-foreground mr-2">Esperando confirmación...</p>
-                                                )}
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    {(c.status === 'active' || c.status === 'partially_paid') && (
+                                                        <>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-8 gap-1.5"
+                                                                onClick={() => {
+                                                                    setSelectedCollection(c);
+                                                                    setIsPaymentDialogOpen(true);
+                                                                    setPaymentWalletId("none");
+                                                                    setPaymentAmount("");
+                                                                    setPaymentNotes("");
+                                                                }}
+                                                            >
+                                                                <Plus className="h-3.5 w-3.5" />
+                                                                Abonar
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-8 text-green-600 hover:text-green-700 hover:bg-green-50 px-2"
+                                                                onClick={() => {
+                                                                    setSelectedCollection(c);
+                                                                    setIsMarkAsPaidDialogOpen(true);
+                                                                    setPaymentWalletId("none");
+                                                                }}
+                                                            >
+                                                                <Check className="h-4 w-4" />
+                                                                Total
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                    {c.status === 'pending_approval' && (
+                                                        <p className="text-xs italic text-muted-foreground mr-2">Esperando confirmación...</p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -341,8 +363,66 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                                     onChange={(e) => setPaymentNotes(e.target.value)}
                                 />
                             </div>
+
+                            <div className="space-y-2">
+                                <Label>¿A qué cuenta llega el dinero?</Label>
+                                <Select value={paymentWalletId} onValueChange={setPaymentWalletId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar cuenta" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Ninguna (No registrar movimiento)</SelectItem>
+                                        {wallets.map(w => (
+                                            <SelectItem key={w.id} value={w.id}>
+                                                {w.name} ({formatCurrency(w.balance, w.currency)})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
                             <Button className="w-full" onClick={handleAddPayment} disabled={isPending || !paymentAmount}>
                                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar Abono"}
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Mark as Paid Dialog */}
+            <Dialog open={isMarkAsPaidDialogOpen} onOpenChange={setIsMarkAsPaidDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Marcar como Pagado</DialogTitle>
+                    </DialogHeader>
+                    {selectedCollection && (
+                        <div className="space-y-4 py-4">
+                            <div className="rounded-lg bg-green-50 border border-green-100 p-3 space-y-1">
+                                <p className="text-xs font-bold uppercase text-green-800">Saldo Final a Cobrar</p>
+                                <p className="text-2xl font-black text-green-950">
+                                    {formatCurrency(calculateBalance(selectedCollection), selectedCollection.currency)}
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>¿A qué cuenta llega el dinero?</Label>
+                                <Select value={paymentWalletId} onValueChange={setPaymentWalletId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar cuenta" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Ninguna (No registrar movimiento)</SelectItem>
+                                        {wallets.map(w => (
+                                            <SelectItem key={w.id} value={w.id}>
+                                                {w.name} ({formatCurrency(w.balance, w.currency)})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => handleMarkAsPaid(selectedCollection.id)} disabled={isPending}>
+                                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar Pago Total"}
                             </Button>
                         </div>
                     )}
