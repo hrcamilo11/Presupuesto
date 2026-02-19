@@ -306,7 +306,7 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                                                     <span>{d.created_at ? format(new Date(d.created_at), "d 'de' MMMM", { locale: es }) : "—"}</span>
                                                     {d.status === 'partially_paid' && (
                                                         <span className="text-destructive font-medium">
-                                                            {(d.payments || []).length} abonos registrados
+                                                            {(d.payments || []).length} {(d.payments || []).length === 1 ? 'abono registrado' : 'abonos registrados'}
                                                         </span>
                                                     )}
                                                 </div>

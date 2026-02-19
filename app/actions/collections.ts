@@ -119,7 +119,7 @@ export async function addCollectionPayment(collectionId: string, amount: number,
                 amount,
                 currency: collection.currency,
                 income_type: 'occasional',
-                description: `Abono de: ${collection.debtor_name || 'Amigo'} (${collection.description || ''})`,
+                description: `Abono de: ${collection.debtor_name || 'Amigo'}${collection.description ? ` (${collection.description})` : ''}`,
                 date: new Date().toISOString().slice(0, 10),
                 wallet_id: walletId
             }).select().single();
@@ -135,7 +135,7 @@ export async function addCollectionPayment(collectionId: string, amount: number,
                 amount,
                 currency: collection.currency,
                 expense_priority: 'obligatory',
-                description: `Pago a: ${collection.creditor_name || 'Amigo'} (${collection.description || ''})`,
+                description: `Pago a: ${collection.creditor_name || 'Amigo'}${collection.description ? ` (${collection.description})` : ''}`,
                 date: new Date().toISOString().slice(0, 10),
                 wallet_id: walletId
             }).select().single();
@@ -273,7 +273,7 @@ export async function markCollectionAsPaid(collectionId: string, walletId?: stri
             amount: balance,
             currency: collection.currency,
             income_type: 'occasional',
-            description: `Pago final de: ${collection.debtor_name || 'Amigo'} (${collection.description || ''})`,
+            description: `Pago final de: ${collection.debtor_name || 'Amigo'}${collection.description ? ` (${collection.description})` : ''}`,
             date: new Date().toISOString().slice(0, 10),
             wallet_id: walletId
         });
@@ -328,7 +328,7 @@ export async function allocateCollectionPayment(paymentId: string, walletId: str
             amount: payment.amount,
             currency: collection.currency,
             income_type: 'occasional',
-            description: `Abono de: ${collection.debtor_name || 'Amigo'} (${collection.description || ''})`,
+            description: `Abono de: ${collection.debtor_name || 'Amigo'}${collection.description ? ` (${collection.description})` : ''}`,
             date: new Date().toISOString().slice(0, 10),
             wallet_id: walletId
         }).select().single();
@@ -344,7 +344,7 @@ export async function allocateCollectionPayment(paymentId: string, walletId: str
             amount: payment.amount,
             currency: collection.currency,
             expense_priority: 'obligatory',
-            description: `Pago a: ${collection.creditor_name || 'Amigo'} (${collection.description || ''})`,
+            description: `Pago a: ${collection.creditor_name || 'Amigo'}${collection.description ? ` (${collection.description})` : ''}`,
             date: new Date().toISOString().slice(0, 10),
             wallet_id: walletId
         }).select().single();

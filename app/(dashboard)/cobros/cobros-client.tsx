@@ -307,7 +307,7 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                                                     <span>{c.created_at ? format(new Date(c.created_at), "d 'de' MMMM", { locale: es }) : "—"}</span>
                                                     {c.status === 'partially_paid' && (
                                                         <span className="text-primary font-medium">
-                                                            {(c.payments || []).length} abonos realizados
+                                                            {(c.payments || []).length} {(c.payments || []).length === 1 ? 'abono realizado' : 'abonos realizados'}
                                                         </span>
                                                     )}
                                                 </div>
