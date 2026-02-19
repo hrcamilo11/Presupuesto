@@ -14,7 +14,7 @@ import type { Collection, Profile, CollectionPayment, Wallet } from "@/lib/datab
 import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, formatCOP, parseCOP } from "@/lib/utils";
 
 interface DeudasClientProps {
     initialDebts: (Collection & { creditor: Profile | null, payments: CollectionPayment[] })[];
@@ -78,11 +78,12 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
     function handleCreate() {
         if (selectedFriendId !== "manual" && !selectedFriendId) return;
         if (selectedFriendId === "manual" && !creditorName) return;
-        if (!amount) return;
+        const numericAmount = parseFloat(parseCOP(amount));
+        if (!numericAmount || numericAmount <= 0) return;
 
         startTransition(async () => {
             const finalCreditorId = selectedFriendId === "manual" ? null : selectedFriendId;
-            const { error } = await createCollection(null, parseFloat(amount), 'COP', description, undefined, finalCreditorId, creditorName);
+            const { error } = await createCollection(null, numericAmount, 'COP', description, undefined, finalCreditorId, creditorName);
             if (error) {
                 setMsg(error);
             } else {
@@ -98,12 +99,20 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
     }
 
     function handleAddPayment() {
-        if (!selectedCollection || !paymentAmount) return;
+        if (!selectedCollection) return;
+        const numericAmount = parseFloat(parseCOP(paymentAmount));
+        if (!numericAmount || numericAmount <= 0) return;
+
+        const balance = calculateBalance(selectedCollection);
+        if (numericAmount > balance + 0.01) {
+            setMsg(`El pago (${formatCurrency(numericAmount)}) excede el saldo pendiente (${formatCurrency(balance)}).`);
+            return;
+        }
 
         startTransition(async () => {
             const { error } = await addCollectionPayment(
                 selectedCollection.id,
-                parseFloat(paymentAmount),
+                numericAmount,
                 paymentNotes,
                 paymentWalletId === "none" ? undefined : paymentWalletId
             );
@@ -211,13 +220,16 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                             )}
                             <div className="space-y-2">
                                 <Label htmlFor="amount">Monto</Label>
-                                <Input
-                                    id="amount"
-                                    type="number"
-                                    placeholder="0.00"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                />
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                                    <Input
+                                        id="amount"
+                                        placeholder="0"
+                                        className="pl-7"
+                                        value={amount}
+                                        onChange={(e) => setAmount(formatCOP(e.target.value))}
+                                    />
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="description">Descripción (opcional)</Label>
@@ -414,13 +426,16 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
 
                             <div className="space-y-2">
                                 <Label htmlFor="pAmount">Monto del pago</Label>
-                                <Input
-                                    id="pAmount"
-                                    type="number"
-                                    placeholder="0.00"
-                                    value={paymentAmount}
-                                    onChange={(e) => setPaymentAmount(e.target.value)}
-                                />
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                                    <Input
+                                        id="pAmount"
+                                        placeholder="0"
+                                        className="pl-7"
+                                        value={paymentAmount}
+                                        onChange={(e) => setPaymentAmount(formatCOP(e.target.value))}
+                                    />
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="pNotes">Notas (opcional)</Label>

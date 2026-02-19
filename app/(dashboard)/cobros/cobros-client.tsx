@@ -13,7 +13,7 @@ import type { Profile, Collection, CollectionPayment, Wallet } from "@/lib/datab
 import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, formatCOP, parseCOP } from "@/lib/utils";
 
 interface CobrosClientProps {
     initialCollections: (Collection & { debtor: Profile | null, payments: CollectionPayment[] })[];
@@ -68,15 +68,16 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
     function handleCreate() {
         if (selectedFriendId !== "manual" && !selectedFriendId) return;
         if (selectedFriendId === "manual" && !debtorName) return;
-        if (!amount) return;
+        const numericAmount = parseFloat(parseCOP(amount));
+        if (!numericAmount || numericAmount <= 0) return;
 
         startTransition(async () => {
             const finalDebtorId = selectedFriendId === "manual" ? null : selectedFriendId;
-            const { error } = await createCollection(finalDebtorId, parseFloat(amount), 'COP', description, debtorName);
+            const { error } = await createCollection(finalDebtorId, numericAmount, 'COP', description, debtorName);
             if (error) {
                 setMsg(error);
             } else {
-                setMsg("Cobro registrado exitosamente.");
+                setMsg(finalDebtorId ? "Cobro registrado y enviado al amigo." : "Cobro manual registrado.");
                 setIsDialogOpen(false);
                 setSelectedFriendId("manual");
                 setDebtorName("");
@@ -88,12 +89,20 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
     }
 
     function handleAddPayment() {
-        if (!selectedCollection || !paymentAmount) return;
+        if (!selectedCollection) return;
+        const numericAmount = parseFloat(parseCOP(paymentAmount));
+        if (!numericAmount || numericAmount <= 0) return;
+
+        const balance = calculateBalance(selectedCollection);
+        if (numericAmount > balance + 0.01) {
+            setMsg(`El abono (${formatCurrency(numericAmount)}) excede el saldo pendiente (${formatCurrency(balance)}).`);
+            return;
+        }
 
         startTransition(async () => {
             const { error } = await addCollectionPayment(
                 selectedCollection.id,
-                parseFloat(paymentAmount),
+                numericAmount,
                 paymentNotes,
                 paymentWalletId === "none" ? undefined : paymentWalletId
             );
@@ -218,13 +227,16 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                             )}
                             <div className="space-y-2">
                                 <Label htmlFor="amount">Monto</Label>
-                                <Input
-                                    id="amount"
-                                    type="number"
-                                    placeholder="0.00"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                />
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                                    <Input
+                                        id="amount"
+                                        placeholder="0"
+                                        className="pl-7"
+                                        value={amount}
+                                        onChange={(e) => setAmount(formatCOP(e.target.value))}
+                                    />
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="description">Descripción (opcional)</Label>
@@ -405,13 +417,16 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
 
                             <div className="space-y-2">
                                 <Label htmlFor="pAmount">Monto del abono</Label>
-                                <Input
-                                    id="pAmount"
-                                    type="number"
-                                    placeholder="0.00"
-                                    value={paymentAmount}
-                                    onChange={(e) => setPaymentAmount(e.target.value)}
-                                />
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                                    <Input
+                                        id="pAmount"
+                                        placeholder="0"
+                                        className="pl-7"
+                                        value={paymentAmount}
+                                        onChange={(e) => setPaymentAmount(formatCOP(e.target.value))}
+                                    />
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="pNotes">Notas (opcional)</Label>
