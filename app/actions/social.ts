@@ -26,13 +26,19 @@ export async function sendFriendRequest(friendId: string): Promise<{ error: stri
     if (!user) return { error: "No autenticado" };
 
     // 1. Check if there's already a record in either direction
-    const { data: existing, error: fetchError } = await supabase
+    const { data: existingRecords, error: fetchError } = await supabase
         .from("friends")
         .select("*")
-        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`)
-        .maybeSingle();
+        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
 
     if (fetchError) return { error: fetchError.message };
+
+    // If multiple exist (unexpected), prioritize: accepted > pending > rejected
+    const sorted = (existingRecords || []).sort((a, b) => {
+        const order: Record<FriendStatus, number> = { accepted: 3, pending: 2, rejected: 1 };
+        return order[b.status as FriendStatus] - order[a.status as FriendStatus];
+    });
+    const existing = sorted[0];
 
     if (existing) {
         // Simple cases: already friends or already pending from Me -> Friend
@@ -61,7 +67,8 @@ export async function sendFriendRequest(friendId: string): Promise<{ error: stri
             if (updateError) return { error: updateError.message };
 
             // Notify them that I accepted
-            const { data: myProfile } = await supabase.from("profiles").select("full_name, username").eq("id", user.id).single();
+            const { data: profiles } = await supabase.from("profiles").select("full_name, username").eq("id", user.id);
+            const myProfile = profiles?.[0];
             const accepterName = myProfile?.full_name || myProfile?.username || "Tu nuevo amigo";
 
             await supabase.rpc('insert_notification', {
@@ -92,7 +99,8 @@ export async function sendFriendRequest(friendId: string): Promise<{ error: stri
     }
 
     // Notify the friend (only for new requests or resent ones)
-    const { data: myProfile } = await supabase.from("profiles").select("full_name, username").eq("id", user.id).single();
+    const { data: profiles } = await supabase.from("profiles").select("full_name, username").eq("id", user.id);
+    const myProfile = profiles?.[0];
     const senderName = myProfile?.full_name || myProfile?.username || "Alguien";
 
     await supabase.rpc('insert_notification', {
@@ -112,12 +120,12 @@ export async function respondToFriendRequest(requestId: string, status: FriendSt
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
 
-    const { data: request, error: fetchError } = await supabase
+    const { data: requests, error: fetchError } = await supabase
         .from("friends")
         .select("*")
-        .eq("id", requestId)
-        .single();
+        .eq("id", requestId);
 
+    const request = requests?.[0];
     if (fetchError || !request) return { error: "Solicitud no encontrada." };
     if (request.friend_id !== user.id) return { error: "No autorizado." };
 
@@ -130,7 +138,8 @@ export async function respondToFriendRequest(requestId: string, status: FriendSt
 
     // Notify sender if accepted
     if (status === 'accepted') {
-        const { data: myProfile } = await supabase.from("profiles").select("full_name, username").eq("id", user.id).single();
+        const { data: profiles } = await supabase.from("profiles").select("full_name, username").eq("id", user.id);
+        const myProfile = profiles?.[0];
         const accepterName = myProfile?.full_name || myProfile?.username || "Tu amigo";
 
         await supabase.rpc('insert_notification', {
