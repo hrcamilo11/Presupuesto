@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Budget, Category, Expense } from "@/lib/database.types";
 
 interface BudgetSummaryProps {
-    budgets: (Budget & { category: Category })[];
+    budgets: (Budget & { category?: Category; categories?: Category })[];
     expenses: Expense[];
 }
 
@@ -19,6 +19,9 @@ export function BudgetSummary({ budgets, expenses }: BudgetSummaryProps) {
             </CardHeader>
             <CardContent className="space-y-6">
                 {budgets.map((budget) => {
+                    const cat = budget.category ?? budget.categories;
+                    if (!cat) return null;
+
                     const spent = expenses
                         .filter((e) => e.category_id === budget.category_id)
                         .reduce((acc, e) => acc + Number(e.amount), 0);
@@ -32,9 +35,9 @@ export function BudgetSummary({ budgets, expenses }: BudgetSummaryProps) {
                                 <div className="flex items-center gap-2 font-medium">
                                     <div
                                         className="h-2 w-2 rounded-full"
-                                        style={{ backgroundColor: budget.category.color }}
+                                        style={{ backgroundColor: cat.color }}
                                     />
-                                    {budget.category.name}
+                                    {cat.name}
                                 </div>
                                 <div className="text-muted-foreground">
                                     ${spent.toLocaleString()} / ${Number(budget.amount).toLocaleString()}
@@ -56,3 +59,4 @@ export function BudgetSummary({ budgets, expenses }: BudgetSummaryProps) {
         </Card>
     );
 }
+
