@@ -10,8 +10,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, FileSpreadsheet } from "lucide-react";
-import { exportToExcel, type ExportSectionId } from "@/app/actions/reports";
+import { Download, Loader2, FileSpreadsheet, FileText } from "lucide-react";
+import { exportToExcel, exportToPdf, type ExportSectionId } from "@/app/actions/reports";
 import { cn } from "@/lib/utils";
 
 const SECTIONS: { id: ExportSectionId; label: string }[] = [
@@ -55,7 +55,7 @@ export function ExportReportDialog({ context = null, wallet = null, trigger }: E
     setSections([]);
   }
 
-  async function handleExport() {
+  async function handleExport(type: "excel" | "pdf") {
     if (sections.length === 0) {
       setError("Selecciona al menos una sección.");
       return;
@@ -66,7 +66,9 @@ export function ExportReportDialog({ context = null, wallet = null, trigger }: E
     }
     setError(null);
     setLoading(true);
-    const result = await exportToExcel({
+
+    const exportFn = type === "excel" ? exportToExcel : exportToPdf;
+    const result = await exportFn({
       dateFrom,
       dateTo,
       sections,
@@ -84,11 +86,17 @@ export function ExportReportDialog({ context = null, wallet = null, trigger }: E
       const bin = atob(result.data);
       const arr = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-      const blob = new Blob([arr], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+      const mimeType = type === "excel"
+        ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        : "application/pdf";
+      const extension = type === "excel" ? "xlsx" : "pdf";
+
+      const blob = new Blob([arr], { type: mimeType });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `reporte_presupuesto_${dateFrom}_${dateTo}.xlsx`;
+      link.download = `reporte_presupuesto_${dateFrom}_${dateTo}.${extension}`;
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
@@ -191,17 +199,25 @@ export function ExportReportDialog({ context = null, wallet = null, trigger }: E
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+        <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading} className="sm:mr-auto">
             Cancelar
           </Button>
-          <Button onClick={handleExport} disabled={loading || sections.length === 0} className="gap-2">
+          <Button onClick={() => handleExport("pdf")} disabled={loading || sections.length === 0} variant="outline" className="gap-2">
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4" />
+            )}
+            PDF
+          </Button>
+          <Button onClick={() => handleExport("excel")} disabled={loading || sections.length === 0} className="gap-2">
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Download className="h-4 w-4" />
             )}
-            Exportar Excel
+            Excel
           </Button>
         </DialogFooter>
       </DialogContent>

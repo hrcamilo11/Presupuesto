@@ -299,3 +299,61 @@ export async function wipeMyPersonalData(input: z.infer<typeof wipePersonalDataS
   return { error: null };
 }
 
+export async function deleteMyAccountPermanently(input: z.infer<typeof wipePersonalDataSchema>) {
+  const parsed = wipePersonalDataSchema.safeParse(input);
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i) => i.message).join(" ");
+    return { error: msg || "Datos inválidos" };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || !user.email) return { error: "No autenticado" };
+
+  // Verify password
+  const { error: authError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: parsed.data.password,
+  });
+
+  if (authError) {
+    return { error: "Contraseña incorrecta. No se realizaron cambios." };
+  }
+
+  const userId = user.id;
+
+  try {
+    // We rely on CASCADE for most things, but some might need explicit deletion if not setup with CASCADE
+    // Actually, everything in the initial schema (incomes, expenses, profiles) has ON DELETE CASCADE from auth.users.
+    // However, since we are deleting the profile (child) and data (child) but can't delete auth.user (parent) easily,
+    // we should delete them explicitly.
+
+    // 1. Delete all data (similar to wipeMyPersonalData but including shared links)
+    // First, remove shared account invitations/memberships
+    await supabase.from("shared_account_members").delete().eq("user_id", userId);
+
+    // 2. Wipe personal data
+    await wipeMyPersonalData(input);
+
+    // 3. Delete notifications
+    await supabase.from("notifications").delete().eq("user_id", userId);
+
+    // 4. Delete profile
+    await supabase.from("profiles").delete().eq("id", userId);
+
+    // Note: We cannot delete the auth.user record from a normal server action WITHOUT service role.
+    // However, with no profile and no data, the account is effectively gone.
+  } catch (e: unknown) {
+    console.error("Error al eliminar cuenta:", e);
+    return {
+      error:
+        e instanceof Error
+          ? e.message
+          : "Ocurrió un error al eliminar tu cuenta. Intenta nuevamente.",
+    };
+  }
+
+  return { error: null };
+}

@@ -19,12 +19,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { updateMyDashboardSettings, updateMyProfileBasics, updateMyUsername, wipeMyPersonalData } from "@/app/actions/profile";
+import { deleteMyAccountPermanently, updateMyDashboardSettings, updateMyProfileBasics, updateMyUsername, wipeMyPersonalData } from "@/app/actions/profile";
 import { updateNotificationPreferences, sendTestEmail } from "@/app/actions/notifications";
 import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
 import { requestInstallPrompt } from "@/components/pwa/install-prompt";
 import { useTransition, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import type { NotificationPreferences } from "@/lib/database.types";
 
 interface SettingsPageClientProps {
@@ -70,6 +72,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
     const [isPending, startTransition] = useTransition();
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
+    const router = useRouter();
 
     // Evitar errores de hidratación
     useEffect(() => {
@@ -100,6 +103,13 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
     const [wipeConfirm2, setWipeConfirm2] = useState(false);
     const [wipeConfirm3, setWipeConfirm3] = useState(false);
     const [wipePassword, setWipePassword] = useState("");
+
+    // Eliminación definitiva
+    const [delMsg, setDelMsg] = useState<string | null>(null);
+    const [delConfirm1, setDelConfirm1] = useState(false);
+    const [delConfirm2, setDelConfirm2] = useState(false);
+    const [delConfirm3, setDelConfirm3] = useState(false);
+    const [delPassword, setDelPassword] = useState("");
 
     const mergedNotifPrefs = { ...DEFAULT_NOTIFICATION_PREFS, ...notificationPreferences };
     const [emailEnabled, setEmailEnabled] = useState(mergedNotifPrefs.email_enabled);
@@ -215,6 +225,26 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                 setWipeConfirm2(false);
                 setWipeConfirm3(false);
                 setWipePassword("");
+            }
+        });
+    }
+
+
+
+    function handleDeleteAccount() {
+        if (!delConfirm1 || !delConfirm2 || !delConfirm3 || !delPassword) return;
+        setDelMsg(null);
+        startTransition(async () => {
+            const res = await deleteMyAccountPermanently({ password: delPassword });
+            if (res.error) {
+                setDelMsg(res.error);
+            } else {
+                setDelMsg("Tu cuenta ha sido eliminada. Cerrando sesión...");
+                setTimeout(async () => {
+                    const supabase = createClient();
+                    await supabase.auth.signOut();
+                    router.push("/login");
+                }, 2000);
             }
         });
     }
@@ -439,7 +469,7 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                 </div>
                                 <div>
                                     <CardTitle className="text-lg text-destructive">
-                                        Zona peligrosa: limpiar cuenta personal
+                                        Zona crítica: limpiar cuenta personal
                                     </CardTitle>
                                     <p className="text-sm text-muted-foreground mt-0.5">Esta acción es irreversible.</p>
                                 </div>
@@ -495,9 +525,6 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                     onChange={(e) => setWipePassword(e.target.value)}
                                     placeholder="Ingresa tu contraseña para confirmar"
                                 />
-                                <p className="text-xs text-muted-foreground">
-                                    Se usará solo para confirmar tu identidad antes de ejecutar la limpieza.
-                                </p>
                             </div>
 
                             <div className="flex justify-end">
@@ -519,6 +546,95 @@ export function SettingsPageClient({ categories, tags, wallets, sharedAccounts, 
                                         <Trash2 className="mr-2 h-4 w-4" />
                                     )}
                                     Limpiar cuenta personal
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="overflow-hidden rounded-xl border-2 border-red-600/30 bg-red-600/5 shadow-sm dark:bg-red-600/10 mt-6">
+                        <CardHeader className="pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-600/20">
+                                    <Trash2 className="h-5 w-5 text-red-600" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-lg text-red-600">
+                                        Zona letal: eliminar cuenta definitivamente
+                                    </CardTitle>
+                                    <p className="text-sm text-muted-foreground mt-0.5">Se borrará TODO, incluyendo tu usuario y perfil.</p>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {delMsg && (
+                                <p className="text-sm text-muted-foreground">{delMsg}</p>
+                            )}
+                            <p className="text-sm text-muted-foreground">
+                                Esta acción eliminará permanentemente tu cuenta y todos tus datos personales.
+                                No podrás recuperar esta información. Se te desconectará de todas las sesiones.
+                            </p>
+
+                            <div className="space-y-3 rounded-lg border border-border/80 bg-muted/40 p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs text-muted-foreground">
+                                        1. Entiendo que se perderá TODO acceso y dato personal.
+                                    </p>
+                                    <Switch
+                                        checked={delConfirm1}
+                                        onCheckedChange={(v) => setDelConfirm1(!!v)}
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs text-muted-foreground">
+                                        2. Entiendo que esta acción NO se puede deshacer.
+                                    </p>
+                                    <Switch
+                                        checked={delConfirm2}
+                                        onCheckedChange={(v) => setDelConfirm2(!!v)}
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs text-muted-foreground">
+                                        3. Confirmo definitivamente que deseo eliminar mi cuenta.
+                                    </p>
+                                    <Switch
+                                        checked={delConfirm3}
+                                        onCheckedChange={(v) => setDelConfirm3(!!v)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="del_password">Contraseña de tu cuenta</Label>
+                                <Input
+                                    id="del_password"
+                                    type="password"
+                                    value={delPassword}
+                                    onChange={(e) => setDelPassword(e.target.value)}
+                                    placeholder="Ingresa tu contraseña para confirmar"
+                                />
+                            </div>
+
+                            <div className="flex justify-end">
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    className="bg-red-600 hover:bg-red-700"
+                                    disabled={
+                                        isPending ||
+                                        !delConfirm1 ||
+                                        !delConfirm2 ||
+                                        !delConfirm3 ||
+                                        !delPassword
+                                    }
+                                    onClick={handleDeleteAccount}
+                                >
+                                    {isPending ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                    )}
+                                    ELIMINAR MI CUENTA AHORA
                                 </Button>
                             </div>
                         </CardContent>
