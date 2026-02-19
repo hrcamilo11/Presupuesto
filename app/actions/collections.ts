@@ -21,7 +21,7 @@ export async function createCollection(
     const finalCreditorId = creditorId || (debtorId ? user.id : null);
     const finalDebtorId = debtorId || (creditorId ? user.id : null);
 
-    const { data, error } = await supabase
+    const { data: inserts, error } = await supabase
         .from("collections")
         .insert({
             creditor_id: finalCreditorId,
@@ -34,10 +34,10 @@ export async function createCollection(
             // Status is pending if it involves a friend who needs to approve
             status: (finalCreditorId && finalDebtorId) ? 'pending_approval' : 'active'
         })
-        .select()
-        .single();
+        .select();
 
-    if (error) return { error: error.message };
+    const data = inserts?.[0];
+    if (error || !data) return { error: error?.message || "Error al crear el registro." };
 
     // Notify the other party if it's a linked friend
     const otherPartyId = debtorId || creditorId;
@@ -72,14 +72,15 @@ export async function addCollectionPayment(collectionId: string, amount: number,
     if (!user) return { error: "No autenticado" };
 
     // Fetch collection to verify and check totals
-    const { data: collection, error: fetchError } = await supabase
+    const { data: results, error: fetchError } = await supabase
         .from("collections")
         .select(`
             *,
             payments:collection_payments(amount)
         `)
-        .eq("id", collectionId)
-        .single();
+        .eq("id", collectionId);
+
+    const collection = results?.[0];
 
     if (fetchError || !collection) return { error: "Cobro no encontrado." };
     if (collection.creditor_id !== user.id) return { error: "Solo el acreedor puede registrar pagos." };
@@ -139,11 +140,12 @@ export async function respondToCollection(collectionId: string, accept: boolean)
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
 
-    const { data: collection, error: fetchError } = await supabase
+    const { data: results, error: fetchError } = await supabase
         .from("collections")
         .select("*")
-        .eq("id", collectionId)
-        .single();
+        .eq("id", collectionId);
+
+    const collection = results?.[0];
 
     if (fetchError || !collection) return { error: "Registro no encontrado." };
 
@@ -188,11 +190,12 @@ export async function markCollectionAsPaid(collectionId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
 
-    const { data: collection, error: fetchError } = await supabase
+    const { data: results, error: fetchError } = await supabase
         .from("collections")
         .select("*")
-        .eq("id", collectionId)
-        .single();
+        .eq("id", collectionId);
+
+    const collection = results?.[0];
 
     if (fetchError || !collection) return { error: "Cobro no encontrado." };
 

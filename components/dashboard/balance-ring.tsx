@@ -8,6 +8,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { formatCurrency } from "@/lib/utils";
 
 type Props = {
   balance: number;
@@ -20,12 +21,7 @@ const balanceRadialConfig = {
   gastos: { label: "Gastos", color: "#ef4444" },
 } satisfies ChartConfig;
 
-const formatCop = (value: number | undefined) =>
-  new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-  }).format(value ?? 0);
+const formatCop = (value: number | undefined) => formatCurrency(value ?? 0);
 
 export function BalanceRing({ balance, totalIncome, totalExpense }: Props) {
   const [mounted, setMounted] = useState(false);

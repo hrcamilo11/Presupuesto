@@ -18,9 +18,10 @@ export function formatNumber(value: number | string): string {
   return `${sign}${withDots}`;
 }
 
-export function formatCurrency(amount: number, currency: string = "COP") {
+export function formatCurrency(amount: number | string, currency: string = "COP") {
+  const numericAmount = typeof amount === "string" ? parseFloat(amount) || 0 : amount;
   const prefix = currency === "COP" ? "$" : `${currency} `;
-  return `${prefix}${formatNumber(amount)}`;
+  return `${prefix}${formatNumber(numericAmount)}`;
 }
 
 /**

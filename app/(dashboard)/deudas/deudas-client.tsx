@@ -11,9 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { respondToCollection, createCollection } from "@/app/actions/collections";
 import type { Collection, Profile, CollectionPayment } from "@/lib/database.types";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 interface DeudasClientProps {
     initialDebts: (Collection & { creditor: Profile | null, payments: CollectionPayment[] })[];
@@ -21,6 +22,7 @@ interface DeudasClientProps {
 }
 
 export function DeudasClient({ initialDebts, friends }: DeudasClientProps) {
+    const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [msg, setMsg] = useState<string | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -38,6 +40,7 @@ export function DeudasClient({ initialDebts, friends }: DeudasClientProps) {
                 setMsg(error);
             } else {
                 setMsg(accept ? "Deuda aceptada." : "Deuda rechazada.");
+                router.refresh();
             }
         });
     }
@@ -59,6 +62,7 @@ export function DeudasClient({ initialDebts, friends }: DeudasClientProps) {
                 setCreditorName("");
                 setAmount("");
                 setDescription("");
+                router.refresh();
             }
         });
     }
@@ -203,10 +207,10 @@ export function DeudasClient({ initialDebts, friends }: DeudasClientProps) {
                                                     {d.description || "Sin descripción"}
                                                 </p>
                                                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                                    <span>{format(new Date(d.created_at), "d 'de' MMMM", { locale: es })}</span>
+                                                    <span>{d.created_at ? format(new Date(d.created_at), "d 'de' MMMM", { locale: es }) : "—"}</span>
                                                     {d.status === 'partially_paid' && (
                                                         <span className="text-destructive font-medium">
-                                                            {d.payments.length} abonos registrados
+                                                            {(d.payments || []).length} abonos registrados
                                                         </span>
                                                     )}
                                                 </div>
@@ -216,11 +220,11 @@ export function DeudasClient({ initialDebts, friends }: DeudasClientProps) {
                                         <div className="flex flex-col items-end gap-2 border-t md:border-t-0 pt-4 md:pt-0">
                                             <div className="text-right">
                                                 <p className="text-2xl font-bold text-destructive">
-                                                    {new Intl.NumberFormat('es-CO', { style: 'currency', currency: d.currency }).format(d.amount)}
+                                                    {formatCurrency(d.amount, d.currency)}
                                                 </p>
                                                 {balance < d.amount && balance > 0 && (
                                                     <p className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full inline-block mt-1">
-                                                        Pendiente: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: d.currency }).format(balance)}
+                                                        Pendiente: {formatCurrency(balance, d.currency)}
                                                     </p>
                                                 )}
                                             </div>
@@ -265,7 +269,7 @@ export function DeudasClient({ initialDebts, friends }: DeudasClientProps) {
                                                     <div key={p.id} className="flex items-center justify-between bg-muted/40 p-2 rounded-md text-xs border border-border/50">
                                                         <div>
                                                             <span className="font-bold text-destructive">
-                                                                {new Intl.NumberFormat('es-CO', { style: 'currency', currency: d.currency }).format(p.amount)}
+                                                                {formatCurrency(p.amount, d.currency)}
                                                             </span>
                                                             <span className="text-muted-foreground ml-2">
                                                                 {format(new Date(p.date), "dd/MM/yy")}

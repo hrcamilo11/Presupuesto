@@ -2,7 +2,7 @@ const postgres = require('postgres');
 
 const projectRef = "vzohoiwmjcuqhndsoazx";
 const password = process.env.SUPABASE_DB_PASSWORD || "NlyTLzO7lefMGGsC";
-const regions = ["us-east-2", "us-east-1"];
+const regions = ["us-east-2", "us-east-1", "us-west-1", "us-west-2", "sa-east-1", "eu-west-1", "eu-central-1", "ap-southeast-1"];
 const ports = [5432, 6543];
 
 async function checkRegion(region, port) {

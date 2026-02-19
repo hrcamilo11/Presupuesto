@@ -19,6 +19,8 @@ import {
 import { TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { formatCurrency } from "@/lib/utils";
+
 type MonthData = {
   month: string;
   ingresos: number;
@@ -36,12 +38,7 @@ const trendChartConfig = {
   gastos: { label: "Gastos", color: "#ef4444" },
 } satisfies ChartConfig;
 
-const formatCop = (value: number | undefined) =>
-  new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-  }).format(value ?? 0);
+const formatCop = (value: number | undefined) => formatCurrency(value ?? 0);
 
 export function TrendChart({ data }: Props) {
   if (data.length === 0) {
@@ -69,62 +66,62 @@ export function TrendChart({ data }: Props) {
   return (
     <div className="min-w-0 max-w-full overflow-hidden">
       <ChartContainer config={trendChartConfig} className="min-h-[280px] w-full max-w-full">
-      <AreaChart
-        data={data}
-        margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-        accessibilityLayer
-      >
-        <defs>
-          <linearGradient id="fillIngresos" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-ingresos)" stopOpacity={0.4} />
-            <stop offset="100%" stopColor="var(--color-ingresos)" stopOpacity={0} />
-          </linearGradient>
-          <linearGradient id="fillGastos" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-gastos)" stopOpacity={0.4} />
-            <stop offset="100%" stopColor="var(--color-gastos)" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis
-          dataKey="month"
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-          tick={{ fontSize: 12 }}
-        />
-        <YAxis
-          tick={{ fontSize: 12 }}
-          tickLine={false}
-          axisLine={false}
-          tickFormatter={(v) =>
-            Number.isFinite(v) ? `$${v >= 1000 ? (v / 1000) + "k" : v}` : ""
-          }
-        />
-        <ChartTooltip
-          content={
-            <ChartTooltipContent
-              formatter={(value) => [formatCop(Number(value)), ""]}
-              labelFormatter={(label) => `Mes: ${label}`}
-            />
-          }
-        />
-        <ChartLegend content={<ChartLegendContent />} />
-        <Area
-          type="monotone"
-          dataKey="ingresos"
-          stroke="var(--color-ingresos)"
-          fill="url(#fillIngresos)"
-          strokeWidth={2}
-        />
-        <Area
-          type="monotone"
-          dataKey="gastos"
-          stroke="var(--color-gastos)"
-          fill="url(#fillGastos)"
-          strokeWidth={2}
-        />
-      </AreaChart>
-    </ChartContainer>
+        <AreaChart
+          data={data}
+          margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+          accessibilityLayer
+        >
+          <defs>
+            <linearGradient id="fillIngresos" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-ingresos)" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="var(--color-ingresos)" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="fillGastos" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-gastos)" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="var(--color-gastos)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis
+            dataKey="month"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis
+            tick={{ fontSize: 12 }}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={(v) =>
+              Number.isFinite(v) ? `$${v >= 1000 ? (v / 1000) + "k" : v}` : ""
+            }
+          />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                formatter={(value) => [formatCop(Number(value)), ""]}
+                labelFormatter={(label) => `Mes: ${label}`}
+              />
+            }
+          />
+          <ChartLegend content={<ChartLegendContent />} />
+          <Area
+            type="monotone"
+            dataKey="ingresos"
+            stroke="var(--color-ingresos)"
+            fill="url(#fillIngresos)"
+            strokeWidth={2}
+          />
+          <Area
+            type="monotone"
+            dataKey="gastos"
+            stroke="var(--color-gastos)"
+            fill="url(#fillGastos)"
+            strokeWidth={2}
+          />
+        </AreaChart>
+      </ChartContainer>
     </div>
   );
 }

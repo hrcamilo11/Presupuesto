@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createCollection, markCollectionAsPaid, addCollectionPayment } from "@/app/actions/collections";
 import type { Profile, Collection, CollectionPayment } from "@/lib/database.types";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 interface CobrosClientProps {
     initialCollections: (Collection & { debtor: Profile | null, payments: CollectionPayment[] })[];
@@ -20,6 +21,7 @@ interface CobrosClientProps {
 }
 
 export function CobrosClient({ initialCollections, friends }: CobrosClientProps) {
+    const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [msg, setMsg] = useState<string | null>(null);
@@ -54,6 +56,7 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                 setDebtorName("");
                 setAmount("");
                 setDescription("");
+                router.refresh();
             }
         });
     }
@@ -62,7 +65,12 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
         if (!confirm("¿Confirmas que recibiste el pago total de este cobro?")) return;
         startTransition(async () => {
             const { error } = await markCollectionAsPaid(id);
-            setMsg(error ? error : "Cobro marcado como pagado.");
+            if (error) {
+                setMsg(error);
+            } else {
+                setMsg("Cobro marcado como pagado.");
+                router.refresh();
+            }
         });
     }
 
@@ -78,6 +86,7 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                 setPaymentAmount("");
                 setPaymentNotes("");
                 setSelectedCollection(null);
+                router.refresh();
             }
         });
     }
@@ -215,10 +224,10 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                                                     {c.description || "Sin descripción"}
                                                 </p>
                                                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                                    <span>{format(new Date(c.created_at), "d 'de' MMMM", { locale: es })}</span>
+                                                    <span>{c.created_at ? format(new Date(c.created_at), "d 'de' MMMM", { locale: es }) : "—"}</span>
                                                     {c.status === 'partially_paid' && (
                                                         <span className="text-primary font-medium">
-                                                            {c.payments.length} abonos realizados
+                                                            {(c.payments || []).length} abonos realizados
                                                         </span>
                                                     )}
                                                 </div>
@@ -228,11 +237,11 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                                         <div className="flex flex-col items-end gap-2 border-t md:border-t-0 pt-4 md:pt-0">
                                             <div className="text-right">
                                                 <p className="text-2xl font-bold text-primary">
-                                                    {new Intl.NumberFormat('es-CO', { style: 'currency', currency: c.currency }).format(c.amount)}
+                                                    {formatCurrency(c.amount, c.currency)}
                                                 </p>
                                                 {balance < c.amount && balance > 0 && (
                                                     <p className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full inline-block mt-1">
-                                                        Pendiente: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: c.currency }).format(balance)}
+                                                        Pendiente: {formatCurrency(balance, c.currency)}
                                                     </p>
                                                 )}
                                             </div>
@@ -279,7 +288,7 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                                                     <div key={p.id} className="flex items-center justify-between bg-muted/40 p-2 rounded-md text-xs border border-border/50">
                                                         <div>
                                                             <span className="font-bold text-primary">
-                                                                {new Intl.NumberFormat('es-CO', { style: 'currency', currency: c.currency }).format(p.amount)}
+                                                                {formatCurrency(p.amount, c.currency)}
                                                             </span>
                                                             <span className="text-muted-foreground ml-2">
                                                                 {format(new Date(p.date), "dd/MM/yy")}
@@ -309,7 +318,7 @@ export function CobrosClient({ initialCollections, friends }: CobrosClientProps)
                             <div className="rounded-lg bg-orange-50 border border-orange-100 p-3 space-y-1">
                                 <p className="text-xs font-bold uppercase text-orange-800">Saldo Pendiente</p>
                                 <p className="text-2xl font-black text-orange-950">
-                                    {new Intl.NumberFormat('es-CO', { style: 'currency', currency: selectedCollection.currency }).format(calculateBalance(selectedCollection))}
+                                    {formatCurrency(calculateBalance(selectedCollection), selectedCollection.currency)}
                                 </p>
                             </div>
 

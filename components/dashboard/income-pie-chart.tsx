@@ -14,6 +14,8 @@ import { INCOME_TYPE_LABELS, type IncomeType } from "@/lib/database.types";
 import { TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { formatCurrency } from "@/lib/utils";
+
 const COLORS = ["#22c55e", "#84cc16", "#eab308"];
 
 const incomeChartConfig: ChartConfig = {
@@ -22,12 +24,7 @@ const incomeChartConfig: ChartConfig = {
   [INCOME_TYPE_LABELS.occasional]: { label: INCOME_TYPE_LABELS.occasional, color: COLORS[2] },
 };
 
-const formatCop = (value: number | undefined) =>
-  new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-  }).format(value ?? 0);
+const formatCop = (value: number | undefined) => formatCurrency(value ?? 0);
 
 type Props = {
   data: Record<IncomeType, number>;
@@ -58,31 +55,31 @@ export function IncomePieChart({ data }: Props) {
   return (
     <div className="min-w-0 max-w-full overflow-hidden">
       <ChartContainer config={incomeChartConfig} className="min-h-[240px] w-full max-w-full">
-      <PieChart accessibilityLayer>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          innerRadius={60}
-          outerRadius={90}
-          paddingAngle={2}
-          dataKey="value"
-        >
-          {chartData.map((entry, i) => (
-            <Cell key={entry.name} fill={entry.fill ?? COLORS[i % COLORS.length]} stroke="transparent" />
-          ))}
-        </Pie>
-        <ChartTooltip
-          content={
-            <ChartTooltipContent
-              nameKey="name"
-              formatter={(value) => [formatCop(Number(value)), ""]}
-            />
-          }
-        />
-        <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-      </PieChart>
-    </ChartContainer>
+        <PieChart accessibilityLayer>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={90}
+            paddingAngle={2}
+            dataKey="value"
+          >
+            {chartData.map((entry, i) => (
+              <Cell key={entry.name} fill={entry.fill ?? COLORS[i % COLORS.length]} stroke="transparent" />
+            ))}
+          </Pie>
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                nameKey="name"
+                formatter={(value) => [formatCop(Number(value)), ""]}
+              />
+            }
+          />
+          <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+        </PieChart>
+      </ChartContainer>
     </div>
   );
 }
