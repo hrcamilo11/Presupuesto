@@ -144,71 +144,61 @@
   display: none;
 }
 
-/* Sileo Toast Theme-Specific Overrides */
-
-/* FORCE Light Mode Toasts: Black background, white text */
-/* Using :root to ensure it applies when no specific theme class is on html */
-:root [data-sileo-toast] [data-sileo-svg] path {
-  fill: #09090b !important;
-  /* zinc-950 (Black) */
-  stroke: #27272a !important;
-  /* zinc-800 */
+/* Premium Glassmorphism Toasts (Sileo) */
+[data-sileo-toast] {
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  background-color: hsla(var(--background), 0.8) !important;
+  border: 1px solid hsla(var(--foreground), 0.1) !important;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.2) !important;
+  border-radius: 16px !important;
+  padding: 1.25rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-:root [data-sileo-toast] [data-sileo-title],
-:root [data-sileo-toast] [data-sileo-description] {
-  color: #fafafa !important;
-  /* zinc-50 (White) */
+[data-sileo-toast] [data-sileo-title] {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
 }
 
-/* Dark Mode (.dark): White background, black text */
-.dark [data-sileo-toast] [data-sileo-svg] path {
-  fill: #fafafa !important;
-  /* zinc-50 (White) */
-  stroke: #e4e4e7 !important;
-  /* zinc-200 */
+[data-sileo-toast] [data-sileo-description] {
+  color: hsla(var(--foreground), 0.7) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.4 !important;
 }
 
-.dark [data-sileo-toast] [data-sileo-title],
-.dark [data-sileo-toast] [data-sileo-description] {
-  color: #09090b !important;
-  /* zinc-950 (Black) */
-}
-
-/* AMOLED: High contrast, pure black background toasts? No, user wants consistency maybe?
-   Let's make AMOLED toasts white for readability on pure black background. */
-.amoled [data-sileo-toast] [data-sileo-svg] path {
-  fill: #ffffff !important;
-  stroke: #ffffff !important;
-}
-
-.amoled [data-sileo-toast] [data-sileo-title],
-.amoled [data-sileo-toast] [data-sileo-description] {
-  color: #000000 !important;
-}
-
-/* Pastel: Soft colored toasts */
-.pastel [data-sileo-toast] [data-sileo-svg] path {
-  fill: #ffffff !important;
-  stroke: #e9e9ff !important;
-}
-
-.pastel [data-sileo-toast] [data-sileo-title],
-.pastel [data-sileo-toast] [data-sileo-description] {
-  color: #2e1a47 !important;
-}
-
-/* Forest: Earthy toasts */
-.forest [data-sileo-toast] [data-sileo-svg] path {
-  fill: #fdfdf5 !important;
-  stroke: #d1d1c1 !important;
-}
-
-.forest [data-sileo-toast] [data-sileo-title],
-.forest [data-sileo-toast] [data-sileo-description] {
-  color: #1a2a1a !important;
-}
-
+/* Sileo uses internal SVG colors, we can override the background tone for variants */
 [data-sileo-toast] [data-sileo-badge] {
-  --sileo-tone-bg: rgba(128, 128, 128, 0.1) !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+
+/* Error / Destructive State Improvements */
+/* Sileo rendered error often has a specific data attribute or we can target by content? 
+   Usually Sileo uses colors based on the type. Let's force better visibility for the badge and icons. */
+
+[data-sileo-toast] [data-sileo-close] {
+  opacity: 0.5 !important;
+  transition: opacity 0.2s !important;
+}
+
+[data-sileo-toast] [data-sileo-close]:hover {
+  opacity: 1 !important;
+}
+
+/* Specific theme refinements for toasts */
+.dark [data-sileo-toast] {
+  background-color: rgba(9, 9, 11, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.amoled [data-sileo-toast] {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.pastel [data-sileo-toast] {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  border-color: hsla(var(--primary), 0.2) !important;
 }
