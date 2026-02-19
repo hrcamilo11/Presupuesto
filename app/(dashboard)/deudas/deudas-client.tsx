@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 
-import { ArrowDownLeft, Check, X, Loader2, User, Plus } from "lucide-react";
+import { ArrowDownLeft, Check, X, Loader2, User, Plus, Wallet as WalletIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { respondToCollection, createCollection, addCollectionPayment } from "@/app/actions/collections";
+import { respondToCollection, createCollection, addCollectionPayment, allocateCollectionPayment } from "@/app/actions/collections";
 import type { Collection, Profile, CollectionPayment, Wallet } from "@/lib/database.types";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -40,6 +40,28 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
     const [paymentAmount, setPaymentAmount] = useState("");
     const [paymentNotes, setPaymentNotes] = useState("");
     const [paymentWalletId, setPaymentWalletId] = useState<string>("none");
+
+    // Allocation UI state
+    const [isAllocationDialogOpen, setIsAllocationDialogOpen] = useState(false);
+    const [selectedPayment, setSelectedPayment] = useState<{ id: string, amount: number, collection: Collection } | null>(null);
+
+    const searchParams = useSearchParams();
+
+    // Effect to handle paymentId from notification link
+    useEffect(() => {
+        const paymentId = searchParams.get('paymentId');
+        if (paymentId && initialDebts) {
+            // Find the payment in any of the collections
+            for (const col of initialDebts) {
+                const p = col.payments?.find(p => p.id === paymentId);
+                if (p && !p.debtor_expense_id) {
+                    setSelectedPayment({ id: p.id, amount: p.amount, collection: col });
+                    setIsAllocationDialogOpen(true);
+                    break;
+                }
+            }
+        }
+    }, [searchParams, initialDebts]);
 
     function handleResponse(collectionId: string, accept: boolean) {
         startTransition(async () => {
@@ -94,6 +116,23 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                 setPaymentNotes("");
                 setPaymentWalletId("none");
                 setSelectedCollection(null);
+                router.refresh();
+            }
+        });
+    }
+
+    function handleAllocateExpense() {
+        if (!selectedPayment || paymentWalletId === "none") return;
+
+        startTransition(async () => {
+            const { error } = await allocateCollectionPayment(selectedPayment.id, paymentWalletId);
+            if (error) {
+                setMsg(error);
+            } else {
+                setMsg("Gasto registrado en la cuenta.");
+                setIsAllocationDialogOpen(false);
+                setPaymentWalletId("none");
+                setSelectedPayment(null);
                 router.refresh();
             }
         });
@@ -317,15 +356,35 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 {d.payments.map(p => (
                                                     <div key={p.id} className="flex items-center justify-between bg-muted/40 p-2 rounded-md text-xs border border-border/50">
-                                                        <div>
+                                                        <div className="flex items-center gap-2">
                                                             <span className="font-bold text-destructive">
                                                                 {formatCurrency(p.amount, d.currency)}
                                                             </span>
-                                                            <span className="text-muted-foreground ml-2">
+                                                            <span className="text-muted-foreground">
                                                                 {format(new Date(p.date), "dd/MM/yy")}
                                                             </span>
+                                                            {p.notes && <span className="text-muted-foreground italic truncate max-w-[80px]" title={p.notes}>({p.notes})</span>}
                                                         </div>
-                                                        {p.notes && <span className="text-muted-foreground italic truncate max-w-[80px]" title={p.notes}>{p.notes}</span>}
+                                                        {!p.debtor_expense_id ? (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-6 px-1.5 text-[10px] gap-1 border-primary/30 text-primary hover:bg-primary/5"
+                                                                onClick={() => {
+                                                                    setSelectedPayment({ id: p.id, amount: p.amount, collection: d });
+                                                                    setIsAllocationDialogOpen(true);
+                                                                    setPaymentWalletId("none");
+                                                                }}
+                                                            >
+                                                                <WalletIcon className="h-3 w-3" />
+                                                                Descontar
+                                                            </Button>
+                                                        ) : (
+                                                            <span className="flex items-center gap-1 text-green-600 font-medium">
+                                                                <Check className="h-3 w-3" />
+                                                                Descontado
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -393,6 +452,63 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                             <Button className="w-full" onClick={handleAddPayment} disabled={isPending || !paymentAmount}>
                                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar Pago"}
                             </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Allocation Dialog (Descontar de Cuenta) */}
+            <Dialog open={isAllocationDialogOpen} onOpenChange={setIsAllocationDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Descontar Pago de Cuenta</DialogTitle>
+                    </DialogHeader>
+                    {selectedPayment && (
+                        <div className="space-y-4 py-4">
+                            <div className="rounded-lg bg-destructive/5 border border-destructive/10 p-4 space-y-3">
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Monto Pagado</p>
+                                    <p className="text-2xl font-black text-destructive">
+                                        {formatCurrency(selectedPayment.amount, selectedPayment.collection.currency)}
+                                    </p>
+                                </div>
+                                <div className="text-sm">
+                                    <p className="text-muted-foreground leading-snug">
+                                        Pago registrado por <span className="font-bold text-foreground">
+                                            {selectedPayment.collection.creditor?.full_name || selectedPayment.collection.creditor_name || "Acreedor"}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>¿De qué cuenta salió el dinero?</Label>
+                                <Select value={paymentWalletId} onValueChange={setPaymentWalletId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar cuenta origen" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {wallets.length === 0 && <SelectItem value="none" disabled>No tienes cuentas registradas</SelectItem>}
+                                        {wallets.map(w => (
+                                            <SelectItem key={w.id} value={w.id}>
+                                                {w.name} ({formatCurrency(w.balance, w.currency)})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <Button
+                                className="w-full h-11 text-base font-semibold bg-destructive hover:bg-destructive/90"
+                                onClick={handleAllocateExpense}
+                                disabled={isPending || paymentWalletId === "none" || wallets.length === 0}
+                            >
+                                {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmar Gasto"}
+                            </Button>
+
+                            <p className="text-[10px] text-center text-muted-foreground">
+                                Esto registrará un gasto en tu cuenta y actualizará el saldo.
+                            </p>
                         </div>
                     )}
                 </DialogContent>

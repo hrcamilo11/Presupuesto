@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { ArrowUpRight, Plus, Check, X, Loader2, User } from "lucide-react";
+import { useState, useTransition, useEffect } from "react";
+import { ArrowUpRight, Plus, Check, X, Loader2, User, Wallet as WalletIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createCollection, markCollectionAsPaid, addCollectionPayment } from "@/app/actions/collections";
+import { createCollection, markCollectionAsPaid, addCollectionPayment, allocateCollectionPayment } from "@/app/actions/collections";
 import type { Profile, Collection, CollectionPayment, Wallet } from "@/lib/database.types";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -42,6 +42,28 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
     const [paymentWalletId, setPaymentWalletId] = useState<string>("none");
 
     const [isMarkAsPaidDialogOpen, setIsMarkAsPaidDialogOpen] = useState(false);
+
+    // Allocation UI state
+    const [isAllocationDialogOpen, setIsAllocationDialogOpen] = useState(false);
+    const [selectedPayment, setSelectedPayment] = useState<{ id: string, amount: number, collection: Collection } | null>(null);
+
+    const searchParams = useSearchParams();
+
+    // Effect to handle paymentId from notification link
+    useEffect(() => {
+        const paymentId = searchParams.get('paymentId');
+        if (paymentId && initialCollections) {
+            // Find the payment in any of the collections
+            for (const col of initialCollections) {
+                const p = col.payments?.find(p => p.id === paymentId);
+                if (p && !p.creditor_income_id) {
+                    setSelectedPayment({ id: p.id, amount: p.amount, collection: col });
+                    setIsAllocationDialogOpen(true);
+                    break;
+                }
+            }
+        }
+    }, [searchParams, initialCollections]);
 
     function handleCreate() {
         if (selectedFriendId !== "manual" && !selectedFriendId) return;
@@ -102,6 +124,23 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                 setIsMarkAsPaidDialogOpen(false);
                 setPaymentWalletId("none");
                 setSelectedCollection(null);
+                router.refresh();
+            }
+        });
+    }
+
+    function handleAllocateMoney() {
+        if (!selectedPayment || paymentWalletId === "none") return;
+
+        startTransition(async () => {
+            const { error } = await allocateCollectionPayment(selectedPayment.id, paymentWalletId);
+            if (error) {
+                setMsg(error);
+            } else {
+                setMsg("Dinero ubicado en la cuenta.");
+                setIsAllocationDialogOpen(false);
+                setPaymentWalletId("none");
+                setSelectedPayment(null);
                 router.refresh();
             }
         });
@@ -308,15 +347,35 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 {c.payments.map(p => (
                                                     <div key={p.id} className="flex items-center justify-between bg-muted/40 p-2 rounded-md text-xs border border-border/50">
-                                                        <div>
+                                                        <div className="flex items-center gap-2">
                                                             <span className="font-bold text-primary">
                                                                 {formatCurrency(p.amount, c.currency)}
                                                             </span>
-                                                            <span className="text-muted-foreground ml-2">
+                                                            <span className="text-muted-foreground">
                                                                 {format(new Date(p.date), "dd/MM/yy")}
                                                             </span>
+                                                            {p.notes && <span className="text-muted-foreground italic truncate max-w-[80px]" title={p.notes}>({p.notes})</span>}
                                                         </div>
-                                                        {p.notes && <span className="text-muted-foreground italic truncate max-w-[80px]" title={p.notes}>{p.notes}</span>}
+                                                        {!p.creditor_income_id ? (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-6 px-1.5 text-[10px] gap-1 border-primary/30 text-primary hover:bg-primary/5"
+                                                                onClick={() => {
+                                                                    setSelectedPayment({ id: p.id, amount: p.amount, collection: c });
+                                                                    setIsAllocationDialogOpen(true);
+                                                                    setPaymentWalletId("none");
+                                                                }}
+                                                            >
+                                                                <WalletIcon className="h-3 w-3" />
+                                                                Ubicar
+                                                            </Button>
+                                                        ) : (
+                                                            <span className="flex items-center gap-1 text-green-600 font-medium">
+                                                                <Check className="h-3 w-3" />
+                                                                Ubicado
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -424,6 +483,68 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                             <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => handleMarkAsPaid(selectedCollection.id)} disabled={isPending}>
                                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar Pago Total"}
                             </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Allocation Dialog (Ubicar Dinero) */}
+            <Dialog open={isAllocationDialogOpen} onOpenChange={setIsAllocationDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Ubicar Dinero en Cuenta</DialogTitle>
+                    </DialogHeader>
+                    {selectedPayment && (
+                        <div className="space-y-4 py-4">
+                            <div className="rounded-lg bg-primary/5 border border-primary/10 p-4 space-y-3">
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Monto Recibido</p>
+                                    <p className="text-2xl font-black text-primary">
+                                        {formatCurrency(selectedPayment.amount, selectedPayment.collection.currency)}
+                                    </p>
+                                </div>
+                                <div className="text-sm">
+                                    <p className="text-muted-foreground leading-snug">
+                                        Dinero enviado por <span className="font-bold text-foreground">
+                                            {selectedPayment.collection.debtor?.full_name || selectedPayment.collection.debtor_name || "Amigo"}
+                                        </span>
+                                    </p>
+                                    {selectedPayment.collection.description && (
+                                        <p className="text-xs text-muted-foreground italic mt-1 italic">
+                                            &quot;{selectedPayment.collection.description}&quot;
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>¿En qué cuenta recibiste el dinero?</Label>
+                                <Select value={paymentWalletId} onValueChange={setPaymentWalletId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar cuenta destino" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {wallets.length === 0 && <SelectItem value="none" disabled>No tienes cuentas registradas</SelectItem>}
+                                        {wallets.map(w => (
+                                            <SelectItem key={w.id} value={w.id}>
+                                                {w.name} ({formatCurrency(w.balance, w.currency)})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <Button
+                                className="w-full h-11 text-base font-semibold"
+                                onClick={handleAllocateMoney}
+                                disabled={isPending || paymentWalletId === "none" || wallets.length === 0}
+                            >
+                                {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmar Recepción"}
+                            </Button>
+
+                            <p className="text-[10px] text-center text-muted-foreground">
+                                Esto registrará un ingreso en tu cuenta y actualizará el saldo.
+                            </p>
                         </div>
                     )}
                 </DialogContent>

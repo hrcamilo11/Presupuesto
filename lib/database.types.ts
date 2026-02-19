@@ -391,4 +391,6 @@ export interface CollectionPayment {
   date: string;
   notes: string | null;
   created_at: string;
+  creditor_income_id?: string | null;
+  debtor_expense_id?: string | null;
 }
