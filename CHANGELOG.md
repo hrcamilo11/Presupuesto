@@ -6,13 +6,16 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 ### Añadido
 - **Username en Registro**: Añadido campo de nombre de usuario obligatorio al proceso de registro.
 - **Prompt de Username**: Implementada ventana modal obligatoria para usuarios existentes sin nombre de usuario.
+- **Normalización de Moneda**: Unificado el formato de moneda en toda la aplicación (Cobros, Deudas y Dashboard) usando puntos como separadores de miles y eliminando decimales.
 - **Gestión de Amigos Robusta**: 
     - Pestañas separadas para solicitudes "Recibidas" y "Enviadas".
     - Auto-aceptación de solicitudes si ambos usuarios intentan agregarse mutuamente.
     - Los registros previos (rechazados) ahora pueden ser reactivados al enviar una nueva solicitud.
+- **Sincronización en Tiempo Real**: Integrado `router.refresh()` en todas las acciones sociales para actualización inmediata de la UI.
 - **Persistencia de Filtros**: El selector de contexto del Dashboard (Global/Personal) ahora persiste correctamente en la URL.
 
 ### Corregido
+- **Excepción de Cobro**: Solucionado el error crítico "single row expected" al confirmar una deuda mediante manejo defensivo de resultados en el servidor.
 - **Bug de Amigos**: Solucionado el problema de solicitudes "invisibles" que bloqueaban nuevas conexiones.
 - **Escaner QR**: Migración a una librería más estable (`qr-scanner`) con mejor soporte de hardware.
 - **Estabilidad de Build**: Eliminados errores de linting (`no-explicit-any`) que bloqueaban el despliegue en Vercel.
