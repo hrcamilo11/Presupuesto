@@ -164,27 +164,34 @@ export async function getFriends() {
     const { data, error } = await supabase
         .from("friends")
         .select(`
-      id,
-      user_id,
-      friend_id,
-      status,
-      sender:profiles!friends_user_id_fkey(id, full_name, username),
-      receiver:profiles!friends_friend_id_fkey(id, full_name, username)
-    `)
+            id,
+            user_id,
+            friend_id,
+            status,
+            sender:profiles!friends_user_id_fkey(id, full_name, username),
+            receiver:profiles!friends_friend_id_fkey(id, full_name, username)
+        `)
         .eq("status", "accepted")
         .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
 
-    if (error) return { data: [], error: error.message };
+    if (error) {
+        console.error("Error en getFriends:", error);
+        return { data: [], error: error.message };
+    }
 
-    // Map to a simpler format
+    // Map to a simpler format, handling potential array joins from Supabase
     const friends = (data || []).map(f => {
         const isSender = f.user_id === user.id;
-        const friendProfile = isSender ? (f.receiver as unknown as Profile) : (f.sender as unknown as Profile);
+        const rawProfile = isSender ? f.receiver : f.sender;
+        const profile = Array.isArray(rawProfile) ? rawProfile[0] : rawProfile;
+
+        if (!profile) return null;
+
         return {
             friendship_id: f.id,
-            profile: friendProfile
+            profile: profile as Profile
         };
-    });
+    }).filter(Boolean) as { friendship_id: string, profile: Profile }[];
 
     return { data: friends, error: null };
 }
@@ -197,22 +204,29 @@ export async function getPendingFriendRequests() {
     const { data, error } = await supabase
         .from("friends")
         .select(`
-      id,
-      user_id,
-      created_at,
-      sender:profiles!friends_user_id_fkey(id, full_name, username)
-    `)
+            id,
+            user_id,
+            created_at,
+            sender:profiles!friends_user_id_fkey(id, full_name, username)
+        `)
         .eq("friend_id", user.id)
         .eq("status", "pending");
 
-    if (error) return { data: [], error: error.message };
+    if (error) {
+        console.error("Error en getPendingFriendRequests:", error);
+        return { data: [], error: error.message };
+    }
 
-    const mapped = (data || []).map(req => ({
-        ...req,
-        sender: Array.isArray(req.sender) ? req.sender[0] : req.sender
-    }));
+    const mapped = (data || []).map(req => {
+        const profile = Array.isArray(req.sender) ? req.sender[0] : req.sender;
+        if (!profile) return null;
+        return {
+            ...req,
+            sender: profile as Profile
+        };
+    }).filter(Boolean) as { id: string, user_id: string, created_at: string, sender: Profile }[];
 
-    return { data: mapped as unknown as { id: string, user_id: string, created_at: string, sender: Profile }[], error: null };
+    return { data: mapped, error: null };
 }
 
 export async function getSentFriendRequests() {
@@ -223,22 +237,29 @@ export async function getSentFriendRequests() {
     const { data, error } = await supabase
         .from("friends")
         .select(`
-      id,
-      friend_id,
-      created_at,
-      receiver:profiles!friends_friend_id_fkey(id, full_name, username)
-    `)
+            id,
+            friend_id,
+            created_at,
+            receiver:profiles!friends_friend_id_fkey(id, full_name, username)
+        `)
         .eq("user_id", user.id)
         .eq("status", "pending");
 
-    if (error) return { data: [], error: error.message };
+    if (error) {
+        console.error("Error en getSentFriendRequests:", error);
+        return { data: [], error: error.message };
+    }
 
-    const mapped = (data || []).map(req => ({
-        ...req,
-        receiver: Array.isArray(req.receiver) ? req.receiver[0] : req.receiver
-    }));
+    const mapped = (data || []).map(req => {
+        const profile = Array.isArray(req.receiver) ? req.receiver[0] : req.receiver;
+        if (!profile) return null;
+        return {
+            ...req,
+            receiver: profile as Profile
+        };
+    }).filter(Boolean) as { id: string, friend_id: string, created_at: string, receiver: Profile }[];
 
-    return { data: mapped as unknown as { id: string, friend_id: string, created_at: string, receiver: Profile }[], error: null };
+    return { data: mapped, error: null };
 }
 
 export async function removeFriend(friendshipId: string) {

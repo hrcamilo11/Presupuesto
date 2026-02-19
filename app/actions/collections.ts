@@ -240,7 +240,13 @@ export async function getMyCollections() {
         .order("created_at", { ascending: false });
 
     if (error) return { data: [], error: error.message };
-    return { data, error: null };
+
+    const mapped = (data || []).map(item => ({
+        ...item,
+        debtor: Array.isArray(item.debtor) ? item.debtor[0] : item.debtor
+    }));
+
+    return { data: mapped, error: null };
 }
 
 export async function getMyDebts() {
@@ -259,5 +265,11 @@ export async function getMyDebts() {
         .order("created_at", { ascending: false });
 
     if (error) return { data: [], error: error.message };
-    return { data, error: null };
+
+    const mapped = (data || []).map(item => ({
+        ...item,
+        creditor: Array.isArray(item.creditor) ? item.creditor[0] : item.creditor
+    }));
+
+    return { data: mapped, error: null };
 }
