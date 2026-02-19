@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { respondToCollection, createCollection, addCollectionPayment, allocateCollectionPayment } from "@/app/actions/collections";
@@ -14,7 +15,7 @@ import type { Collection, Profile, CollectionPayment, Wallet } from "@/lib/datab
 import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { cn, formatCurrency, formatCOP, parseCOP } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
 interface DeudasClientProps {
@@ -33,13 +34,13 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
     // Form state for new debt
     const [selectedFriendId, setSelectedFriendId] = useState<string>("manual");
     const [creditorName, setCreditorName] = useState("");
-    const [amount, setAmount] = useState("");
+    const [amount, setAmount] = useState<number>(0);
     const [description, setDescription] = useState("");
 
     // Form state for payment (abono)
     const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
     const [selectedCollection, setSelectedCollection] = useState<(Collection & { payments: CollectionPayment[] }) | null>(null);
-    const [paymentAmount, setPaymentAmount] = useState("");
+    const [paymentAmount, setPaymentAmount] = useState<number>(0);
     const [paymentNotes, setPaymentNotes] = useState("");
     const [paymentWalletId, setPaymentWalletId] = useState<string>("none");
 
@@ -80,7 +81,7 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
     function handleCreate() {
         if (selectedFriendId !== "manual" && !selectedFriendId) return;
         if (selectedFriendId === "manual" && !creditorName) return;
-        const numericAmount = parseFloat(parseCOP(amount));
+        const numericAmount = amount;
         if (!numericAmount || numericAmount <= 0) return;
 
         startTransition(async () => {
@@ -93,7 +94,7 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                 setIsDialogOpen(false);
                 setSelectedFriendId("manual");
                 setCreditorName("");
-                setAmount("");
+                setAmount(0);
                 setDescription("");
                 router.refresh();
             }
@@ -102,7 +103,7 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
 
     function handleAddPayment() {
         if (!selectedCollection) return;
-        const numericAmount = parseFloat(parseCOP(paymentAmount));
+        const numericAmount = paymentAmount;
         if (!numericAmount || numericAmount <= 0) return;
 
         const balance = calculateBalance(selectedCollection);
@@ -134,7 +135,7 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                     description: "Pago registrado correctamente."
                 });
                 setIsPaymentDialogOpen(false);
-                setPaymentAmount("");
+                setPaymentAmount(0);
                 setPaymentNotes("");
                 setPaymentWalletId("none");
                 setSelectedCollection(null);
@@ -233,16 +234,11 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                             )}
                             <div className="space-y-2">
                                 <Label htmlFor="amount">Monto</Label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                                    <Input
-                                        id="amount"
-                                        placeholder="0"
-                                        className="pl-7"
-                                        value={amount}
-                                        onChange={(e) => setAmount(formatCOP(e.target.value))}
-                                    />
-                                </div>
+                                <CurrencyInput
+                                    id="amount"
+                                    value={amount}
+                                    onChange={setAmount}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="description">Descripción (opcional)</Label>
@@ -358,7 +354,7 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                                                             setSelectedCollection(d);
                                                             setIsPaymentDialogOpen(true);
                                                             setPaymentWalletId("none");
-                                                            setPaymentAmount("");
+                                                            setPaymentAmount(0);
                                                             setPaymentNotes("");
                                                         }}
                                                     >
@@ -439,16 +435,11 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
 
                             <div className="space-y-2">
                                 <Label htmlFor="pAmount">Monto del pago</Label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                                    <Input
-                                        id="pAmount"
-                                        placeholder="0"
-                                        className="pl-7"
-                                        value={paymentAmount}
-                                        onChange={(e) => setPaymentAmount(formatCOP(e.target.value))}
-                                    />
-                                </div>
+                                <CurrencyInput
+                                    id="pAmount"
+                                    value={paymentAmount}
+                                    onChange={setPaymentAmount}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="pNotes">Notas (opcional)</Label>
@@ -506,6 +497,11 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                                             {selectedPayment.collection.creditor?.full_name || selectedPayment.collection.creditor_name || "Acreedor"}
                                         </span>
                                     </p>
+                                    {selectedPayment.collection.description && (
+                                        <p className="text-xs text-muted-foreground italic mt-1">
+                                            &quot;{selectedPayment.collection.description}&quot;
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 

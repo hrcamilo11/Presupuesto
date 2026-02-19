@@ -25,21 +25,39 @@ export function formatCurrency(amount: number | string, currency: string = "COP"
 }
 
 /**
- * Formats a number or string into a COP currency string with dots as thousands separators.
- * Example: 1000000 -> "1.000.000"
+ * Formats a number or string into a currency string with dots as thousands separators
+ * and preserves decimals.
  */
 export function formatCOP(value: string | number): string {
-  const numericValue =
-    typeof value === "string" ? value.replace(/\D/g, "") : String(Math.floor(Number(value) || 0));
-  if (!numericValue) return "";
-  return formatNumber(numericValue);
+  if (value === "" || value === undefined || value === null) return "";
+
+  const strValue = typeof value === "number" ? value.toFixed(2) : value.replace(/,/g, ".");
+  const [integerPart, decimalPart] = strValue.split(".");
+
+  const cleanInteger = integerPart.replace(/\D/g, "");
+  if (!cleanInteger && !decimalPart) return "";
+
+  const formattedInteger = formatNumber(cleanInteger || "0");
+
+  // Only show decimals if they exist and are not "00" (or similar depending on context, 
+  // but for now let's show them if they were explicitly provided or exist in number)
+  if (decimalPart !== undefined) {
+    return `${formattedInteger},${decimalPart.slice(0, 2)}`;
+  }
+
+  return formattedInteger;
 }
 
 /**
- * Strips all non-numeric characters from a string.
+ * Strips non-numeric characters but preserves the first decimal separator.
  */
 export function parseCOP(value: string): string {
-  return value.replace(/\D/g, "");
+  const sanitized = value.replace(/,/g, ".");
+  const parts = sanitized.split(".");
+  if (parts.length > 1) {
+    return parts[0].replace(/\D/g, "") + "." + parts[1].replace(/\D/g, "").slice(0, 2);
+  }
+  return sanitized.replace(/\D/g, "");
 }
 
 /**

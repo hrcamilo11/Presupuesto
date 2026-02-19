@@ -1,4 +1,5 @@
 import { getBudgets } from "@/app/actions/budgets";
+import { Budget, Category } from "@/lib/database.types";
 import { getCategories } from "@/app/actions/categories";
 import { getMySharedAccounts } from "@/app/actions/shared-accounts";
 import { BudgetList } from "@/components/budgets/budget-list";
@@ -89,10 +90,10 @@ export default async function BudgetsPage({
             </div>
 
             <BudgetList
-                budgets={(budgets || []) as any}
+                budgets={(budgets || []) as (Budget & { category: Category })[]}
                 categories={categories || []}
                 sharedAccountId={sharedAccountId ?? null}
-                expenses={(expenses || []) as any}
+                expenses={(expenses || []) as { amount: number; category_id: string }[]}
             />
         </div>
     );

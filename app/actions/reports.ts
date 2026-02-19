@@ -24,6 +24,34 @@ export type ExportToExcelOptions = {
   wallet?: string | null;
 };
 
+interface IncomeRow {
+  id: string;
+  date: string;
+  amount: number;
+  currency: string;
+  income_type: string;
+  description: string | null;
+  created_at: string;
+  category: { name: string } | { name: string }[] | null;
+  wallet: { name: string } | { name: string }[] | null;
+  shared_account: { name: string } | { name: string }[] | null;
+  income_tags: { tags: { name: string } | { name: string }[] }[];
+}
+
+interface ExpenseRow {
+  id: string;
+  date: string;
+  amount: number;
+  currency: string;
+  expense_priority: string;
+  description: string | null;
+  created_at: string;
+  category: { name: string } | { name: string }[] | null;
+  wallet: { name: string } | { name: string }[] | null;
+  shared_account: { name: string } | { name: string }[] | null;
+  expense_tags: { tags: { name: string } | { name: string }[] }[];
+}
+
 function escapeCsv(value: string): string {
   const s = String(value ?? "").replace(/"/g, '""');
   return s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\r") ? `"${s}"` : s;
@@ -117,8 +145,8 @@ export async function exportMonthlyReport(
       "Descripción", "Etiquetas", "Fecha de registro",
     ])
   );
-  for (const i of incomes) {
-    const row = i as any;
+  for (const i of (incomes as unknown[])) {
+    const row = i as IncomeRow;
     const catName = nameOf(row.category) || "Sin categoría";
     const tagsStr = tagsNames(row.income_tags ?? []);
     lines.push(
@@ -139,8 +167,8 @@ export async function exportMonthlyReport(
       "Descripción", "Etiquetas", "Fecha de registro",
     ])
   );
-  for (const e of expenses) {
-    const row = e as any;
+  for (const e of (expenses as unknown[])) {
+    const row = e as ExpenseRow;
     const catName = nameOf(row.category) || "Sin categoría";
     const tagsStr = tagsNames(row.expense_tags ?? []);
     lines.push(
@@ -202,8 +230,8 @@ export async function exportToExcel(options: ExportToExcelOptions) {
       expenseQuery = expenseQuery.eq("wallet_id", wallet);
     }
     const [incomesRes, expensesRes] = await Promise.all([incomeQuery, expenseQuery]);
-    const incomes = (incomesRes.data ?? []) as any[];
-    const expenses = (expensesRes.data ?? []) as any[];
+    const incomes = (incomesRes.data ?? []) as unknown[] as IncomeRow[];
+    const expenses = (expensesRes.data ?? []) as unknown[] as ExpenseRow[];
     const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
     const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
     const balance = totalIncome - totalExpense;
@@ -266,7 +294,7 @@ export async function exportToExcel(options: ExportToExcelOptions) {
     const { data: subs } = await q;
     const rows: (string | number)[][] = [
       ["Nombre", "Monto", "Moneda", "Frecuencia", "Próxima fecha", "Descripción", "Cuenta compartida"],
-      ...(subs ?? []).map((s: any) => [
+      ...(subs ?? []).map((s) => [
         s.name, s.amount, s.currency, s.frequency === "monthly" ? "Mensual" : "Anual", s.next_due_date ?? "", s.description ?? "", nameOf(s.shared_account),
       ]),
     ];
@@ -278,19 +306,21 @@ export async function exportToExcel(options: ExportToExcelOptions) {
     let q = supabase.from("loans").select("id, name, principal, annual_interest_rate, term_months, start_date, currency, description, shared_account:shared_accounts(name)").order("created_at", { ascending: false });
     q = applyContext(q);
     const { data: loans } = await q;
-    const loanIds = (loans ?? []).map((l: any) => l.id);
+    const loanIds = (loans ?? []).map((l) => l.id);
     const { data: paymentsByLoan } = loanIds.length
       ? await supabase.from("loan_payments").select("loan_id, payment_number, paid_at, amount, balance_after").in("loan_id", loanIds).order("paid_at", { ascending: false })
-      : { data: [] as any[] };
-    const lastPaymentByLoan = (paymentsByLoan ?? []).reduce((acc: Record<string, any>, p: any) => {
+      : { data: [] as { loan_id: string; paid_at: string; balance_after: number }[] };
+
+    const lastPaymentByLoan = (paymentsByLoan ?? []).reduce((acc: Record<string, { loan_id: string; paid_at: string; balance_after: number }>, p) => {
       if (!acc[p.loan_id]) acc[p.loan_id] = p;
       return acc;
     }, {});
+
     const rows: (string | number)[][] = [
       ["Nombre", "Capital", "Tasa %", "Plazo (meses)", "Fecha inicio", "Moneda", "Descripción", "Cuenta compartida", "Pagos realizados", "Último pago", "Saldo restante"],
-      ...(loans ?? []).map((l: any) => {
+      ...(loans ?? []).map((l) => {
         const last = lastPaymentByLoan[l.id];
-        const payCount = (paymentsByLoan ?? []).filter((p: any) => p.loan_id === l.id).length;
+        const payCount = (paymentsByLoan ?? []).filter((p) => p.loan_id === l.id).length;
         return [
           l.name, l.principal, l.annual_interest_rate, l.term_months, l.start_date, l.currency,
           l.description ?? "", nameOf(l.shared_account),
@@ -308,7 +338,7 @@ export async function exportToExcel(options: ExportToExcelOptions) {
     const { data: taxes } = await q;
     const rows: (string | number)[][] = [
       ["Nombre", "Monto", "Moneda", "Periodo", "Vencimiento", "Pagado", "Notas", "Cuenta compartida"],
-      ...(taxes ?? []).map((t: any) => [
+      ...(taxes ?? []).map((t) => [
         t.name, t.amount, t.currency, t.period_type === "monthly" ? "Mensual" : t.period_type === "quarterly" ? "Trimestral" : "Anual",
         t.due_date, t.paid_at ? "Sí" : "No", t.notes ?? "", nameOf(t.shared_account),
       ]),
@@ -321,7 +351,7 @@ export async function exportToExcel(options: ExportToExcelOptions) {
     const { data: wallets } = await supabase.from("wallets").select("name, type, currency, balance, credit_limit").eq("user_id", user.id).order("created_at", { ascending: true });
     const rows: (string | number)[][] = [
       ["Nombre", "Tipo", "Moneda", "Balance", "Límite de crédito"],
-      ...(wallets ?? []).map((w: any) =>
+      ...(wallets ?? []).map((w) =>
         [w.name, w.type, w.currency, w.balance, w.credit_limit ?? ""]
       ),
     ];
@@ -335,7 +365,7 @@ export async function exportToExcel(options: ExportToExcelOptions) {
     const { data: goals } = await q;
     const rows: (string | number)[][] = [
       ["Nombre", "Meta", "Actual", "Progreso %", "Fecha meta", "Tipo", "Cuenta compartida"],
-      ...(goals ?? []).map((g: any) => {
+      ...(goals ?? []).map((g) => {
         const pct = g.target_amount > 0 ? Math.round((g.current_amount / g.target_amount) * 100) : 0;
         return [g.name, g.target_amount, g.current_amount, `${pct}%`, g.target_date ?? "", g.type ?? "", nameOf(g.shared_account)];
       }),
@@ -403,8 +433,8 @@ export async function exportToPdf(options: ExportToExcelOptions) {
       expenseQuery = expenseQuery.eq("wallet_id", wallet);
     }
     const [incomesRes, expensesRes] = await Promise.all([incomeQuery, expenseQuery]);
-    const incomes = (incomesRes.data ?? []) as any[];
-    const expenses = (expensesRes.data ?? []) as any[];
+    const incomes = (incomesRes.data ?? []) as IncomeRow[];
+    const expenses = (expensesRes.data ?? []) as ExpenseRow[];
     const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
     const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
     const balance = totalIncome - totalExpense;
@@ -424,7 +454,7 @@ export async function exportToPdf(options: ExportToExcelOptions) {
         ],
         theme: "striped",
       });
-      yPos = (doc as any).lastAutoTable.finalY + 15;
+      yPos = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15;
     }
 
     if (sections.includes("ingresos")) {
@@ -443,7 +473,7 @@ export async function exportToPdf(options: ExportToExcelOptions) {
           nameOf(i.wallet) || "N/A",
         ]),
       });
-      yPos = (doc as any).lastAutoTable.finalY + 15;
+      yPos = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15;
     }
 
     if (sections.includes("gastos")) {
@@ -462,7 +492,7 @@ export async function exportToPdf(options: ExportToExcelOptions) {
           nameOf(e.wallet) || "N/A",
         ]),
       });
-      yPos = (doc as any).lastAutoTable.finalY + 15;
+      yPos = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15;
     }
   }
 
@@ -484,7 +514,7 @@ export async function exportToPdf(options: ExportToExcelOptions) {
         s.next_due_date || "N/A",
       ]),
     });
-    yPos = (doc as any).lastAutoTable.finalY + 15;
+    yPos = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15;
   }
 
   const pdfBase64 = doc.output("datauristring").split(",")[1];

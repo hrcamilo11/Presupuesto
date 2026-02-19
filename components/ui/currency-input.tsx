@@ -29,7 +29,14 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
         }, [value, displayValue]);
 
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            const rawValue = parseCOP(e.target.value);
+            const val = e.target.value;
+            // If the user just typed a comma or dot at the end, keep it in display but don't parse yet
+            if (val.endsWith(".") || val.endsWith(",")) {
+                setDisplayValue(val);
+                return;
+            }
+
+            const rawValue = parseCOP(val);
             const formattedValue = rawValue ? formatCOP(rawValue) : "";
 
             setDisplayValue(formattedValue);
