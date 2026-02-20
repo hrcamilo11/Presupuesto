@@ -10,6 +10,11 @@ export default function DebugDashboard() {
         { name: "Budgets", href: "/debug/budgets", icon: PiggyBank, desc: "Presupuestos y límites" },
         { name: "Social (Debts/Col.)", href: "/debug/collections", icon: Users, desc: "Deudas, cobros y amigos" },
         { name: "Savings & Invest.", href: "/debug/savings", icon: TrendingUp, desc: "Metas e inversiones" },
+        { name: "Loans", href: "/debug/loans", icon: ArrowRightLeft, desc: "Préstamos y amortización" },
+        { name: "Subscriptions", href: "/debug/subscriptions", icon: ArrowRightLeft, desc: "Suscripciones recurrentes" },
+        { name: "Taxes", href: "/debug/taxes", icon: ArrowRightLeft, desc: "Obligaciones tributarias" },
+        { name: "Shared (Diag.)", href: "/debug-shared", icon: Users, desc: "Diagnóstico compartido" },
+        { name: "Friends (Diag.)", href: "/debug-friends", icon: Users, desc: "Diagnóstico de amigos" },
     ];
 
     return (
