@@ -29,9 +29,15 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
         }, [value, displayValue]);
 
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            const val = e.target.value;
-            // If the user just typed a comma or dot at the end, keep it in display but don't parse yet
-            if (val.endsWith(".") || val.endsWith(",")) {
+            let val = e.target.value;
+
+            // UX: If user types a dot, convert it to comma for decimal
+            if (val.endsWith(".")) {
+                val = val.slice(0, -1) + ",";
+            }
+
+            // If the user just typed a comma at the end, keep it in display but don't parse yet
+            if (val.endsWith(",")) {
                 setDisplayValue(val);
                 return;
             }

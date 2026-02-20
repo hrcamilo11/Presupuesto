@@ -50,12 +50,12 @@ export function formatCOP(value: string | number): string {
  * Strips non-numeric characters but preserves the first decimal separator.
  */
 export function parseCOP(value: string): string {
-  const sanitized = value.replace(/,/g, ".");
-  const parts = sanitized.split(".");
-  if (parts.length > 1) {
-    return parts[0].replace(/\D/g, "") + "." + parts[1].replace(/\D/g, "").slice(0, 2);
-  }
-  return sanitized.replace(/\D/g, "");
+  // Remove thousands separators (dots) and handle decimal separator (comma)
+  // 1.000 -> 1000
+  // 1.000,50 -> 1000.50
+  let val = value.replace(/\./g, "");
+  val = val.replace(/,/g, ".");
+  return val.replace(/[^0-9.]/g, "");
 }
 
 /**
