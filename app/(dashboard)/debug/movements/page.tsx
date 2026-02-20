@@ -15,15 +15,26 @@ export default async function DebugMovementsPage() {
 
     if (!user) return <div>Not authenticated</div>;
 
-    const { data: movements, error } = await supabase
-        .from("movements")
-        .select(`
-      *,
-      wallet:wallets(name),
-      category:categories(name)
-    `)
-        .order("date", { ascending: false })
-        .limit(50);
+    const [incomesRes, expensesRes] = await Promise.all([
+        supabase
+            .from("incomes")
+            .select(`*, wallet:wallets(name), category:categories(name)`)
+            .order("date", { ascending: false })
+            .limit(25),
+        supabase
+            .from("expenses")
+            .select(`*, wallet:wallets(name), category:categories(name)`)
+            .order("date", { ascending: false })
+            .limit(25)
+    ]);
+
+    const error = incomesRes.error || expensesRes.error;
+
+    const incomes = (incomesRes.data || []).map(i => ({ ...i, type: 'income' }));
+    const expenses = (expensesRes.data || []).map(e => ({ ...e, type: 'expense' }));
+    const movements = [...incomes, ...expenses].sort((a, b) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
 
     return (
         <div className="p-8 space-y-6">
@@ -44,7 +55,7 @@ export default async function DebugMovementsPage() {
                     </TableHeader>
                     <TableBody>
                         {movements?.map((mov: any) => (
-                            <TableRow key={mov.id}>
+                            <TableRow key={`${mov.type}-${mov.id}`}>
                                 <TableCell>{new Date(mov.date).toLocaleDateString()}</TableCell>
                                 <TableCell>{mov.description}</TableCell>
                                 <TableCell>{mov.wallet?.name}</TableCell>

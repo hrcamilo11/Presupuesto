@@ -16,10 +16,10 @@ export async function createCollection(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "No autenticado" };
 
-    // If creditorId is provided, current user is the debtor
-    // If debtorId is provided, current user is the creditor
-    const finalCreditorId = creditorId || (debtorId ? user.id : null);
-    const finalDebtorId = debtorId || (creditorId ? user.id : null);
+    // If creditorId/creditorName are provided, current user is the debtor
+    // If debtorId/debtorName are provided, current user is the creditor
+    const finalCreditorId = creditorId || (debtorId || debtorName ? user.id : null);
+    const finalDebtorId = debtorId || (creditorId || creditorName ? user.id : null);
 
     const { data: inserts, error } = await supabase
         .from("collections")
