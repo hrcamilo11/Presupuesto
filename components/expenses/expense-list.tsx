@@ -22,7 +22,7 @@ import {
 import { EXPENSE_PRIORITY_LABELS } from "@/lib/database.types";
 import { deleteExpense } from "@/app/actions/expenses";
 import { ExpenseForm } from "./expense-form";
-import type { Expense, SharedAccount, Wallet, Category } from "@/lib/database.types";
+import type { Expense, SharedAccount, Wallet, Category, Tag } from "@/lib/database.types";
 import { Pencil, Trash2, MessageCircle } from "lucide-react";
 import { ExpenseComments } from "./expense-comments";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
@@ -104,6 +104,19 @@ export function ExpenseList({ expenses, sharedAccounts, wallets, categories }: E
                       {expense.description}
                     </p>
                   )}
+                  {expense.tags && expense.tags.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {expense.tags.map((tag: Tag) => (
+                        <span
+                          key={tag.id}
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+                          style={{ backgroundColor: tag.color }}
+                        >
+                          {tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </button>
                 <div className="flex gap-1 shrink-0 sm:flex-shrink-0">
                   <Button
@@ -158,8 +171,21 @@ export function ExpenseList({ expenses, sharedAccounts, wallets, categories }: E
                     <TableCell>
                       {categories.find((c) => c.id === expense.category_id)?.name || "—"}
                     </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {expense.description || "—"}
+                    <TableCell className="max-w-[200px]">
+                      <span className="block truncate">{expense.description || "—"}</span>
+                      {expense.tags && expense.tags.length > 0 && (
+                        <div className="mt-0.5 flex flex-wrap gap-0.5">
+                          {expense.tags.map((tag: Tag) => (
+                            <span
+                              key={tag.id}
+                              className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
+                              style={{ backgroundColor: tag.color }}
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       ${formatNumber(Number(expense.amount))}

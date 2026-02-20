@@ -22,7 +22,7 @@ import {
 import { INCOME_TYPE_LABELS } from "@/lib/database.types";
 import { deleteIncome } from "@/app/actions/incomes";
 import { IncomeForm } from "./income-form";
-import type { Income, SharedAccount, Wallet, Category } from "@/lib/database.types";
+import type { Income, SharedAccount, Wallet, Category, Tag } from "@/lib/database.types";
 import { Pencil, Trash2 } from "lucide-react";
 import { formatDateYMD, formatNumber } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
@@ -103,6 +103,19 @@ export function IncomeList({ incomes, sharedAccounts, wallets, categories }: Inc
                       {income.description}
                     </p>
                   )}
+                  {income.tags && income.tags.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {income.tags.map((tag: Tag) => (
+                        <span
+                          key={tag.id}
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+                          style={{ backgroundColor: tag.color }}
+                        >
+                          {tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </button>
                 <div className="flex gap-1 shrink-0">
                   <Button
@@ -149,8 +162,21 @@ export function IncomeList({ incomes, sharedAccounts, wallets, categories }: Inc
                     <TableCell>
                       {categories.find((c) => c.id === income.category_id)?.name || "—"}
                     </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {income.description || "—"}
+                    <TableCell className="max-w-[200px]">
+                      <span className="block truncate">{income.description || "—"}</span>
+                      {income.tags && income.tags.length > 0 && (
+                        <div className="mt-0.5 flex flex-wrap gap-0.5">
+                          {income.tags.map((tag: Tag) => (
+                            <span
+                              key={tag.id}
+                              className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
+                              style={{ backgroundColor: tag.color }}
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       ${formatNumber(Number(income.amount))}
