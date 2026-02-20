@@ -217,14 +217,21 @@ export async function getPendingFriendRequests() {
         return { data: [], error: error.message };
     }
 
+    console.log("Pending requests raw data:", JSON.stringify(data, null, 2));
+
     const mapped = (data || []).map(req => {
         const profile = Array.isArray(req.sender) ? req.sender[0] : req.sender;
-        if (!profile) return null;
+        if (!profile) {
+            console.warn("Sender profile not found for request:", req.id);
+            return null;
+        }
         return {
             ...req,
             sender: profile as Profile
         };
     }).filter(Boolean) as { id: string, user_id: string, created_at: string, sender: Profile }[];
+
+    console.log("Mapped pending requests:", mapped.length);
 
     return { data: mapped, error: null };
 }
