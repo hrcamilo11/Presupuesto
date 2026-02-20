@@ -35,12 +35,10 @@ export function formatCOP(value: string | number): string {
   const [integerPart, decimalPart] = strValue.split(".");
 
   const cleanInteger = integerPart.replace(/\D/g, "");
-  if (!cleanInteger && !decimalPart) return "";
+  if (cleanInteger === "" && !decimalPart) return "";
+  const formattedInteger = cleanInteger ? formatNumber(cleanInteger) : "0";
 
-  const formattedInteger = formatNumber(cleanInteger || "0");
-
-  // Only show decimals if they exist and are not "00" (or similar depending on context, 
-  // but for now let's show them if they were explicitly provided or exist in number)
+  // Only show decimals if they exist
   if (decimalPart !== undefined) {
     return `${formattedInteger},${decimalPart.slice(0, 2)}`;
   }

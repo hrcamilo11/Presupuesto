@@ -39,10 +39,19 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
             const rawValue = parseCOP(val);
             const formattedValue = rawValue ? formatCOP(rawValue) : "";
 
+            // If the input is empty or just "0", allow it to be empty in display
+            // This fixes the issue where you can't delete "0" because it comes back
+            if (val === "" || rawValue === "") {
+                setDisplayValue("");
+                if (onChange) onChange(0);
+                return;
+            }
+
             setDisplayValue(formattedValue);
 
             if (onChange) {
-                onChange(rawValue ? parseFloat(rawValue) : 0);
+                const num = parseFloat(rawValue);
+                onChange(isNaN(num) ? 0 : num);
             }
         };
 
