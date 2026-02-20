@@ -15,8 +15,10 @@ export default async function DebugSavingsPage() {
         .select("*");
 
     const { data: investments, error: investError } = await supabase
-        .from("investments")
-        .select("*");
+        .from("wallets")
+        .select("*")
+        .eq("type", "investment")
+        .order("created_at", { ascending: false });
 
     return (
         <div className="p-8 space-y-8">
