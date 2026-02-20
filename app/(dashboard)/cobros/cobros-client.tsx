@@ -292,7 +292,7 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
                                                     <p className="font-semibold text-lg leading-none">
-                                                        {c.debtor ? (c.debtor.full_name || c.debtor.username) : (c.debtor_name || "Desconocido")}
+                                                        {c.debtor?.username ? `@${c.debtor.username}` : (c.debtor?.full_name || c.debtor_name || "Desconocido")}
                                                     </p>
                                                     {getStatusBadge(c.status)}
                                                 </div>
@@ -450,11 +450,16 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">Ninguna (No registrar movimiento)</SelectItem>
-                                        {wallets.map(w => (
-                                            <SelectItem key={w.id} value={w.id}>
-                                                {w.name} ({formatCurrency(w.balance, w.currency)})
-                                            </SelectItem>
-                                        ))}
+                                        {wallets.map(w => {
+                                            const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
+                                            const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
+                                            const bal = formatCurrency(w.balance, w.currency);
+                                            return (
+                                                <SelectItem key={w.id} value={w.id}>
+                                                    {`${name}${last4} - ${bal}`}
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -490,11 +495,16 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">Ninguna (No registrar movimiento)</SelectItem>
-                                        {wallets.map(w => (
-                                            <SelectItem key={w.id} value={w.id}>
-                                                {w.name} ({formatCurrency(w.balance, w.currency)})
-                                            </SelectItem>
-                                        ))}
+                                        {wallets.map(w => {
+                                            const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
+                                            const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
+                                            const bal = formatCurrency(w.balance, w.currency);
+                                            return (
+                                                <SelectItem key={w.id} value={w.id}>
+                                                    {`${name}${last4} - ${bal}`}
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -525,7 +535,7 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                                 <div className="text-sm">
                                     <p className="text-muted-foreground leading-snug">
                                         Dinero enviado por <span className="font-bold text-foreground">
-                                            {selectedPayment.collection.debtor?.full_name || selectedPayment.collection.debtor_name || "Amigo"}
+                                            {selectedPayment.collection.debtor?.username ? `@${selectedPayment.collection.debtor.username}` : (selectedPayment.collection.debtor?.full_name || selectedPayment.collection.debtor_name || "Amigo")}
                                         </span>
                                     </p>
                                     {selectedPayment.collection.description && (
@@ -544,11 +554,16 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                                     </SelectTrigger>
                                     <SelectContent>
                                         {wallets.length === 0 && <SelectItem value="none" disabled>No tienes cuentas registradas</SelectItem>}
-                                        {wallets.map(w => (
-                                            <SelectItem key={w.id} value={w.id}>
-                                                {w.name} ({formatCurrency(w.balance, w.currency)})
-                                            </SelectItem>
-                                        ))}
+                                        {wallets.map(w => {
+                                            const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
+                                            const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
+                                            const bal = formatCurrency(w.balance, w.currency);
+                                            return (
+                                                <SelectItem key={w.id} value={w.id}>
+                                                    {`${name}${last4} - ${bal}`}
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </SelectContent>
                                 </Select>
                             </div>

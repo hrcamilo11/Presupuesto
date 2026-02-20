@@ -291,7 +291,7 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
                                                     <p className="font-semibold text-lg leading-none">
-                                                        {d.creditor ? (d.creditor.full_name || d.creditor.username) : (d.creditor_name || "Desconocido")}
+                                                        {d.creditor?.username ? `@${d.creditor.username}` : (d.creditor?.full_name || d.creditor_name || "Desconocido")}
                                                     </p>
                                                     {getStatusBadge(d.status)}
                                                 </div>
@@ -459,11 +459,16 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">Ninguna (No registrar movimiento)</SelectItem>
-                                        {wallets.map(w => (
-                                            <SelectItem key={w.id} value={w.id}>
-                                                {w.name} ({formatCurrency(w.balance, w.currency)})
-                                            </SelectItem>
-                                        ))}
+                                        {wallets.map(w => {
+                                            const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
+                                            const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
+                                            const bal = formatCurrency(w.balance, w.currency);
+                                            return (
+                                                <SelectItem key={w.id} value={w.id}>
+                                                    {`${name}${last4} - ${bal}`}
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -494,7 +499,7 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                                 <div className="text-sm">
                                     <p className="text-muted-foreground leading-snug">
                                         Pago registrado por <span className="font-bold text-foreground">
-                                            {selectedPayment.collection.creditor?.full_name || selectedPayment.collection.creditor_name || "Acreedor"}
+                                            {selectedPayment.collection.creditor?.username ? `@${selectedPayment.collection.creditor.username}` : (selectedPayment.collection.creditor?.full_name || selectedPayment.collection.creditor_name || "Acreedor")}
                                         </span>
                                     </p>
                                     {selectedPayment.collection.description && (
@@ -513,11 +518,16 @@ export function DeudasClient({ initialDebts, friends, wallets }: DeudasClientPro
                                     </SelectTrigger>
                                     <SelectContent>
                                         {wallets.length === 0 && <SelectItem value="none" disabled>No tienes cuentas registradas</SelectItem>}
-                                        {wallets.map(w => (
-                                            <SelectItem key={w.id} value={w.id}>
-                                                {w.name} ({formatCurrency(w.balance, w.currency)})
-                                            </SelectItem>
-                                        ))}
+                                        {wallets.map(w => {
+                                            const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
+                                            const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
+                                            const bal = formatCurrency(w.balance, w.currency);
+                                            return (
+                                                <SelectItem key={w.id} value={w.id}>
+                                                    {`${name}${last4} - ${bal}`}
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </SelectContent>
                                 </Select>
                             </div>
