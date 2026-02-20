@@ -31,14 +31,15 @@ export function formatCurrency(amount: number | string, currency: string = "COP"
 export function formatCOP(value: string | number): string {
   if (value === "" || value === undefined || value === null) return "";
 
-  const strValue = typeof value === "number" ? value.toFixed(2) : value.replace(/,/g, ".");
+  // Convert number to string without forcing decimals
+  const strValue = typeof value === "number" ? value.toString() : value.replace(/,/g, ".");
   const [integerPart, decimalPart] = strValue.split(".");
 
   const cleanInteger = integerPart.replace(/\D/g, "");
   if (cleanInteger === "" && !decimalPart) return "";
   const formattedInteger = cleanInteger ? formatNumber(cleanInteger) : "0";
 
-  // Only show decimals if they exist
+  // Only show decimals if they exist in the input
   if (decimalPart !== undefined) {
     return `${formattedInteger},${decimalPart.slice(0, 2)}`;
   }

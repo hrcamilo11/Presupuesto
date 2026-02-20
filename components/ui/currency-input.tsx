@@ -21,12 +21,15 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
         // Sync with external value changes
         React.useEffect(() => {
             if (value !== undefined) {
-                const formatted = value !== "" ? formatCOP(value) : "";
-                if (formatted !== displayValue) {
+                // Only update display if the current display doesn't match the new value conceptually
+                // This prevents cursor jumping when typing "50000" -> "50.000"
+                const rawDisplay = parseCOP(displayValue);
+                if (rawDisplay !== value.toString()) {
+                    const formatted = value !== "" ? formatCOP(value) : "";
                     setDisplayValue(formatted);
                 }
             }
-        }, [value, displayValue]);
+        }, [value]); // Removed displayValue from deps to avoid loop
 
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             let val = e.target.value;
@@ -45,19 +48,22 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
             const rawValue = parseCOP(val);
             const formattedValue = rawValue ? formatCOP(rawValue) : "";
 
-            // If the input is empty or just "0", allow it to be empty in display
-            // This fixes the issue where you can't delete "0" because it comes back
+            // If the input is empty
             if (val === "" || rawValue === "") {
                 setDisplayValue("");
                 if (onChange) onChange(0);
                 return;
             }
 
+            // Update display immediately to feedback formatting
             setDisplayValue(formattedValue);
 
             if (onChange) {
                 const num = parseFloat(rawValue);
-                onChange(isNaN(num) ? 0 : num);
+                // Don't trigger change if it's not a valid number, or if it's just a trailing comma case handled above
+                if (!isNaN(num)) {
+                    onChange(num);
+                }
             }
         };
 

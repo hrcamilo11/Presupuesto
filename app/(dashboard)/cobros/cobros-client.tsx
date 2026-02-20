@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createCollection, markCollectionAsPaid, addCollectionPayment, allocateCollectionPayment } from "@/app/actions/collections";
@@ -207,7 +207,7 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                             Nuevo Cobro
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
                             <DialogTitle>Registrar nuevo cobro</DialogTitle>
                         </DialogHeader>
@@ -256,10 +256,12 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                                     onChange={(e) => setDescription(e.target.value)}
                                 />
                             </div>
+                        </div>
+                        <DialogFooter>
                             <Button className="w-full" onClick={handleCreate} disabled={isPending || (selectedFriendId === 'manual' && !debtorName) || (selectedFriendId !== 'manual' && !selectedFriendId) || !amount}>
                                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Registrar Cobro"}
                             </Button>
-                        </div>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </header>
@@ -416,58 +418,61 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                         <DialogTitle>Registrar Abono</DialogTitle>
                     </DialogHeader>
                     {selectedCollection && (
-                        <div className="space-y-4 py-4">
-                            <div className="rounded-lg bg-orange-50 border border-orange-100 p-3 space-y-1">
-                                <p className="text-xs font-bold uppercase text-orange-800">Saldo Pendiente</p>
-                                <p className="text-2xl font-black text-orange-950">
-                                    {formatCurrency(calculateBalance(selectedCollection), selectedCollection.currency)}
-                                </p>
-                            </div>
+                        <>
+                            <div className="space-y-4 py-4">
+                                <div className="rounded-lg bg-orange-50 border border-orange-100 p-3 space-y-1">
+                                    <p className="text-xs font-bold uppercase text-orange-800">Saldo Pendiente</p>
+                                    <p className="text-2xl font-black text-orange-950">
+                                        {formatCurrency(calculateBalance(selectedCollection), selectedCollection.currency)}
+                                    </p>
+                                </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="pAmount">Monto del abono</Label>
-                                <CurrencyInput
-                                    id="pAmount"
-                                    value={paymentAmount}
-                                    onChange={setPaymentAmount}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="pNotes">Notas (opcional)</Label>
-                                <Input
-                                    id="pNotes"
-                                    placeholder="Ej: Transferencia Bancolombia"
-                                    value={paymentNotes}
-                                    onChange={(e) => setPaymentNotes(e.target.value)}
-                                />
-                            </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="pAmount">Monto del abono</Label>
+                                    <CurrencyInput
+                                        id="pAmount"
+                                        value={paymentAmount}
+                                        onChange={setPaymentAmount}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="pNotes">Notas (opcional)</Label>
+                                    <Input
+                                        id="pNotes"
+                                        placeholder="Ej: Transferencia Bancolombia"
+                                        value={paymentNotes}
+                                        onChange={(e) => setPaymentNotes(e.target.value)}
+                                    />
+                                </div>
 
-                            <div className="space-y-2">
-                                <Label>¿A qué cuenta llega el dinero?</Label>
-                                <Select value={paymentWalletId} onValueChange={setPaymentWalletId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccionar cuenta" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Ninguna (No registrar movimiento)</SelectItem>
-                                        {wallets.map(w => {
-                                            const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
-                                            const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
-                                            const bal = formatCurrency(w.balance, w.currency);
-                                            return (
-                                                <SelectItem key={w.id} value={w.id}>
-                                                    {`${name}${last4} - ${bal}`}
-                                                </SelectItem>
-                                            );
-                                        })}
-                                    </SelectContent>
-                                </Select>
+                                <div className="space-y-2">
+                                    <Label>¿A qué cuenta llega el dinero?</Label>
+                                    <Select value={paymentWalletId} onValueChange={setPaymentWalletId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar cuenta" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Ninguna (No registrar movimiento)</SelectItem>
+                                            {wallets.map(w => {
+                                                const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
+                                                const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
+                                                const bal = formatCurrency(w.balance, w.currency);
+                                                return (
+                                                    <SelectItem key={w.id} value={w.id}>
+                                                        {`${name}${last4} - ${bal}`}
+                                                    </SelectItem>
+                                                );
+                                            })}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
-
-                            <Button className="w-full" onClick={handleAddPayment} disabled={isPending || !paymentAmount}>
-                                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar Abono"}
-                            </Button>
-                        </div>
+                            <DialogFooter>
+                                <Button className="w-full" onClick={handleAddPayment} disabled={isPending || !paymentAmount}>
+                                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar Abono"}
+                                </Button>
+                            </DialogFooter>
+                        </>
                     )}
                 </DialogContent>
             </Dialog>
@@ -479,40 +484,43 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                         <DialogTitle>Marcar como Pagado</DialogTitle>
                     </DialogHeader>
                     {selectedCollection && (
-                        <div className="space-y-4 py-4">
-                            <div className="rounded-lg bg-green-50 border border-green-100 p-3 space-y-1">
-                                <p className="text-xs font-bold uppercase text-green-800">Saldo Final a Cobrar</p>
-                                <p className="text-2xl font-black text-green-950">
-                                    {formatCurrency(calculateBalance(selectedCollection), selectedCollection.currency)}
-                                </p>
-                            </div>
+                        <>
+                            <div className="space-y-4 py-4">
+                                <div className="rounded-lg bg-green-50 border border-green-100 p-3 space-y-1">
+                                    <p className="text-xs font-bold uppercase text-green-800">Saldo Final a Cobrar</p>
+                                    <p className="text-2xl font-black text-green-950">
+                                        {formatCurrency(calculateBalance(selectedCollection), selectedCollection.currency)}
+                                    </p>
+                                </div>
 
-                            <div className="space-y-2">
-                                <Label>¿A qué cuenta llega el dinero?</Label>
-                                <Select value={paymentWalletId} onValueChange={setPaymentWalletId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccionar cuenta" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Ninguna (No registrar movimiento)</SelectItem>
-                                        {wallets.map(w => {
-                                            const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
-                                            const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
-                                            const bal = formatCurrency(w.balance, w.currency);
-                                            return (
-                                                <SelectItem key={w.id} value={w.id}>
-                                                    {`${name}${last4} - ${bal}`}
-                                                </SelectItem>
-                                            );
-                                        })}
-                                    </SelectContent>
-                                </Select>
+                                <div className="space-y-2">
+                                    <Label>¿A qué cuenta llega el dinero?</Label>
+                                    <Select value={paymentWalletId} onValueChange={setPaymentWalletId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar cuenta" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Ninguna (No registrar movimiento)</SelectItem>
+                                            {wallets.map(w => {
+                                                const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
+                                                const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
+                                                const bal = formatCurrency(w.balance, w.currency);
+                                                return (
+                                                    <SelectItem key={w.id} value={w.id}>
+                                                        {`${name}${last4} - ${bal}`}
+                                                    </SelectItem>
+                                                );
+                                            })}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
-
-                            <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => handleMarkAsPaid(selectedCollection.id)} disabled={isPending}>
-                                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar Pago Total"}
-                            </Button>
-                        </div>
+                            <DialogFooter>
+                                <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => handleMarkAsPaid(selectedCollection.id)} disabled={isPending}>
+                                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar Pago Total"}
+                                </Button>
+                            </DialogFooter>
+                        </>
                     )}
                 </DialogContent>
             </Dialog>
@@ -524,62 +532,65 @@ export function CobrosClient({ initialCollections, friends, wallets }: CobrosCli
                         <DialogTitle>Ubicar Dinero en Cuenta</DialogTitle>
                     </DialogHeader>
                     {selectedPayment && (
-                        <div className="space-y-4 py-4">
-                            <div className="rounded-lg bg-primary/5 border border-primary/10 p-4 space-y-3">
-                                <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Monto Recibido</p>
-                                    <p className="text-2xl font-black text-primary">
-                                        {formatCurrency(selectedPayment.amount, selectedPayment.collection.currency)}
-                                    </p>
-                                </div>
-                                <div className="text-sm">
-                                    <p className="text-muted-foreground leading-snug">
-                                        Dinero enviado por <span className="font-bold text-foreground">
-                                            {selectedPayment.collection.debtor?.username ? `@${selectedPayment.collection.debtor.username}` : (selectedPayment.collection.debtor?.full_name || selectedPayment.collection.debtor_name || "Amigo")}
-                                        </span>
-                                    </p>
-                                    {selectedPayment.collection.description && (
-                                        <p className="text-xs text-muted-foreground italic mt-1 italic">
-                                            &quot;{selectedPayment.collection.description}&quot;
+                        <>
+                            <div className="space-y-4 py-4">
+                                <div className="rounded-lg bg-primary/5 border border-primary/10 p-4 space-y-3">
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Monto Recibido</p>
+                                        <p className="text-2xl font-black text-primary">
+                                            {formatCurrency(selectedPayment.amount, selectedPayment.collection.currency)}
                                         </p>
-                                    )}
+                                    </div>
+                                    <div className="text-sm">
+                                        <p className="text-muted-foreground leading-snug">
+                                            Dinero enviado por <span className="font-bold text-foreground">
+                                                {selectedPayment.collection.debtor?.username ? `@${selectedPayment.collection.debtor.username}` : (selectedPayment.collection.debtor?.full_name || selectedPayment.collection.debtor_name || "Amigo")}
+                                            </span>
+                                        </p>
+                                        {selectedPayment.collection.description && (
+                                            <p className="text-xs text-muted-foreground italic mt-1 italic">
+                                                &quot;{selectedPayment.collection.description}&quot;
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
+
+                                <div className="space-y-2">
+                                    <Label>¿En qué cuenta recibiste el dinero?</Label>
+                                    <Select value={paymentWalletId} onValueChange={setPaymentWalletId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar cuenta destino" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {wallets.length === 0 && <SelectItem value="none" disabled>No tienes cuentas registradas</SelectItem>}
+                                            {wallets.map(w => {
+                                                const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
+                                                const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
+                                                const bal = formatCurrency(w.balance, w.currency);
+                                                return (
+                                                    <SelectItem key={w.id} value={w.id}>
+                                                        {`${name}${last4} - ${bal}`}
+                                                    </SelectItem>
+                                                );
+                                            })}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <p className="text-[10px] text-center text-muted-foreground">
+                                    Esto registrará un ingreso en tu cuenta y actualizará el saldo.
+                                </p>
                             </div>
-
-                            <div className="space-y-2">
-                                <Label>¿En qué cuenta recibiste el dinero?</Label>
-                                <Select value={paymentWalletId} onValueChange={setPaymentWalletId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccionar cuenta destino" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {wallets.length === 0 && <SelectItem value="none" disabled>No tienes cuentas registradas</SelectItem>}
-                                        {wallets.map(w => {
-                                            const name = w.name.length > 10 ? w.name.substring(0, 10) + "..." : w.name;
-                                            const last4 = w.last_four_digits ? ` - ****${w.last_four_digits}` : "";
-                                            const bal = formatCurrency(w.balance, w.currency);
-                                            return (
-                                                <SelectItem key={w.id} value={w.id}>
-                                                    {`${name}${last4} - ${bal}`}
-                                                </SelectItem>
-                                            );
-                                        })}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <Button
-                                className="w-full h-11 text-base font-semibold"
-                                onClick={handleAllocateMoney}
-                                disabled={isPending || paymentWalletId === "none" || wallets.length === 0}
-                            >
-                                {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmar Recepción"}
-                            </Button>
-
-                            <p className="text-[10px] text-center text-muted-foreground">
-                                Esto registrará un ingreso en tu cuenta y actualizará el saldo.
-                            </p>
-                        </div>
+                            <DialogFooter>
+                                <Button
+                                    className="w-full h-11 text-base font-semibold"
+                                    onClick={handleAllocateMoney}
+                                    disabled={isPending || paymentWalletId === "none" || wallets.length === 0}
+                                >
+                                    {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmar Recepción"}
+                                </Button>
+                            </DialogFooter>
+                        </>
                     )}
                 </DialogContent>
             </Dialog>
