@@ -2,6 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { type LoanPayment } from "@/lib/database.types";
 
 export default async function LoansDebugPage() {
     const supabase = await createClient();
@@ -62,7 +63,7 @@ export default async function LoansDebugPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {loan.loan_payments?.sort((a: any, b: any) => a.payment_number - b.payment_number).map((p: any) => (
+                                            {loan.loan_payments?.sort((a: LoanPayment, b: LoanPayment) => a.payment_number - b.payment_number).map((p: LoanPayment) => (
                                                 <tr key={p.id} className="border-t">
                                                     <td className="p-2">{p.payment_number}</td>
                                                     <td className="p-2">{p.paid_at}</td>

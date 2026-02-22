@@ -37,7 +37,7 @@ export default async function DebugCollectionsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {collections?.map((col: any) => {
+                        {collections?.map((col) => {
                             const isCreditor = col.creditor_id === user.id;
                             const otherParty = isCreditor ? col.debtor : col.creditor;
                             const type = isCreditor ? "Cobro (Incoming)" : "Deuda (Outgoing)";

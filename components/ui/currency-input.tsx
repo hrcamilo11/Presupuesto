@@ -29,7 +29,7 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
                     setDisplayValue(formatted);
                 }
             }
-        }, [value]); // Removed displayValue from deps to avoid loop
+        }, [value, displayValue]);
 
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             let val = e.target.value;

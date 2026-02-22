@@ -33,7 +33,7 @@ export default async function TaxesDebugPage() {
                                 </div>
                                 <div className="p-2 border rounded bg-muted/30">
                                     <p className="text-muted-foreground">Period</p>
-                                    <p className="font-bold">{(TAX_PERIOD_LABELS as any)[tax.period_type] || tax.period_type}</p>
+                                    <p className="font-bold">{(TAX_PERIOD_LABELS as Record<string, string>)[tax.period_type] || tax.period_type}</p>
                                 </div>
                                 <div className="p-2 border rounded bg-muted/30">
                                     <p className="text-muted-foreground">Due Date</p>

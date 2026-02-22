@@ -1,8 +1,5 @@
 
 import { createClient } from "@/lib/supabase/server";
-import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow
-} from "@/components/ui/table";
 
 export default async function DebugSavingsPage() {
     const supabase = await createClient();

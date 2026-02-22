@@ -35,7 +35,7 @@ export default async function DebugFriendsPage() {
             </div>
 
             <div className="space-y-2">
-                <h2 className="text-xl font-semibold">Search 'samrromz' (RPC)</h2>
+                <h2 className="text-xl font-semibold">Search &apos;samrromz&apos; (RPC)</h2>
                 <pre className="bg-muted p-4 rounded overflow-auto">
                     {JSON.stringify({ searchResults, searchError }, null, 2)}
                 </pre>

@@ -54,7 +54,7 @@ export default async function DebugMovementsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {movements?.map((mov: any) => (
+                        {movements?.map((mov) => (
                             <TableRow key={`${mov.type}-${mov.id}`}>
                                 <TableCell>{new Date(mov.date).toLocaleDateString()}</TableCell>
                                 <TableCell>{mov.description}</TableCell>

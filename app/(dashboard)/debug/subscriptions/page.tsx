@@ -33,7 +33,7 @@ export default async function SubscriptionsDebugPage() {
                                 </div>
                                 <div className="p-2 border rounded bg-muted/30">
                                     <p className="text-muted-foreground">Frequency</p>
-                                    <p className="font-bold">{(SUBSCRIPTION_FREQUENCY_LABELS as any)[sub.frequency] || sub.frequency}</p>
+                                    <p className="font-bold">{(SUBSCRIPTION_FREQUENCY_LABELS as Record<string, string>)[sub.frequency] || sub.frequency}</p>
                                 </div>
                                 <div className="p-2 border rounded bg-muted/30">
                                     <p className="text-muted-foreground">Next Due Date</p>

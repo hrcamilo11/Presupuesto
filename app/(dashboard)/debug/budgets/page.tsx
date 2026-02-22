@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
 
 export default async function DebugBudgetsPage() {
     const supabase = await createClient();
@@ -38,7 +37,7 @@ export default async function DebugBudgetsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {budgets?.map((b: any) => (
+                        {budgets?.map((b: { id: string, amount: number, period: string, category: { name: string } | null }) => (
                             <TableRow key={b.id}>
                                 <TableCell>{b.category?.name}</TableCell>
                                 <TableCell className="text-right font-mono">
