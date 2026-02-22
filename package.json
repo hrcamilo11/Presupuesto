@@ -11,6 +11,9 @@
     "start": "next start",
     "lint": "next lint",
     "db:migrate": "node scripts/migrate.js",
+    "db:link": "npx supabase link --project-ref vzohoiwmjcuqhndsoazx",
+    "db:push": "npx supabase db push",
+    "db:status": "npx supabase migration list",
     "appwrite:create-wallets": "node scripts/appwrite-create-wallets-collection.js",
     "appwrite:setup": "node scripts/appwrite-setup-schema.js",
     "appwrite:migrate-to-supabase": "node scripts/migrate-appwrite-to-supabase.js",
@@ -66,6 +69,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",
+    "supabase": "^2.76.12",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }

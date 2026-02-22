@@ -29,7 +29,7 @@ export function SortableWalletCard({ id, wallet, wallets }: SortableWalletCardPr
         transition,
         zIndex: isDragging ? 50 : undefined,
         opacity: isDragging ? 0.5 : 1,
-        touchAction: "none", // Importante para dispositivos móviles
+        touchAction: "pan-y", // Permite el scroll vertical en móviles mientras no se arrastra
     };
 
     return (
