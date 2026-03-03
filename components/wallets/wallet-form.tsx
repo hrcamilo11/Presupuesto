@@ -38,7 +38,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 import { walletSchema, type WalletSchema } from "@/lib/validations/wallet";
 import { createWallet, updateWallet } from "@/app/actions/wallets";
-import { isNequiConfigured } from "@/app/actions/nequi-sync";
+// isNequiConfigured was removed in favor of Floid
 import type { Wallet } from "@/lib/database.types";
 import { COLOMBIAN_BANKS } from "@/lib/banks";
 import { useEffect } from "react";
@@ -99,7 +99,7 @@ export function WalletForm({
     const [isGlobalNequiConfigured, setIsGlobalNequiConfigured] = useState(false);
 
     useEffect(() => {
-        isNequiConfigured().then(setIsGlobalNequiConfigured);
+// Sync state logic simplified for Floid
     }, []);
 
     const isEditMode = !!wallet;

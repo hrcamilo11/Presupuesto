@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet, CreditCard, Banknote, PiggyBank, TrendingUp, MoreHorizontal, Trash, Pencil, Calendar, CalendarClock, BanknoteIcon, Table2, History, RefreshCcw } from "lucide-react";
+import { Wallet, CreditCard, Banknote, PiggyBank, TrendingUp, MoreHorizontal, Trash, Pencil, Calendar, CalendarClock, BanknoteIcon, Table2, History, RefreshCcw, FileDown, Link2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import {
     Card,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { deleteWallet } from "@/app/actions/wallets";
-import { syncNequiTransactions } from "@/app/actions/nequi-sync";
+import { syncFloidTransactions } from "@/app/actions/floid-sync";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import {
@@ -28,9 +28,9 @@ import { CreditCardAmortizationDialog } from "./credit-card-amortization-dialog"
 import { CardBrandLogo } from "./card-brand-logo";
 import { getNextCutDate, getNextPaymentDueDate, formatShortDate } from "@/lib/credit-card";
 import { ImportMovementsDialog } from "./import-movements-dialog";
+import { FloidConnectDialog } from "./floid-connect-dialog";
 import type { Wallet as WalletType } from "@/lib/database.types";
 import { COLOMBIAN_BANKS, getBankColor, getBankGradient } from "@/lib/banks";
-import { FileDown } from "lucide-react";
 
 /** Devuelve true si el color hex es claro (fondo blanco/claro → usar texto oscuro). */
 function isLightColor(hex: string | null | undefined): boolean {
@@ -94,6 +94,7 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
     const [payOpen, setPayOpen] = useState(false);
     const [amortOpen, setAmortOpen] = useState(false);
     const [importOpen, setImportOpen] = useState(false);
+    const [floidOpen, setFloidOpen] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const Icon = typeIcons[wallet.type as keyof typeof typeIcons] || Wallet;
     const label = typeLabels[wallet.type as keyof typeof typeLabels] || "Cuenta";
@@ -122,7 +123,7 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
     async function handleSync() {
         setSyncing(true);
         try {
-            const res = await syncNequiTransactions(wallet.id);
+            const res = await syncFloidTransactions(wallet.id);
             if (res.error) {
                 toast({
                     variant: "destructive",
@@ -132,11 +133,11 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
             } else {
                 toast({
                     title: "Sincronización exitosa",
-                    description: res.message,
+                    description: res.message || "Movimientos actualizados.",
                 });
                 router.refresh();
             }
-        } catch {
+        } catch (error: any) {
             toast({
                 variant: "destructive",
                 title: "Error",
@@ -273,6 +274,35 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                         </div>
                         {wallet.bank === "nequi" && (
                             <div className="ml-auto flex items-center gap-1">
+                                {(wallet.nequi_config as any)?.floid_token ? (
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className={`h-8 w-8 rounded-full ${isDarkCard ? "text-white hover:bg-white/20" : "text-purple-600 hover:text-purple-700 hover:bg-purple-50"}`}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleSync();
+                                        }}
+                                        disabled={syncing}
+                                        title="Sincronizar vía Floid"
+                                    >
+                                        <RefreshCcw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className={`h-8 px-2 text-[10px] gap-1 rounded-full ${isDarkCard ? "text-white hover:bg-white/20 border-white/20" : "text-blue-600 hover:text-blue-700 border-blue-200"}`}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setFloidOpen(true);
+                                        }}
+                                        title="Vincular con Floid"
+                                    >
+                                        <Link2 className="h-3 w-3" />
+                                        Vincular
+                                    </Button>
+                                )}
                                 <Button
                                     size="icon"
                                     variant="ghost"
@@ -285,21 +315,6 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                                 >
                                     <FileDown className="h-4 w-4" />
                                 </Button>
-                                {wallet.nequi_config && (
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className={`h-8 w-8 rounded-full ${isDarkCard ? "text-white hover:bg-white/20" : "text-purple-600 hover:text-purple-700 hover:bg-purple-50"}`}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            handleSync();
-                                        }}
-                                        disabled={syncing}
-                                        title="Sincronizar vía API"
-                                    >
-                                        <RefreshCcw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                                    </Button>
-                                )}
                             </div>
                         )}
                     </div>
@@ -392,6 +407,12 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
             <ImportMovementsDialog
                 open={importOpen}
                 onOpenChange={setImportOpen}
+                walletId={wallet.id}
+                walletName={wallet.name}
+            />
+            <FloidConnectDialog
+                open={floidOpen}
+                onOpenChange={setFloidOpen}
                 walletId={wallet.id}
                 walletName={wallet.name}
             />
