@@ -134,6 +134,11 @@ export type CreateWalletFormData = {
   investment_yield_rate?: number;
   investment_term?: string;
   investment_start_date?: string;
+  nequi_config?: {
+    client_id?: string;
+    client_secret?: string;
+    phone_number?: string;
+  } | null;
 };
 
 /** Crea una wallet solo en Appwrite (fallback cuando Supabase está caído). Devuelve la wallet creada. */
@@ -166,6 +171,7 @@ export async function createWalletInAppwrite(userId: string, formData: CreateWal
     investment_yield_rate: formData.type === "investment" ? formData.investment_yield_rate ?? null : null,
     investment_term: formData.type === "investment" ? formData.investment_term ?? null : null,
     investment_start_date: formData.type === "investment" ? formData.investment_start_date ?? null : null,
+    nequi_config: formData.nequi_config ?? null,
     created_at: now,
     updated_at: now,
   };
@@ -177,7 +183,7 @@ export async function createWalletInAppwrite(userId: string, formData: CreateWal
 /** Actualiza una wallet en Appwrite con datos parciales (fallback cuando Supabase está caído). */
 export async function updateWalletPartialInAppwrite(
   walletId: string,
-  data: Record<string, string | number | null>
+  data: Record<string, unknown>
 ): Promise<void> {
   const db = getAppwriteDatabases();
   if (!db) return;

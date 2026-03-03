@@ -59,9 +59,9 @@ interface WalletProps {
     investment_term?: string | null;
     investment_start_date?: string | null;
     nequi_config?: {
-        client_id: string;
-        client_secret: string;
-        phone_number: string;
+        client_id?: string;
+        client_secret?: string;
+        phone_number?: string;
     } | null;
     last_synced_at?: string | null;
 }
@@ -133,7 +133,7 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                 });
                 router.refresh();
             }
-        } catch (err) {
+        } catch {
             toast({
                 variant: "destructive",
                 title: "Error",

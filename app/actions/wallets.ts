@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { walletSchema } from "@/lib/validations/wallet";
+import { walletSchema, type WalletSchema } from "@/lib/validations/wallet";
 import { withFailover, isNetworkOrServerError } from "@/lib/backend/with-failover";
 import { getUserIdForFailover } from "@/lib/backend/auth-context";
 import {
@@ -102,6 +102,11 @@ export async function createWallet(formData: {
     investment_yield_rate?: number;
     investment_term?: string;
     investment_start_date?: string;
+    nequi_config?: {
+        client_id?: string;
+        client_secret?: string;
+        phone_number?: string;
+    } | null;
 }) {
     const parsed = walletSchema.safeParse(formData);
     if (!parsed.success) {
@@ -145,7 +150,7 @@ export async function createWallet(formData: {
             investment_yield_rate: formData.type === "investment" ? formData.investment_yield_rate ?? null : null,
             investment_term: formData.type === "investment" ? formData.investment_term ?? null : null,
             investment_start_date: formData.type === "investment" ? formData.investment_start_date ?? null : null,
-            nequi_config: formData.bank === "nequi" ? (formData as any).nequi_config ?? null : null,
+            nequi_config: formData.bank === "nequi" ? (parsed.data as WalletSchema).nequi_config ?? null : null,
         };
         const { data: created, error } = await supabase
             .from("wallets")
@@ -203,6 +208,11 @@ export async function updateWallet(
         investment_yield_rate?: number;
         investment_term?: string;
         investment_start_date?: string;
+        nequi_config?: {
+            client_id?: string;
+            client_secret?: string;
+            phone_number?: string;
+        } | null;
     }
 ) {
     const parsed = walletSchema.safeParse(formData);
@@ -210,13 +220,13 @@ export async function updateWallet(
         return { error: parsed.error.issues[0].message };
     }
 
-    const updateData: Record<string, string | number | null> = {
+    const updateData: Record<string, unknown> = {
         name: formData.name,
         type: formData.type,
         currency: formData.currency,
         balance: formData.balance ?? null,
         color: formData.color || null,
-        nequi_config: formData.bank === "nequi" ? (formData as any).nequi_config ?? null : null,
+        nequi_config: formData.bank === "nequi" ? (parsed.data as WalletSchema).nequi_config ?? null : null,
     };
     const lastFour = formData.last_four_digits && /^\d{1,4}$/.test(formData.last_four_digits) ? formData.last_four_digits : null;
     if (formData.type === "debit") {

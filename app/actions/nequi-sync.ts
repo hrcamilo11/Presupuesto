@@ -29,7 +29,7 @@ export async function syncNequiTransactions(walletId: string) {
       throw new Error(walletError?.message || "Cuenta no encontrada");
     }
 
-    const config = (wallet as any).nequi_config as NequiConfig;
+    const config = (wallet as Wallet).nequi_config as unknown as NequiConfig;
     if (!config || !config.client_id || !config.client_secret || !config.phone_number) {
       throw new Error("Configuración de Nequi incompleta para esta cuenta");
     }
@@ -124,7 +124,7 @@ export async function syncNequiTransactions(walletId: string) {
     // 7. Update last_synced_at
     await supabase.from("wallets").update({
       last_synced_at: new Date().toISOString()
-    } as any).eq("id", walletId);
+    }).eq("id", walletId);
 
     revalidatePath("/wallets");
     revalidatePath("/dashboard");
