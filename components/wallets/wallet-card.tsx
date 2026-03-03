@@ -27,8 +27,10 @@ import { PayCreditCardDialog } from "./pay-credit-card-dialog";
 import { CreditCardAmortizationDialog } from "./credit-card-amortization-dialog";
 import { CardBrandLogo } from "./card-brand-logo";
 import { getNextCutDate, getNextPaymentDueDate, formatShortDate } from "@/lib/credit-card";
+import { ImportMovementsDialog } from "./import-movements-dialog";
 import type { Wallet as WalletType } from "@/lib/database.types";
 import { COLOMBIAN_BANKS, getBankColor, getBankGradient } from "@/lib/banks";
+import { FileDown } from "lucide-react";
 
 /** Devuelve true si el color hex es claro (fondo blanco/claro → usar texto oscuro). */
 function isLightColor(hex: string | null | undefined): boolean {
@@ -91,6 +93,7 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
     const [editOpen, setEditOpen] = useState(false);
     const [payOpen, setPayOpen] = useState(false);
     const [amortOpen, setAmortOpen] = useState(false);
+    const [importOpen, setImportOpen] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const Icon = typeIcons[wallet.type as keyof typeof typeIcons] || Wallet;
     const label = typeLabels[wallet.type as keyof typeof typeLabels] || "Cuenta";
@@ -268,21 +271,35 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                                 {label}
                             </p>
                         </div>
-                        {wallet.bank === "nequi" && wallet.nequi_config && (
-                            <div className="ml-auto">
+                        {wallet.bank === "nequi" && (
+                            <div className="ml-auto flex items-center gap-1">
                                 <Button
                                     size="icon"
                                     variant="ghost"
-                                    className={`h-8 w-8 rounded-full ${isDarkCard ? "text-white hover:bg-white/20" : "text-purple-600 hover:text-purple-700 hover:bg-purple-50"}`}
+                                    className={`h-8 w-8 rounded-full ${isDarkCard ? "text-white hover:bg-white/20" : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"}`}
                                     onClick={(e) => {
                                         e.preventDefault();
-                                        handleSync();
+                                        setImportOpen(true);
                                     }}
-                                    disabled={syncing}
-                                    title="Sincronizar movimientos"
+                                    title="Importar movimientos (Texto/Archivo)"
                                 >
-                                    <RefreshCcw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                                    <FileDown className="h-4 w-4" />
                                 </Button>
+                                {wallet.nequi_config && (
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className={`h-8 w-8 rounded-full ${isDarkCard ? "text-white hover:bg-white/20" : "text-purple-600 hover:text-purple-700 hover:bg-purple-50"}`}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleSync();
+                                        }}
+                                        disabled={syncing}
+                                        title="Sincronizar vía API"
+                                    >
+                                        <RefreshCcw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                                    </Button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -372,6 +389,12 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                     currency={wallet.currency}
                 />
             )}
+            <ImportMovementsDialog
+                open={importOpen}
+                onOpenChange={setImportOpen}
+                walletId={wallet.id}
+                walletName={wallet.name}
+            />
         </div>
     );
 }

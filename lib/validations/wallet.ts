@@ -108,6 +108,15 @@ export const walletSchema = baseWalletSchema.superRefine((value, ctx) => {
       }
     }
   }
+  if (value.bank === "nequi") {
+    if (!value.nequi_config?.phone_number) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["nequi_config", "phone_number"],
+        message: "El número de teléfono es obligatorio para Nequi.",
+      });
+    }
+  }
 });
 
 export type WalletSchema = z.infer<typeof walletSchema>;

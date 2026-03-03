@@ -6,8 +6,8 @@ import { NequiClient } from "@/lib/bank-providers/nequi";
 import type { Wallet } from "@/lib/database.types";
 
 interface NequiConfig {
-  client_id: string;
-  client_secret: string;
+  client_id?: string;
+  client_secret?: string;
   phone_number: string;
 }
 
@@ -30,12 +30,19 @@ export async function syncNequiTransactions(walletId: string) {
     }
 
     const config = (wallet as Wallet).nequi_config as unknown as NequiConfig;
-    if (!config || !config.client_id || !config.client_secret || !config.phone_number) {
-      throw new Error("Configuración de Nequi incompleta para esta cuenta");
+    if (!config || !config.phone_number) {
+      throw new Error("El número de teléfono de Nequi es obligatorio");
     }
 
-    // 2. Initialize Nequi Client
-    const nequi = new NequiClient(config.client_id, config.client_secret, config.phone_number);
+    const clientId = config.client_id || process.env.NEQUI_CLIENT_ID;
+    const clientSecret = config.client_secret || process.env.NEQUI_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      throw new Error("No se ha configurado el Client ID o Client Secret de Nequi (ni en la cuenta ni en el sistema)");
+    }
+
+    // 2. Initialize Nequi Client - phoneNumber is now first
+    const nequi = new NequiClient(config.phone_number, clientId, clientSecret);
 
     // 3. Fetch existing external_ids from this wallet to avoid duplicates
     const [{ data: existingIncomes }, { data: existingExpenses }] = await Promise.all([
@@ -141,4 +148,8 @@ export async function syncNequiTransactions(walletId: string) {
     console.error("Sync Error:", err);
     return { error: err instanceof Error ? err.message : "Error desconocido durante la sincronización" };
   }
+}
+
+export async function isNequiConfigured() {
+  return !!(process.env.NEQUI_CLIENT_ID && process.env.NEQUI_CLIENT_SECRET);
 }

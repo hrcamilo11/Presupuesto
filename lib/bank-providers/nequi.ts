@@ -19,16 +19,19 @@ interface NequiMovement {
   date: string;
   concept?: string;
 }
-
 export class NequiClient {
   private clientId: string;
   private clientSecret: string;
   private phoneNumber: string;
 
-  constructor(clientId: string, clientSecret: string, phoneNumber: string) {
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
+  constructor(phoneNumber: string, clientId?: string | null, clientSecret?: string | null) {
+    this.clientId = clientId || process.env.NEQUI_CLIENT_ID || '';
+    this.clientSecret = clientSecret || process.env.NEQUI_CLIENT_SECRET || '';
     this.phoneNumber = phoneNumber.startsWith('+') ? phoneNumber : `+57${phoneNumber}`;
+    
+    if (!this.clientId || !this.clientSecret) {
+      console.warn('NequiClient initialized without Client ID or Client Secret. Ensure they are provided or set as environment variables.');
+    }
   }
 
   /**
