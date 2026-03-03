@@ -137,7 +137,7 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                 });
                 router.refresh();
             }
-        } catch (error: any) {
+        } catch {
             toast({
                 variant: "destructive",
                 title: "Error",
@@ -274,7 +274,7 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                         </div>
                         {wallet.bank === "nequi" && (
                             <div className="ml-auto flex items-center gap-1">
-                                {(wallet.nequi_config as any)?.floid_token ? (
+                                {(wallet.nequi_config as { floid_token?: string })?.floid_token ? (
                                     <Button
                                         size="icon"
                                         variant="ghost"

@@ -9,6 +9,17 @@ export interface FloidTransaction {
   balance_after?: number;
 }
 
+interface RawFloidTransaction {
+  id?: string;
+  external_id?: string;
+  amount?: string | number;
+  description?: string;
+  concept?: string;
+  date?: string;
+  created_at?: string;
+  balance?: number;
+}
+
 export class FloidClient {
   private clientId: string;
   private clientSecret: string;
@@ -79,19 +90,22 @@ export class FloidClient {
       // Map Floid response to our internal format
       // Note: We'll need to adjust the mapping based on the actual JSON structure
       // returned by the Floid API (usually they have a common format for aggregators).
-      const transactions = response.data?.transactions || response.data || [];
+      const transactions = (response.data?.transactions || response.data || []) as RawFloidTransaction[];
       
-      return transactions.map((tx: any) => ({
-        id: tx.id || tx.external_id,
-        amount: Math.abs(parseFloat(tx.amount)),
-        description: tx.description || tx.concept || "Movimiento Nequi",
-        date: tx.date || tx.created_at,
-        type: parseFloat(tx.amount) < 0 ? 'EXPENSE' : 'INCOME',
+      return transactions.map((tx) => ({
+        id: (tx.id || tx.external_id || Math.random().toString(36).substring(7)),
+        amount: Math.abs(typeof tx.amount === 'string' ? parseFloat(tx.amount) : (tx.amount || 0)),
+        description: (tx.description || tx.concept || "Movimiento Nequi"),
+        date: (tx.date || tx.created_at || new Date().toISOString().split('T')[0]),
+        type: (typeof tx.amount === 'string' ? parseFloat(tx.amount) : (tx.amount || 0)) < 0 ? 'EXPENSE' : 'INCOME',
         balance_after: tx.balance
       }));
-    } catch (error: any) {
-      console.error("Floid API Error:", error.response?.data || error.message);
-      throw new Error(error.response?.data?.message || "Error al obtener movimientos de Floid");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error("Floid API Error:", error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || "Error al obtener movimientos de Floid");
+      }
+      throw error;
     }
   }
 

@@ -96,8 +96,6 @@ export function WalletForm({
     const colorPickerRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
     const { toast } = useToast();
-    const [isGlobalNequiConfigured, setIsGlobalNequiConfigured] = useState(false);
-
     useEffect(() => {
 // Sync state logic simplified for Floid
     }, []);
@@ -365,100 +363,12 @@ export function WalletForm({
                         {watchBank === "nequi" && (
                             <div className="space-y-4 pt-2 border-t border-dashed bg-muted/30 p-3 rounded-lg">
                                 <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-semibold text-purple-700 dark:text-purple-400">Configuración Conecta Nequi</h4>
+                                    <h4 className="text-sm font-semibold text-purple-700 dark:text-purple-400">Automatización Nequi</h4>
                                     <HelpCircle className="h-4 w-4 text-muted-foreground" />
                                 </div>
-                                
-                                {isGlobalNequiConfigured ? (
-                                    <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-100 dark:border-green-900/30 mb-2">
-                                        <p className="text-[10px] text-green-700 dark:text-green-400 font-medium leading-tight">
-                                            ✅ El sistema está configurado globalmente. Las credenciales de la aplicación se usarán automáticamente.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-muted-foreground">
-                                        Ingresa tus credenciales de Nequi Conecta para habilitar la sincronización automática de movimientos.
-                                    </p>
-                                )}
-
-                                {!isGlobalNequiConfigured && (
-                                    <>
-                                        <FormField
-                                            control={form.control}
-                                            name="nequi_config.client_id"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-xs">Client ID</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="password" placeholder="Tu Client ID" {...field} value={Array.isArray(field.value) ? "" : field.value ?? ""} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="nequi_config.client_secret"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-xs">Client Secret</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="password" placeholder="Tu Client Secret" {...field} value={Array.isArray(field.value) ? "" : field.value ?? ""} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </>
-                                )}
-
-                                <FormField
-                                    control={form.control}
-                                    name="nequi_config.phone_number"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-xs">Número de Celular</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="3001234567" {...field} value={Array.isArray(field.value) ? "" : field.value ?? ""} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                
-                                {isGlobalNequiConfigured && (
-                                    <details className="mt-2 text-[10px]">
-                                        <summary className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-2">
-                                            ¿Usar credenciales diferentes para esta cuenta?
-                                        </summary>
-                                        <div className="mt-2 space-y-2 border-l-2 border-muted pl-2 py-1">
-                                            <FormField
-                                                control={form.control}
-                                                name="nequi_config.client_id"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-[10px]">Client ID Override</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="password" className="h-7 text-xs" {...field} value={Array.isArray(field.value) ? "" : field.value ?? ""} />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="nequi_config.client_secret"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-[10px]">Client Secret Override</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="password" className="h-7 text-xs" {...field} value={Array.isArray(field.value) ? "" : field.value ?? ""} />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                    </details>
-                                )}
+                                <p className="text-xs text-muted-foreground">
+                                    Esta cuenta se puede sincronizar automáticamente usando **Floid** o mediante importación manual después de crearla.
+                                </p>
                             </div>
                         )}
 

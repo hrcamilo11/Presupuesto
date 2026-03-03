@@ -25,9 +25,10 @@ export async function linkFloidAccount(walletId: string, accessToken: string) {
 
     revalidatePath("/wallets");
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Error al vincular con Floid";
     console.error("Error linking Floid account:", error);
-    return { error: "No se pudo vincular la cuenta con Floid" };
+    return { error: message };
   }
 }
 
@@ -49,7 +50,7 @@ export async function syncFloidTransactions(walletId: string) {
 
     if (!wallet) return { error: "Cuenta no encontrada" };
     
-    const config = wallet.nequi_config as any;
+    const config = wallet.nequi_config as { floid_token?: string };
     if (!config?.floid_token) {
       return { error: "La cuenta no está vinculada con Floid" };
     }
@@ -123,8 +124,9 @@ export async function syncFloidTransactions(walletId: string) {
       success: true, 
       message: `Sincronización completa. Se agregaron ${addedCount} movimientos.` 
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Error al sincronizar con Floid";
     console.error("Floid sync error:", error);
-    return { error: error.message || "Error al sincronizar con Floid" };
+    return { error: message };
   }
 }

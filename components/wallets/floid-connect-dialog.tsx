@@ -51,7 +51,7 @@ export function FloidConnectDialog({
         });
         onOpenChange(false);
       }
-    } catch (err) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error inesperado",
