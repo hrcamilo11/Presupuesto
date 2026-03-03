@@ -122,12 +122,26 @@ export function WalletForm({
                 investment_yield_rate: wallet.investment_yield_rate ?? undefined,
                 investment_term: wallet.investment_term ?? undefined,
                 investment_start_date: wallet.investment_start_date ?? undefined,
+                nequi_config: wallet.nequi_config ? {
+                    client_id: wallet.nequi_config.client_id ?? "",
+                    client_secret: wallet.nequi_config.client_secret ?? "",
+                    phone_number: wallet.nequi_config.phone_number ?? "",
+                } : {
+                    client_id: "",
+                    client_secret: "",
+                    phone_number: "",
+                },
             }
             : {
                 name: "",
                 type: allowedTypes && allowedTypes.length > 0 ? allowedTypes[0] : "cash",
                 currency: "COP",
                 balance: 0,
+                nequi_config: {
+                    client_id: "",
+                    client_secret: "",
+                    phone_number: "",
+                },
             },
     });
 
@@ -311,7 +325,6 @@ export function WalletForm({
                                         </FormItem>
                                     )}
                                 />
-
                                 <FormField
                                     control={form.control}
                                     name="debit_card_brand"
@@ -335,6 +348,57 @@ export function WalletForm({
                                                     ))}
                                                 </SelectContent>
                                             </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
+
+                        {watchBank === "nequi" && (
+                            <div className="space-y-4 pt-2 border-t border-dashed bg-muted/30 p-3 rounded-lg">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-semibold text-purple-700 dark:text-purple-400">Configuración Conecta Nequi</h4>
+                                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Ingresa tus credenciales de Nequi Conecta para habilitar la sincronización automática de movimientos.
+                                </p>
+                                <FormField
+                                    control={form.control}
+                                    name="nequi_config.client_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-xs">Client ID</FormLabel>
+                                            <FormControl>
+                                                <Input type="password" placeholder="Tu Client ID" {...field} value={Array.isArray(field.value) ? "" : field.value ?? ""} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="nequi_config.client_secret"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-xs">Client Secret</FormLabel>
+                                            <FormControl>
+                                                <Input type="password" placeholder="Tu Client Secret" {...field} value={Array.isArray(field.value) ? "" : field.value ?? ""} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="nequi_config.phone_number"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-xs">Número de Celular</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="3001234567" {...field} value={Array.isArray(field.value) ? "" : field.value ?? ""} />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}

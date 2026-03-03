@@ -279,6 +279,12 @@ export type Wallet = {
   investment_yield_rate?: number | null;
   investment_term?: string | null;
   investment_start_date?: string | null;
+  nequi_config?: {
+    client_id: string;
+    client_secret: string;
+    phone_number: string;
+  } | null;
+  last_synced_at?: string | null;
   created_at: string;
   updated_at: string;
 };

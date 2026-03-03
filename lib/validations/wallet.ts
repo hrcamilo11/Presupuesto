@@ -44,6 +44,12 @@ const baseWalletSchema = z.object({
     .number()
     .min(0, "La tasa de interés de avances no puede ser negativa")
     .optional(),
+  // Configuración de Nequi Conecta
+  nequi_config: z.object({
+    client_id: z.string().optional(),
+    client_secret: z.string().optional(),
+    phone_number: z.string().optional(),
+  }).optional().nullable(),
 });
 
 export const walletSchema = baseWalletSchema.superRefine((value, ctx) => {

@@ -145,6 +145,7 @@ export async function createWallet(formData: {
             investment_yield_rate: formData.type === "investment" ? formData.investment_yield_rate ?? null : null,
             investment_term: formData.type === "investment" ? formData.investment_term ?? null : null,
             investment_start_date: formData.type === "investment" ? formData.investment_start_date ?? null : null,
+            nequi_config: formData.bank === "nequi" ? (formData as any).nequi_config ?? null : null,
         };
         const { data: created, error } = await supabase
             .from("wallets")
@@ -215,6 +216,7 @@ export async function updateWallet(
         currency: formData.currency,
         balance: formData.balance ?? null,
         color: formData.color || null,
+        nequi_config: formData.bank === "nequi" ? (formData as any).nequi_config ?? null : null,
     };
     const lastFour = formData.last_four_digits && /^\d{1,4}$/.test(formData.last_four_digits) ? formData.last_four_digits : null;
     if (formData.type === "debit") {

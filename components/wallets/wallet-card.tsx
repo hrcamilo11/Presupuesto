@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet, CreditCard, Banknote, PiggyBank, TrendingUp, MoreHorizontal, Trash, Pencil, Calendar, CalendarClock, BanknoteIcon, Table2, History } from "lucide-react";
+import { Wallet, CreditCard, Banknote, PiggyBank, TrendingUp, MoreHorizontal, Trash, Pencil, Calendar, CalendarClock, BanknoteIcon, Table2, History, RefreshCcw } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import {
     Card,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { deleteWallet } from "@/app/actions/wallets";
+import { syncNequiTransactions } from "@/app/actions/nequi-sync";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import {
@@ -57,6 +58,12 @@ interface WalletProps {
     investment_yield_rate?: number | null;
     investment_term?: string | null;
     investment_start_date?: string | null;
+    nequi_config?: {
+        client_id: string;
+        client_secret: string;
+        phone_number: string;
+    } | null;
+    last_synced_at?: string | null;
 }
 
 const typeIcons = {
@@ -84,6 +91,7 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
     const [editOpen, setEditOpen] = useState(false);
     const [payOpen, setPayOpen] = useState(false);
     const [amortOpen, setAmortOpen] = useState(false);
+    const [syncing, setSyncing] = useState(false);
     const Icon = typeIcons[wallet.type as keyof typeof typeIcons] || Wallet;
     const label = typeLabels[wallet.type as keyof typeof typeLabels] || "Cuenta";
     const { toast } = useToast();
@@ -105,6 +113,34 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                 description: "La cuenta ha sido eliminada.",
             });
             router.refresh();
+        }
+    }
+
+    async function handleSync() {
+        setSyncing(true);
+        try {
+            const res = await syncNequiTransactions(wallet.id);
+            if (res.error) {
+                toast({
+                    variant: "destructive",
+                    title: "Error de sincronización",
+                    description: res.error,
+                });
+            } else {
+                toast({
+                    title: "Sincronización exitosa",
+                    description: res.message,
+                });
+                router.refresh();
+            }
+        } catch (err) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Ocurrió un error inesperado.",
+            });
+        } finally {
+            setSyncing(false);
         }
     }
 
@@ -232,6 +268,23 @@ export function WalletCard({ wallet, wallets = [] }: WalletCardProps) {
                                 {label}
                             </p>
                         </div>
+                        {wallet.bank === "nequi" && wallet.nequi_config && (
+                            <div className="ml-auto">
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className={`h-8 w-8 rounded-full ${isDarkCard ? "text-white hover:bg-white/20" : "text-purple-600 hover:text-purple-700 hover:bg-purple-50"}`}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleSync();
+                                    }}
+                                    disabled={syncing}
+                                    title="Sincronizar movimientos"
+                                >
+                                    <RefreshCcw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
                     {isCreditCard && (
