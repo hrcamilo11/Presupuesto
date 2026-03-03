@@ -60,8 +60,10 @@ export class FloidClient {
       }
 
       return response.data.access_token;
-    } catch (error: any) {
-      console.error("Floid Auth Error:", error.response?.data || error.message);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error("Floid Auth Error:", error.response?.data || error.message);
+      }
       throw new Error("Error de autenticación con Floid");
     }
   }
